@@ -1,0 +1,622 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <meta
+    name="description"
+    content="QA Sentinel Tyra quality intelligence dashboard"
+  />
+
+  <title>QA Sentinel Tyra Dashboard</title>
+
+  <link
+    rel="stylesheet"
+    href="./dashboard.css"
+  />
+</head>
+
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">
+        QA SENTINEL TYRA
+      </p>
+
+      <h1>
+        Quality Intelligence
+      </h1>
+
+      <p
+        id="run-meta"
+        class="muted"
+      >
+        Loading latest run…
+      </p>
+
+      <div class="run-metadata">
+        <span>
+          Build:
+          <strong id="build-value">local</strong>
+        </span>
+
+        <span>
+          Branch:
+          <strong id="branch-value">local</strong>
+        </span>
+
+        <span>
+          Commit:
+          <strong id="commit-value">—</strong>
+        </span>
+
+        <span>
+          Run:
+          <strong id="run-number-value">—</strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="actions command-center">
+  <span
+    id="live-status"
+    class="live-status live-status-live"
+    title="Dashboard data updates automatically"
+  >
+    <span class="live-dot"></span>
+    LIVE
+  </span>
+
+  <button
+    id="refresh-button"
+    type="button"
+  >
+    Refresh
+  </button>
+
+  <a
+    href="/reports/latest-report.html"
+    target="_blank"
+    rel="noreferrer"
+  >
+    Executive report
+  </a>
+
+  <a
+    href="/reports/latest-report.md"
+    target="_blank"
+    rel="noreferrer"
+  >
+    Markdown
+  </a>
+
+  <a
+    href="./data/latest-run.json"
+    target="_blank"
+    rel="noreferrer"
+  >
+    Latest JSON
+  </a>
+
+  <a
+    href="./data/history.json"
+    target="_blank"
+    rel="noreferrer"
+  >
+    History
+  </a>
+
+  <a
+    href="http://localhost:9323"
+    target="_blank"
+    rel="noreferrer"
+  >
+    Playwright
+  </a>
+</div>
+  </header>
+
+  <main>
+    <section
+      id="release-card"
+      class="release-card card"
+    >
+      <div class="release-heading">
+        <div>
+          <p class="eyebrow">
+            RELEASE READINESS
+          </p>
+
+          <h2 id="release-status">
+            Calculating release status…
+          </h2>
+        </div>
+
+        <span
+          id="release-risk"
+          class="release-risk"
+        >
+          UNKNOWN RISK
+        </span>
+      </div>
+
+      <div class="release-grid">
+        <div class="release-confidence">
+          <span class="label">
+            Confidence
+          </span>
+
+          <strong id="release-confidence-value">
+            --%
+          </strong>
+        </div>
+
+        <div class="release-stat">
+          <span class="label">
+            Blocking issues
+          </span>
+
+          <strong id="blocking-issues-value">
+            --
+          </strong>
+        </div>
+
+        <div class="release-stat">
+          <span class="label">
+            Non-blocking issues
+          </span>
+
+          <strong id="non-blocking-issues-value">
+            --
+          </strong>
+        </div>
+
+        <div class="release-stat">
+          <span class="label">
+            Overall risk
+          </span>
+
+          <strong id="release-risk-value">
+            --
+          </strong>
+        </div>
+      </div>
+
+      <div class="release-verdict">
+        <p id="release-verdict-text">
+          Waiting for release assessment…
+        </p>
+
+        <p
+          id="release-action-text"
+          class="release-action"
+        >
+          Recommended action will appear here.
+        </p>
+      </div>
+    </section>
+
+    <section class="hero-grid">
+      <article class="health-card card">
+        <span class="label">
+          Quality score
+        </span>
+
+        <div class="health-wrap">
+          <div
+            id="health-ring"
+            class="health-ring"
+          >
+            <strong id="health-value">
+              --%
+            </strong>
+          </div>
+
+          <div>
+            <p
+              id="run-status"
+              class="status-pill"
+            >
+              Unknown
+            </p>
+
+            <p
+              id="health-label"
+              class="health-label"
+            >
+              Calculating…
+            </p>
+
+            <p class="muted">
+              Weighted by test results and issue classification.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Passed
+        </span>
+
+        <strong id="passed-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Failed
+        </span>
+
+        <strong id="failed-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Product bugs
+        </span>
+
+        <strong id="critical-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Content bugs
+        </span>
+
+        <strong id="content-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Automation issues
+        </span>
+
+        <strong id="automation-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Warnings
+        </span>
+
+        <strong id="warnings-value">
+          --
+        </strong>
+      </article>
+
+      <article class="metric card">
+        <span class="label">
+          Average duration
+        </span>
+
+        <strong id="average-value">
+          --
+        </strong>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            QA VERDICT
+          </p>
+
+          <h2>
+            Executive summary
+          </h2>
+        </div>
+      </div>
+
+      <p
+        id="executive-summary-text"
+        class="summary-text executive-summary"
+      >
+        Waiting for QA assessment…
+      </p>
+    </section>
+
+    <section class="two-column">
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              CROSS-BROWSER
+            </p>
+
+            <h2>
+              Browser health
+            </h2>
+          </div>
+        </div>
+
+        <div
+          id="browser-list"
+          class="stack"
+        ></div>
+      </article>
+
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              PERFORMANCE
+            </p>
+
+            <h2>
+              Timing overview
+            </h2>
+          </div>
+        </div>
+
+        <dl
+          id="performance-list"
+          class="definition-grid"
+        ></dl>
+      </article>
+    </section>
+
+    <section class="two-column">
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              FAILURE DISTRIBUTION
+            </p>
+
+            <h2>
+              Issues by type
+            </h2>
+          </div>
+        </div>
+
+        <div
+          id="failure-distribution"
+          class="distribution-chart"
+        ></div>
+      </article>
+
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              SLOWEST TESTS
+            </p>
+
+            <h2>
+              Performance bottlenecks
+            </h2>
+          </div>
+        </div>
+
+        <div
+          id="slowest-tests-list"
+          class="slowest-tests"
+        ></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            PRIORITY QUEUE
+          </p>
+
+          <h2>
+            Issues requiring attention
+          </h2>
+        </div>
+
+        <span
+          id="issue-count"
+          class="badge"
+        >
+          0 issues
+        </span>
+      </div>
+
+      <div class="issue-toolbar">
+        <label class="search-field">
+          <span class="visually-hidden">
+            Search issues
+          </span>
+
+          <input
+            id="issue-search"
+            type="search"
+            placeholder="Search issues…"
+            autocomplete="off"
+          />
+        </label>
+
+        <select
+          id="classification-filter"
+          aria-label="Filter by classification"
+        >
+          <option value="all">
+            All classifications
+          </option>
+
+          <option value="product-bug">
+            Product bugs
+          </option>
+
+          <option value="content-bug">
+            Content bugs
+          </option>
+
+          <option value="automation-issue">
+            Automation issues
+          </option>
+
+          <option value="accessibility-issue">
+            Accessibility issues
+          </option>
+
+          <option value="performance-issue">
+            Performance issues
+          </option>
+
+          <option value="security-issue">
+            Security issues
+          </option>
+
+          <option value="needs-investigation">
+            Needs investigation
+          </option>
+
+          <option value="warning">
+            Warnings
+          </option>
+        </select>
+
+        <select
+          id="severity-filter"
+          aria-label="Filter by severity"
+        >
+          <option value="all">
+            All severities
+          </option>
+
+          <option value="critical">
+            Critical
+          </option>
+
+          <option value="high">
+            High
+          </option>
+
+          <option value="medium">
+            Medium
+          </option>
+
+          <option value="low">
+            Low
+          </option>
+
+          <option value="info">
+            Info
+          </option>
+        </select>
+      </div>
+
+      <div
+        id="issues-list"
+        class="issues"
+      ></div>
+    </section>
+
+    <section class="two-column">
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              CATEGORIES
+            </p>
+
+            <h2>
+              Quality by area
+            </h2>
+          </div>
+        </div>
+
+        <div
+          id="category-list"
+          class="stack"
+        ></div>
+      </article>
+
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              BROWSER MATRIX
+            </p>
+
+            <h2>
+              Browser comparison
+            </h2>
+          </div>
+        </div>
+
+        <div
+          id="browser-matrix"
+          class="browser-matrix"
+        ></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            HISTORY
+          </p>
+
+          <h2>
+            Quality trend
+          </h2>
+        </div>
+
+        <span
+          id="history-trend"
+          class="badge"
+        >
+          No trend
+        </span>
+      </div>
+
+      <div
+        id="history-chart"
+        class="history-chart"
+      ></div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            AUTOMATED SUMMARY
+          </p>
+
+          <h2>
+            QA assessment
+          </h2>
+        </div>
+      </div>
+
+      <p
+        id="summary-text"
+        class="summary-text"
+      >
+        Waiting for test data…
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    QA Sentinel Tyra · Enterprise Quality Intelligence Platform
+  </footer>
+
+  <script
+    type="module"
+    src="./dashboard.js"
+  ></script>
+</body>
+</html>

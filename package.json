@@ -1,0 +1,40 @@
+{
+  "name": "qa-sentinel-tyra",
+  "version": "1.0.0",
+  "description": "QA Sentinel Tyra - Playwright-based QA testing and website scanning for Nation.dev and AI Skills.",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --headed",
+    "test:chromium": "playwright test --project=chromium --headed",
+    "test:nation": "playwright test tests/nation --project=chromium --headed",
+    "test:nation:all": "playwright test tests/nation-basic-user.spec.ts",
+    "test:skills": "playwright test tests/homepage.spec.ts --project=chromium --headed",
+    "test:skills:all": "playwright test tests/homepage.spec.ts",
+    "test:discovered": "playwright test tests/discovered-pages.spec.ts --project=chromium",
+    "test:all-sites": "playwright test tests/nation-basic-user.spec.ts tests/homepage.spec.ts --project=chromium --headed",
+    "qa": "node scripts/run-qa.mjs",
+    "qa:full": "npm run scan:nation && npm run scan:skills && npm run qa",
+    "scan": "node scripts/scan-site.mjs",
+    "scan:nation": "node scripts/scan-site.mjs https://nation.dev/",
+    "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/skills",
+    "dashboard": "node scripts/serve-dashboard.mjs",
+    "report": "playwright show-report"
+  },
+  "keywords": [
+    "qa",
+    "playwright",
+    "typescript",
+    "test-automation",
+    "website-scanner",
+    "nation-dev"
+  ],
+  "author": "Petter Wastesson",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.1.2",
+    "typescript": "^7.0.2"
+  }
+}
