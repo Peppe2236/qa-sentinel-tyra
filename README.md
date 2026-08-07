@@ -2,7 +2,7 @@
   <img src="docs/assets/qa-sentinel-tyra-banner.png" alt="QA Sentinel Tyra" width="100%" />
 </p>
 
-<h1 align="center">QA Sentinel Tyra</h1>
+<h1 align="center">QA Sentinel Tyra Enterptrise <h1>
 
 <p align="center">
   <strong>Enterprise Quality Intelligence for Playwright</strong><br/>
