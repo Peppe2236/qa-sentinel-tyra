@@ -1,0 +1,283 @@
+/* ==========================================================
+   SENTINEL AI PANEL
+   ========================================================== */
+
+.sentinel-ai-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.sentinel-ai-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sentinel-ai-state {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+
+  padding: .45rem .9rem;
+
+  border-radius: 999px;
+
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+
+  color: #7ef5b4;
+
+  background:
+    rgba(28,185,120,.12);
+
+  border:
+    1px solid rgba(28,185,120,.3);
+}
+
+.sentinel-ai-state-dot {
+
+  width:10px;
+  height:10px;
+
+  border-radius:50%;
+
+  background:#28d17c;
+
+  box-shadow:
+      0 0 12px #28d17c;
+}
+
+/* ==========================================================
+   METRICS
+   ========================================================== */
+
+.sentinel-ai-metrics {
+
+  display:grid;
+
+  grid-template-columns:
+      repeat(auto-fit,minmax(180px,1fr));
+
+  gap:1rem;
+}
+
+.sentinel-ai-metric {
+
+  padding:1.2rem;
+
+  border-radius:16px;
+
+  background:
+
+      rgba(255,255,255,.025);
+
+  border:
+
+      1px solid rgba(255,255,255,.05);
+
+  transition:.25s;
+}
+
+.sentinel-ai-metric:hover{
+
+  transform:translateY(-2px);
+
+  border-color:
+
+      rgba(74,144,226,.45);
+}
+
+.sentinel-ai-metric strong{
+
+  display:block;
+
+  margin-top:.4rem;
+
+  margin-bottom:.35rem;
+
+  font-size:2rem;
+
+  font-weight:800;
+}
+
+.sentinel-ai-metric small{
+
+  opacity:.65;
+}
+
+/* ==========================================================
+   SUMMARY
+   ========================================================== */
+
+.sentinel-ai-summary{
+
+  padding:1.5rem;
+
+  border-radius:18px;
+
+  background:
+
+      linear-gradient(
+          135deg,
+          rgba(74,144,226,.12),
+          rgba(94,234,212,.06)
+      );
+
+  border:
+
+      1px solid rgba(74,144,226,.25);
+}
+
+.sentinel-ai-section-title{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:1rem;
+
+  margin-bottom:1rem;
+}
+
+.sentinel-ai-symbol{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  width:48px;
+
+  height:48px;
+
+  border-radius:14px;
+
+  font-size:1.3rem;
+
+  background:
+
+      rgba(74,144,226,.15);
+}
+
+#sentinel-ai-summary-text{
+
+  line-height:1.8;
+
+  font-size:1rem;
+}
+
+/* ==========================================================
+   INSIGHTS
+   ========================================================== */
+
+.sentinel-ai-insights{
+
+  display:grid;
+
+  gap:1rem;
+
+  grid-template-columns:
+      repeat(auto-fit,minmax(320px,1fr));
+}
+
+.sentinel-ai-insight{
+
+  padding:1.2rem;
+
+  border-radius:16px;
+
+  background:
+
+      rgba(255,255,255,.025);
+
+  border:
+
+      1px solid rgba(255,255,255,.06);
+}
+
+.sentinel-ai-insight-head{
+
+  display:flex;
+
+  gap:1rem;
+
+  align-items:center;
+
+  margin-bottom:1rem;
+}
+
+.sentinel-ai-insight-icon{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  width:42px;
+
+  height:42px;
+
+  border-radius:12px;
+
+  background:
+
+      rgba(74,144,226,.15);
+
+  font-weight:700;
+}
+
+.sentinel-ai-next-action{
+
+  border:
+
+      1px solid rgba(94,234,212,.25);
+}
+
+/* ==========================================================
+   FOOTER
+   ========================================================== */
+
+.sentinel-ai-footer{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  opacity:.65;
+
+  font-size:.8rem;
+}
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:900px){
+
+.sentinel-ai-heading{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:1rem;
+
+}
+
+.sentinel-ai-footer{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:.6rem;
+
+}
+
+}

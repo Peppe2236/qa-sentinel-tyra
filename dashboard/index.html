@@ -15,15 +15,9 @@
 
   <title>QA Sentinel Tyra Dashboard</title>
 
-  <link
-    rel="stylesheet"
-    href="./dashboard.css"
-   
-  />
-  <link
-    rel="stylesheet"
-    href="./command-center.css"
-/>
+  <link rel="stylesheet" href="./dashboard.css"/>
+  <link rel="stylesheet" href="./command-center.css"/>
+<link rel="stylesheet" href="sentinel-ai.css" />
 </head>
 
 <body>
@@ -673,6 +667,254 @@
 
 <!-- =========================================================
      END CONTROL CENTER
+     ========================================================= -->
+
+     <!-- =========================================================
+     SENTINEL AI
+     ========================================================= -->
+
+<section
+  id="sentinel-ai-panel"
+  class="card sentinel-ai-panel"
+>
+  <div class="section-heading sentinel-ai-heading">
+    <div>
+      <p class="eyebrow">
+        SENTINEL AI
+      </p>
+
+      <h2>
+        Quality Intelligence
+      </h2>
+    </div>
+
+    <div class="sentinel-ai-state">
+      <span class="sentinel-ai-state-dot"></span>
+
+      INTELLIGENCE ACTIVE
+    </div>
+  </div>
+
+  <div class="sentinel-ai-metrics">
+
+    <article class="sentinel-ai-metric">
+      <span class="label">
+        Confidence
+      </span>
+
+      <strong id="sentinel-ai-confidence">
+        --%
+      </strong>
+
+      <small>
+        Analysis confidence
+      </small>
+    </article>
+
+
+    <article class="sentinel-ai-metric">
+      <span class="label">
+        Release Risk
+      </span>
+
+      <strong id="sentinel-ai-risk">
+        --
+      </strong>
+
+      <small>
+        Current deployment risk
+      </small>
+    </article>
+
+
+    <article class="sentinel-ai-metric">
+      <span class="label">
+        Priority
+      </span>
+
+      <strong id="sentinel-ai-priority">
+        --
+      </strong>
+
+      <small>
+        Highest action priority
+      </small>
+    </article>
+
+
+    <article class="sentinel-ai-metric">
+      <span class="label">
+        Findings
+      </span>
+
+      <strong id="sentinel-ai-findings-count">
+        --
+      </strong>
+
+      <small>
+        Intelligence findings
+      </small>
+    </article>
+
+  </div>
+
+
+  <div class="sentinel-ai-summary">
+
+    <div class="sentinel-ai-section-title">
+      <span class="sentinel-ai-symbol">
+        ✦
+      </span>
+
+      <div>
+        <span class="label">
+          AI SUMMARY
+        </span>
+
+        <small>
+          Automated quality assessment
+        </small>
+      </div>
+    </div>
+
+    <p id="sentinel-ai-summary-text">
+      Sentinel AI intelligence will appear after
+      the next QA analysis.
+    </p>
+
+  </div>
+
+
+  <div class="sentinel-ai-insights">
+
+    <article class="sentinel-ai-insight">
+      <div class="sentinel-ai-insight-head">
+
+        <span class="sentinel-ai-insight-icon">
+          !
+        </span>
+
+        <div>
+          <span class="label">
+            LIKELY ROOT CAUSE
+          </span>
+
+          <small>
+            Highest-confidence explanation
+          </small>
+        </div>
+
+      </div>
+
+      <p id="sentinel-ai-root-cause">
+        No analysis available.
+      </p>
+    </article>
+
+
+    <article class="sentinel-ai-insight">
+      <div class="sentinel-ai-insight-head">
+
+        <span class="sentinel-ai-insight-icon">
+          ◇
+        </span>
+
+        <div>
+          <span class="label">
+            USER IMPACT
+          </span>
+
+          <small>
+            Expected production impact
+          </small>
+        </div>
+
+      </div>
+
+      <p id="sentinel-ai-user-impact">
+        No analysis available.
+      </p>
+    </article>
+
+
+    <article class="sentinel-ai-insight">
+      <div class="sentinel-ai-insight-head">
+
+        <span class="sentinel-ai-insight-icon">
+          →
+        </span>
+
+        <div>
+          <span class="label">
+            RECOMMENDATION
+          </span>
+
+          <small>
+            Suggested corrective action
+          </small>
+        </div>
+
+      </div>
+
+      <p id="sentinel-ai-recommendation">
+        No recommendation available.
+      </p>
+    </article>
+
+
+    <article
+      class="
+        sentinel-ai-insight
+        sentinel-ai-next-action
+      "
+    >
+      <div class="sentinel-ai-insight-head">
+
+        <span class="sentinel-ai-insight-icon">
+          ✓
+        </span>
+
+        <div>
+          <span class="label">
+            NEXT ACTION
+          </span>
+
+          <small>
+            Highest-value immediate action
+          </small>
+        </div>
+
+      </div>
+
+      <p id="sentinel-ai-next-action">
+        No immediate action available.
+      </p>
+    </article>
+
+  </div>
+
+
+  <div class="sentinel-ai-footer">
+
+    <span>
+      Generated
+      <strong id="sentinel-ai-generated">
+        --
+      </strong>
+    </span>
+
+    <span>
+      Engine
+      <strong>
+        Sentinel AI v1
+      </strong>
+    </span>
+
+  </div>
+</section>
+
+<!-- =========================================================
+     END SENTINEL AI
      ========================================================= -->
 
     <section class="card">

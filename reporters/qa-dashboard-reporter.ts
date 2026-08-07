@@ -45,6 +45,10 @@ import {
   analyzeSentinelAi,
 } from './analyzers/sentinel-ai';
 
+import type {
+  SentinelOutput,
+} from './models/sentinel-output';
+
 import {
   sortIssues,
 } from './utils/issue-sorter';
@@ -71,6 +75,7 @@ import type {
   RiskLevel,
   RunMetadata,
 } from './models/types';
+
 
 function countClassification(
   tests: DashboardTestResult[],
@@ -697,7 +702,13 @@ class QaDashboardReporter implements Reporter {
       tests:
         this.results,
     };
+const sentinelAi =
+  analyzeSentinelAi(run);
 
+const outputRun: SentinelOutput = {
+  ...run,
+  sentinelAi,
+};
     const dataDirectory =
       path.resolve(
         process.cwd(),
@@ -725,7 +736,7 @@ class QaDashboardReporter implements Reporter {
 
     writeJson(
       latestRunFile,
-      run
+      outputRun
     );
 
     writeJson(
@@ -734,12 +745,12 @@ class QaDashboardReporter implements Reporter {
     );
 
     const history =
-      readJson<DashboardRun[]>(
+      readJson<SentinelOutput[]>(
         historyFile,
         []
       );
 
-    history.push(run);
+    history.push(outputRun);
 
     writeJson(
       historyFile,
