@@ -214,8 +214,9 @@ export interface DashboardRun {
   categoryStatistics: CategoryStatistics;
 
   classificationSummary?: ClassificationSummary;
-  releaseAssessment?: ReleaseAssessment;
-  metadata?: RunMetadata;
+releaseAssessment?: ReleaseAssessment;
+
+metadata?: RunMetadata;
 
   prioritizedIssues: DashboardTestResult[];
   tests: DashboardTestResult[];

@@ -13,33 +13,37 @@ import path from 'node:path';
 import {
   detectCategory,
   VITAL_RANK,
-} from './analyzers/category-analyzer';
+} from './analyzers/sentinel-category';
 
 import {
   detectSeverity,
-} from './analyzers/severity-analyzer';
+} from './analyzers/sentinel-severity';
 
 import {
   analyzeAttachments,
-} from './analyzers/attachment-analyzer';
+} from './analyzers/sentinel-attachments';
 
 import {
   analyzePerformance,
-} from './analyzers/performance-analyzer';
+} from './analyzers/sentinel-performance';
 
 import {
   browserFamily,
   buildBrowserStatistics,
   buildCategoryStatistics,
-} from './analyzers/statistics-analyzer';
+} from './analyzers/sentinel-statistics';
 
 import {
   analyzeHealth,
-} from './analyzers/health-analyzer';
+} from './analyzers/sentinel-health';
 
 import {
   classifyIssue,
-} from './analyzers/issue-classifier';
+} from './analyzers/sentinel-classifier';
+
+import {
+  analyzeSentinelAi,
+} from './analyzers/sentinel-ai';
 
 import {
   sortIssues,

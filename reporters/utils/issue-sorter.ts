@@ -1,5 +1,5 @@
 import type { DashboardTestResult } from '../models/types';
-import { SEVERITY_ORDER } from '../analyzers/severity-analyzer';
+import { SEVERITY_ORDER } from '../analyzers/sentinel-severity';
 
 export function sortIssues(
   tests: DashboardTestResult[]
