@@ -18,7 +18,12 @@
   <link
     rel="stylesheet"
     href="./dashboard.css"
+   
   />
+  <link
+    rel="stylesheet"
+    href="./command-center.css"
+/>
 </head>
 
 <body>
@@ -78,46 +83,6 @@
   >
     Refresh
   </button>
-
-  <a
-    href="/reports/latest-report.html"
-    target="_blank"
-    rel="noreferrer"
-  >
-    Executive report
-  </a>
-
-  <a
-    href="/reports/latest-report.md"
-    target="_blank"
-    rel="noreferrer"
-  >
-    Markdown
-  </a>
-
-  <a
-    href="./data/latest-run.json"
-    target="_blank"
-    rel="noreferrer"
-  >
-    Latest JSON
-  </a>
-
-  <a
-    href="./data/history.json"
-    target="_blank"
-    rel="noreferrer"
-  >
-    History
-  </a>
-
-  <a
-    href="http://localhost:9323"
-    target="_blank"
-    rel="noreferrer"
-  >
-    Playwright
-  </a>
 </div>
   </header>
 
@@ -309,6 +274,406 @@
         </strong>
       </article>
     </section>
+
+    <!-- =========================================================
+     CONTROL CENTER
+     ========================================================= -->
+
+<section class="card control-center">
+  <div class="section-heading control-center-heading">
+    <div>
+      <p class="eyebrow">
+        CONTROL CENTER
+      </p>
+
+      <h2>
+        Sentinel Operations
+      </h2>
+    </div>
+
+    <span class="control-center-status">
+      SENTINEL ONLINE
+    </span>
+  </div>
+
+  <div class="control-center-grid">
+
+    <!-- DASHBOARD -->
+    <a
+      class="control-action control-dashboard"
+      href="/"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <rect
+            x="3"
+            y="3"
+            width="7"
+            height="7"
+            rx="1"
+          />
+          <rect
+            x="14"
+            y="3"
+            width="7"
+            height="7"
+            rx="1"
+          />
+          <rect
+            x="3"
+            y="14"
+            width="7"
+            height="7"
+            rx="1"
+          />
+          <rect
+            x="14"
+            y="14"
+            width="7"
+            height="7"
+            rx="1"
+          />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Dashboard
+        </strong>
+
+        <small>
+          Live quality overview
+        </small>
+
+        <span
+          id="control-dashboard-status"
+          class="control-action-status"
+        >
+          LIVE
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        →
+      </span>
+    </a>
+
+
+    <!-- EXECUTIVE REPORT -->
+    <a
+      class="control-action control-executive"
+      href="/reports/latest-report.html"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M6 2h9l5 5v15H6z" />
+          <path d="M15 2v6h5" />
+          <path d="M9 13h6" />
+          <path d="M9 17h6" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Executive Report
+        </strong>
+
+        <small>
+          Release-ready HTML report
+        </small>
+
+        <span
+          id="control-executive-status"
+          class="control-action-status"
+        >
+          READY
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- MARKDOWN -->
+    <a
+      class="control-action control-markdown"
+      href="/reports/latest-report.md"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <rect
+            x="3"
+            y="5"
+            width="18"
+            height="14"
+            rx="2"
+          />
+          <path d="M6 15V9l3 3 3-3v6" />
+          <path d="M15 12h3" />
+          <path d="M17 10l2 2-2 2" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Markdown Report
+        </strong>
+
+        <small>
+          Technical QA report
+        </small>
+
+        <span
+          id="control-markdown-status"
+          class="control-action-status"
+        >
+          AVAILABLE
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- PLAYWRIGHT -->
+    <a
+      class="control-action control-playwright"
+      href="http://127.0.0.1:9323"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M5 7l2-3 3 2" />
+          <path d="M19 7l-2-3-3 2" />
+          <path d="M5 8c0 8 3 12 7 12s7-4 7-12" />
+          <path d="M8 11h2" />
+          <path d="M14 11h2" />
+          <path d="M9 15c2 1 4 1 6 0" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Playwright Report
+        </strong>
+
+        <small>
+          Native Playwright results
+        </small>
+
+        <span
+          id="control-playwright-status"
+          class="control-action-status"
+        >
+          TEST RESULTS
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- REFRESH -->
+    <button
+      id="quick-refresh-button"
+      class="control-action control-refresh"
+      type="button"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M20 6v5h-5" />
+          <path d="M4 18v-5h5" />
+          <path d="M6 9a7 7 0 0 1 11-2l3 4" />
+          <path d="M18 15a7 7 0 0 1-11 2l-3-4" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Refresh Dashboard
+        </strong>
+
+        <small>
+          Reload latest Sentinel data
+        </small>
+
+        <span
+          id="control-refresh-status"
+          class="control-action-status"
+        >
+          AUTO · 10 SEC
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        →
+      </span>
+    </button>
+
+
+    <!-- JSON -->
+    <a
+      class="control-action control-json"
+      href="./data/latest-run.json"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M9 4c-2 0-3 1-3 3v2c0 2-1 3-3 3" />
+          <path d="M3 12c2 0 3 1 3 3v2c0 2 1 3 3 3" />
+          <path d="M15 4c2 0 3 1 3 3v2c0 2 1 3 3 3" />
+          <path d="M21 12c-2 0-3 1-3 3v2c0 2-1 3-3 3" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Latest JSON
+        </strong>
+
+        <small>
+          Raw quality intelligence
+        </small>
+
+        <span
+          id="control-json-status"
+          class="control-action-status"
+        >
+          DATA READY
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- HISTORY -->
+    <a
+      class="control-action control-history"
+      href="./data/history.json"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M4 19V9" />
+          <path d="M10 19V5" />
+          <path d="M16 19v-7" />
+          <path d="M22 19V2" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Run History
+        </strong>
+
+        <small>
+          Previous QA executions
+        </small>
+
+        <span
+          id="control-history-status"
+          class="control-action-status"
+        >
+          LOADING
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- SETTINGS -->
+    <button
+      class="control-action control-settings"
+      type="button"
+      disabled
+      title="Coming soon"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="3"
+          />
+          <path d="M12 2v3" />
+          <path d="M12 19v3" />
+          <path d="M4.9 4.9L7 7" />
+          <path d="M17 17l2.1 2.1" />
+          <path d="M2 12h3" />
+          <path d="M19 12h3" />
+          <path d="M4.9 19.1L7 17" />
+          <path d="M17 7l2.1-2.1" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Settings
+        </strong>
+
+        <small>
+          Sentinel configuration
+        </small>
+
+        <span class="control-action-status">
+          COMING SOON
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        —
+      </span>
+    </button>
+
+  </div>
+</section>
+
+<!-- =========================================================
+     END CONTROL CENTER
+     ========================================================= -->
 
     <section class="card">
       <div class="section-heading">

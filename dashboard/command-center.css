@@ -1,0 +1,652 @@
+/* ==========================================================
+   QA SENTINEL TYRA
+   CONTROL CENTER v2
+   ========================================================== */
+
+.control-center {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Subtle blue ambient glow */
+.control-center::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+
+  width: 420px;
+  height: 420px;
+
+  top: -290px;
+  right: -140px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(120, 174, 252, 0.15),
+      rgba(120, 174, 252, 0.04) 42%,
+      transparent 72%
+    );
+
+  pointer-events: none;
+}
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.control-center-heading {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.control-center-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  flex-shrink: 0;
+
+  padding: 0.45rem 0.75rem;
+
+  border:
+    1px solid rgba(59, 214, 139, 0.24);
+
+  border-radius: 999px;
+
+  background:
+    rgba(59, 214, 139, 0.07);
+
+  color: var(--good);
+
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+/* Green live indicator */
+.control-center-status::before {
+  content: "";
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: var(--good);
+
+  box-shadow:
+    0 0 0 4px rgba(59, 214, 139, 0.08),
+    0 0 12px rgba(59, 214, 139, 0.7);
+}
+
+/* ==========================================================
+   GRID
+   ========================================================== */
+
+.control-center-grid {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 0.85rem;
+
+  margin-top: 1.15rem;
+}
+
+/* ==========================================================
+   ACTION CARDS
+   ========================================================== */
+
+.control-action {
+  appearance: none;
+
+  position: relative;
+
+  min-width: 0;
+  min-height: 118p;
+
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+
+  padding: 1rem;
+
+  border:
+    1px solid rgba(120, 174, 252, 0.13);
+
+  border-radius: var(--radius-md);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(19, 34, 57, 0.88),
+      rgba(8, 20, 36, 0.94)
+    );
+
+  color: var(--text);
+
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.25),
+0 0 30px rgba(120,174,252,.10);
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Very subtle highlight */
+.control-action::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.025),
+      transparent 35%
+    );
+
+  pointer-events: none;
+}
+
+.control-action:hover {
+  transform: translateY(-3px);
+
+  border-color:
+    rgba(120, 174, 252, 0.42);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(25, 45, 74, 0.96),
+      rgba(10, 25, 44, 0.98)
+    );
+
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.2),
+    0 0 24px rgba(120, 174, 252, 0.035);
+}
+
+.control-action:active {
+  transform: translateY(-1px);
+}
+
+/* ==========================================================
+   FEATURED ACTION
+   ========================================================== */
+
+.control-action-featured {
+  border-color:
+    rgba(59, 214, 139, 0.23);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 56, 51, 0.66),
+      rgba(8, 27, 38, 0.96)
+    );
+}
+
+.control-action-featured:hover {
+  border-color:
+    rgba(59, 214, 139, 0.54);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24, 68, 59, 0.78),
+      rgba(9, 32, 43, 0.98)
+    );
+
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.22),
+    0 0 28px rgba(59, 214, 139, 0.05);
+}
+
+/* ==========================================================
+   SECONDARY ACTIONS
+   ========================================================== */
+
+.control-action-secondary {
+  opacity: 0.84;
+}
+
+.control-action-secondary:hover {
+  opacity: 1;
+}
+
+/* ==========================================================
+   ICON
+   ========================================================== */
+
+.control-action-icon {
+  width: 46px;
+  height: 46px;
+
+  flex: 0 0 46px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid rgba(120, 174, 252, 0.14);
+
+  border-radius: 0.8rem;
+
+  background:
+    rgba(120, 174, 252, 0.075);
+
+  color: var(--accent);
+
+  font-size: 1rem;
+  font-weight: 900;
+
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.control-action:hover
+.control-action-icon {
+  transform: scale(1.04);
+
+  background:
+    rgba(120, 174, 252, 0.11);
+
+  border-color:
+    rgba(120, 174, 252, 0.25);
+}
+
+.control-action-featured
+.control-action-icon {
+  color: var(--good);
+
+  border-color:
+    rgba(59, 214, 139, 0.16);
+
+  background:
+    rgba(59, 214, 139, 0.075);
+}
+
+.control-action-featured:hover
+.control-action-icon {
+  border-color:
+    rgba(59, 214, 139, 0.3);
+
+  background:
+    rgba(59, 214, 139, 0.12);
+}
+
+/* ==========================================================
+   CONTENT
+   ========================================================== */
+
+.control-action-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.control-action-content strong {
+  display: block;
+
+  margin-bottom: 0.18rem;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--text);
+
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.control-action-content small {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================
+   ARROW
+   ========================================================== */
+
+.control-action-arrow {
+  flex-shrink: 0;
+
+  color: var(--muted);
+
+  font-size: 0.9rem;
+
+  transition:
+    transform 160ms ease,
+    color 160ms ease;
+}
+
+.control-action:hover
+.control-action-arrow {
+  color: var(--accent);
+
+  transform: translateX(3px);
+}
+
+.control-action-featured:hover
+.control-action-arrow {
+  color: var(--good);
+}
+
+/* ==========================================================
+   BUTTON NORMALIZATION
+   ========================================================== */
+
+button.control-action {
+  width: 100%;
+}
+
+.control-action:focus-visible {
+  outline:
+    2px solid var(--accent);
+
+  outline-offset: 3px;
+}
+
+/* Disabled / future feature */
+.control-action:disabled {
+  opacity: 0.42;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+.control-action:disabled:hover {
+  transform: none;
+
+  border-color:
+    rgba(120, 174, 252, 0.13);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(19, 34, 57, 0.88),
+      rgba(8, 20, 36, 0.94)
+    );
+}
+
+/* ==========================================================
+   REFRESH FEEDBACK
+   ========================================================== */
+
+#quick-refresh-button:disabled {
+  cursor: wait;
+}
+
+#quick-refresh-button:disabled
+.control-action-icon {
+  animation:
+    sentinel-spin 0.85s linear infinite;
+}
+
+@keyframes sentinel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 1250px) {
+  .control-center-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .control-center-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .control-center-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-action {
+    min-height: 84px;
+  }
+
+  .control-center-status {
+    font-size: 0.65rem;
+  }
+}
+
+/* ==========================================================
+   ACCESSIBILITY
+   ========================================================== */
+
+   /* ==========================================================
+   CONTROL CENTER ICONS
+   ========================================================== */
+
+.control-action-icon svg {
+  width: 21px;
+  height: 21px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* ==========================================================
+   LIVE ACTION STATUS
+   ========================================================== */
+
+.control-action-status {
+  display: inline-flex;
+  align-items: center;
+
+  margin-top: 0.5rem;
+
+  font-size: 0.58rem;
+  font-weight: 800;
+
+  letter-spacing: 0.075em;
+
+  color: var(--muted);
+}
+
+.control-action-status::before {
+  content: "";
+
+  width: 5px;
+  height: 5px;
+
+  margin-right: 0.35rem;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  opacity: 0.8;
+}
+
+
+/* ==========================================================
+   ACTION ACCENT COLORS
+   ========================================================== */
+
+/* Dashboard */
+
+.control-dashboard
+.control-action-icon {
+  color: #70a7ff;
+}
+
+.control-dashboard
+.control-action-status {
+  color: #70a7ff;
+}
+
+
+/* Executive */
+
+.control-executive {
+  border-color:
+    rgba(59, 214, 139, 0.23);
+}
+
+.control-executive
+.control-action-icon,
+
+.control-executive
+.control-action-status {
+  color: #3bd68b;
+}
+
+
+/* Markdown */
+
+.control-markdown
+.control-action-icon,
+
+.control-markdown
+.control-action-status {
+  color: #bd8cff;
+}
+
+
+/* Playwright */
+
+.control-playwright
+.control-action-icon,
+
+.control-playwright
+.control-action-status {
+  color: #ff9966;
+}
+
+
+/* Refresh */
+
+.control-refresh
+.control-action-icon,
+
+.control-refresh
+.control-action-status {
+  color: #45d7c2;
+}
+
+
+/* JSON */
+
+.control-json
+.control-action-icon,
+
+.control-json
+.control-action-status {
+  color: #9aaac1;
+}
+
+
+/* History */
+
+.control-history
+.control-action-icon,
+
+.control-history
+.control-action-status {
+  color: #f2be58;
+}
+
+
+/* Settings */
+
+.control-settings
+.control-action-icon,
+
+.control-settings
+.control-action-status {
+  color: #738196;
+}
+
+
+/* Slight glow on hover */
+
+.control-dashboard:hover {
+  border-color:
+    rgba(112, 167, 255, 0.48);
+}
+
+.control-markdown:hover {
+  border-color:
+    rgba(189, 140, 255, 0.48);
+}
+
+.control-playwright:hover {
+  border-color:
+    rgba(255, 153, 102, 0.48);
+}
+
+.control-refresh:hover {
+  border-color:
+    rgba(69, 215, 194, 0.48);
+}
+
+.control-history:hover {
+  border-color:
+    rgba(242, 190, 88, 0.48);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-action,
+  .control-action-icon,
+  .control-action-arrow {
+    transition: none;
+  }
+
+  .control-action:hover {
+    transform: none;
+  }
+
+  #quick-refresh-button:disabled
+  .control-action-icon {
+    animation: none;
+  }
+}

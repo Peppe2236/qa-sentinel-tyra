@@ -978,6 +978,63 @@ function bindFilters() {
     );
   }
 }
+function renderControlCenter(
+  run,
+  history = []
+) {
+  const health =
+    clamp(run?.health ?? 0);
+
+  const totalTests =
+    Number(run?.totalTests ?? 0);
+
+  const failed =
+    Number(run?.failed ?? 0);
+
+  const assessment =
+    run?.releaseAssessment ?? {};
+
+  setText(
+    'control-dashboard-status',
+    `${health}% HEALTH`
+  );
+
+  setText(
+    'control-executive-status',
+    String(
+      assessment.status ??
+      'READY'
+    )
+      .replaceAll('-', ' ')
+      .toUpperCase()
+  );
+
+  setText(
+    'control-markdown-status',
+    `${totalTests} TESTS`
+  );
+
+  setText(
+    'control-playwright-status',
+    failed === 0
+      ? 'ALL PASSED'
+      : `${failed} FAILURE${
+          failed === 1 ? '' : 'S'
+        }`
+  );
+
+  setText(
+    'control-json-status',
+    'DATA READY'
+  );
+
+  setText(
+    'control-history-status',
+    `${history.length} RUN${
+      history.length === 1 ? '' : 'S'
+    } STORED`
+  );
+}
 
 async function render() {
   const [run, history, issues] =
@@ -1003,6 +1060,10 @@ async function render() {
   renderMetadata(run);
   renderReleaseAssessment(run);
   renderMetrics(run);
+  renderControlCenter(
+  run,
+  history
+);
   renderExecutiveSummary(run);
   renderBrowsers(run.browserStatistics ?? {});
   renderBrowserMatrix(run.browserStatistics ?? {});
@@ -1114,6 +1175,16 @@ function startAutoRefresh() {
 
 if (refreshButton) {
   refreshButton.addEventListener(
+    'click',
+    refreshDashboard
+  );
+}
+
+const quickRefreshButton =
+  byId('quick-refresh-button');
+
+if (quickRefreshButton) {
+  quickRefreshButton.addEventListener(
     'click',
     refreshDashboard
   );
