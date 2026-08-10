@@ -1,31 +1,76 @@
-import { defineConfig, devices } from '@playwright/test';
+import {
+  defineConfig,
+  devices,
+} from '@playwright/test';
+
+import {
+  SENTINEL_SITES,
+} from './config/sites';
+
+
+const nation =
+  SENTINEL_SITES.find(
+    site => site.id === 'nation'
+  );
+
+const aiSkills =
+  SENTINEL_SITES.find(
+    site => site.id === 'ai-skills'
+  );
+
+
+if (!nation) {
+  throw new Error(
+    'Sentinel site configuration for Nation was not found.'
+  );
+}
+
+if (!aiSkills) {
+  throw new Error(
+    'Sentinel site configuration for AI Skills was not found.'
+  );
+}
+
 
 export default defineConfig({
-  // Alla testfiler ligger i mappen tests.
+
+  // =========================================================
+  // TEST DISCOVERY
+  // =========================================================
+
   testDir: './tests',
 
-  // Tillåter att tester körs parallellt.
   fullyParallel: true,
 
-  // Stoppar körningen om test.only råkar finnas i CI.
-  forbidOnly: Boolean(process.env.CI),
+  forbidOnly:
+    Boolean(process.env.CI),
 
-  // Fler försök i GitHub Actions, inga automatiska försök lokalt.
-  retries: process.env.CI ? 2 : 0,
+  retries:
+    process.env.CI
+      ? 2
+      : 0,
 
-  // Begränsa antalet parallella workers i CI.
-  workers: process.env.CI ? 1 : undefined,
+  workers:
+    process.env.CI
+      ? 1
+      : undefined,
 
-  // Maximal tid för varje test.
+
+  // =========================================================
+  // TIMEOUTS
+  // =========================================================
+
   timeout: 30_000,
 
-  // Tid för varje enskild expect-kontroll.
   expect: {
     timeout: 5_000,
   },
 
-  // Kör både terminalrapport, Playwrights HTML-rapport
-  // och vår egen QA-dashboard-reporter.
+
+  // =========================================================
+  // REPORTERS
+  // =========================================================
+
   reporter: [
     [
       'list',
@@ -34,89 +79,289 @@ export default defineConfig({
         printFailuresInline: true,
       },
     ],
+
     [
       'html',
       {
-        outputFolder: 'playwright-report',
+        outputFolder:
+          'playwright-report',
+
         open: 'never',
       },
     ],
+
     [
       'json',
       {
-        outputFile: 'test-results/playwright-results.json',
+        outputFile:
+          'test-results/playwright-results.json',
       },
     ],
-    ['./reporters/qa-dashboard-reporter.ts'],
+
+    [
+      './reporters/qa-dashboard-reporter.ts',
+    ],
   ],
+
+
+  // =========================================================
+  // GLOBAL PLAYWRIGHT SETTINGS
+  // =========================================================
 
   use: {
-    // Grundadress för Nation AI Skills.
-    baseURL: 'https://aiskills.nation.dev',
 
-    // Samlar trace första gången ett misslyckat test körs om.
-    trace: 'on-first-retry',
+    trace:
+      'on-first-retry',
 
-    // Sparar skärmbild endast när testet misslyckas.
-    screenshot: 'only-on-failure',
+    screenshot:
+      'only-on-failure',
 
-    // Spelar in video men behåller den endast vid fel.
-    video: 'retain-on-failure',
+    video:
+      'retain-on-failure',
 
-    // Maximal tid för navigering.
-    navigationTimeout: 30_000,
+    navigationTimeout:
+      30_000,
 
-    // Maximal tid för vanliga actions.
-    actionTimeout: 10_000,
+    actionTimeout:
+      10_000,
 
-    // Ignorera inte HTTPS-fel.
-    ignoreHTTPSErrors: false,
+    ignoreHTTPSErrors:
+      false,
   },
 
-  // Resultat, bilder, videor och traces sparas här.
-  outputDir: 'test-results',
+
+  // =========================================================
+  // OUTPUT
+  // =========================================================
+
+  outputDir:
+    'test-results',
+
+
+  // =========================================================
+  // SENTINEL MULTI-SITE PROJECTS
+  // =========================================================
 
   projects: [
+
+    // =======================================================
+    // NATION
+    // https://nation.dev/home
+    // =======================================================
+
     {
-      name: 'chromium',
+      name:
+        'nation-chromium',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices[
+          'Desktop Chrome'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
 
+
     {
-      name: 'firefox',
+      name:
+        'nation-firefox',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['Desktop Firefox'],
+        ...devices[
+          'Desktop Firefox'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
 
+
     {
-      name: 'webkit',
+      name:
+        'nation-webkit',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['Desktop Safari'],
+        ...devices[
+          'Desktop Safari'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
 
+
     {
-      name: 'mobile-chrome',
+      name:
+        'nation-mobile-chrome',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['Pixel 7'],
+        ...devices[
+          'Pixel 7'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
 
+
     {
-      name: 'mobile-safari',
+      name:
+        'nation-mobile-safari',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['iPhone 15'],
+        ...devices[
+          'iPhone 15'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
 
+
     {
-      name: 'tablet',
+      name:
+        'nation-tablet',
+
+      testMatch:
+        /nation\/.*\.spec\.ts/,
+
       use: {
-        ...devices['iPad Pro 11'],
+        ...devices[
+          'iPad Pro 11'
+        ],
+
+        baseURL:
+          nation.baseURL,
       },
     },
-  ],
+
+
+    // =======================================================
+    // AI SKILLS
+    // https://aiskills.nation.dev/
+    // =======================================================
+
+   {
+  name:
+    'ai-skills-chromium',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'Desktop Chrome'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+
+{
+  name:
+    'ai-skills-firefox',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'Desktop Firefox'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+
+{
+  name:
+    'ai-skills-webkit',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'Desktop Safari'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+
+{
+  name:
+    'ai-skills-mobile-chrome',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'Pixel 7'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+
+{
+  name:
+    'ai-skills-mobile-safari',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'iPhone 15'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+
+{
+  name:
+    'ai-skills-tablet',
+
+  testMatch:
+  'skills/**/*.spec.ts',
+
+  use: {
+    ...devices[
+      'iPad Pro 11'
+    ],
+
+    baseURL:
+      aiSkills.baseURL,
+  },
+},
+],
 });

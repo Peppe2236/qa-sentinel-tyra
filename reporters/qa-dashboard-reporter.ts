@@ -28,10 +28,15 @@ import {
 } from './analyzers/sentinel-performance';
 
 import {
+  buildSiteStatistics,
+} from './analyzers/sentinel-site-statistics';
+
+import {
   browserFamily,
   buildBrowserStatistics,
   buildCategoryStatistics,
 } from './analyzers/sentinel-statistics';
+
 
 import {
   analyzeHealth,
@@ -533,9 +538,14 @@ class QaDashboardReporter implements Reporter {
       column: test.location.column,
 
       project,
-      browserFamily:
-        browserFamily(project),
 
+site:
+  project.startsWith('ai-skills-')
+    ? 'ai-skills'
+    : 'nation',
+
+browserFamily:
+  browserFamily(project),
       status: result.status,
       expectedStatus:
         test.expectedStatus,
@@ -643,6 +653,11 @@ class QaDashboardReporter implements Reporter {
         this.results
       );
 
+      const siteStatistics =
+  buildSiteStatistics(
+    this.results
+  );
+
     const prioritizedIssues =
       sortIssues(this.results);
 
@@ -693,6 +708,7 @@ class QaDashboardReporter implements Reporter {
       performance,
       browserStatistics,
       categoryStatistics,
+      siteStatistics,
 
       classificationSummary,
       releaseAssessment,

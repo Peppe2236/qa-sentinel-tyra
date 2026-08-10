@@ -15,9 +15,10 @@
 
   <title>QA Sentinel Tyra Dashboard</title>
 
-  <link rel="stylesheet" href="./dashboard.css"/>
-  <link rel="stylesheet" href="./command-center.css"/>
+<link rel="stylesheet" href="./dashboard.css"/>
+<link rel="stylesheet" href="./command-center.css"/>
 <link rel="stylesheet" href="sentinel-ai.css" />
+<link rel="stylesheet" href="./site-health.css" />
 </head>
 
 <body>
@@ -60,6 +61,167 @@
         </span>
       </div>
     </div>
+
+    <!-- =========================================================
+     MULTI-SITE HEALTH
+     ========================================================= -->
+
+<section
+  id="site-health-panel"
+  class="card site-health-panel"
+>
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">
+        MULTI-SITE INTELLIGENCE
+      </p>
+
+      <h2>
+        Site Health
+      </h2>
+    </div>
+
+    <span class="site-health-status">
+      2 SITES MONITORED
+    </span>
+  </div>
+
+  <div class="site-health-grid">
+
+    <article
+      class="site-health-card"
+      data-site="nation"
+    >
+      <div class="site-health-card-header">
+        <div>
+          <span class="site-health-name">
+            Nation
+          </span>
+
+          <small>
+            nation.dev
+          </small>
+        </div>
+
+        <div
+          id="nation-site-health"
+          class="site-health-score"
+        >
+          --%
+        </div>
+      </div>
+
+      <div class="site-health-bar">
+        <div
+          id="nation-site-health-bar"
+          class="site-health-bar-fill"
+          style="width: 0%"
+        ></div>
+      </div>
+
+      <div class="site-health-metrics">
+        <div>
+          <span>Tests</span>
+          <strong id="nation-site-total">--</strong>
+        </div>
+
+        <div>
+          <span>Passed</span>
+          <strong id="nation-site-passed">--</strong>
+        </div>
+
+        <div>
+          <span>Failed</span>
+          <strong id="nation-site-failed">--</strong>
+        </div>
+
+        <div>
+          <span>Warnings</span>
+          <strong id="nation-site-warnings">--</strong>
+        </div>
+      </div>
+
+      <div class="site-health-footer">
+        <span>
+          Average duration
+        </span>
+
+        <strong id="nation-site-duration">
+          --
+        </strong>
+      </div>
+    </article>
+
+    <article
+      class="site-health-card"
+      data-site="ai-skills"
+    >
+      <div class="site-health-card-header">
+        <div>
+          <span class="site-health-name">
+            AI Skills
+          </span>
+
+          <small>
+            aiskills.nation.dev
+          </small>
+        </div>
+
+        <div
+          id="ai-skills-site-health"
+          class="site-health-score"
+        >
+          --%
+        </div>
+      </div>
+
+      <div class="site-health-bar">
+        <div
+          id="ai-skills-site-health-bar"
+          class="site-health-bar-fill"
+          style="width: 0%"
+        ></div>
+      </div>
+
+      <div class="site-health-metrics">
+        <div>
+          <span>Tests</span>
+          <strong id="ai-skills-site-total">--</strong>
+        </div>
+
+        <div>
+          <span>Passed</span>
+          <strong id="ai-skills-site-passed">--</strong>
+        </div>
+
+        <div>
+          <span>Failed</span>
+          <strong id="ai-skills-site-failed">--</strong>
+        </div>
+
+        <div>
+          <span>Warnings</span>
+          <strong id="ai-skills-site-warnings">--</strong>
+        </div>
+      </div>
+
+      <div class="site-health-footer">
+        <span>
+          Average duration
+        </span>
+
+        <strong id="ai-skills-site-duration">
+          --
+        </strong>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- =========================================================
+     END MULTI-SITE HEALTH
+     ========================================================= -->
 
     <div class="actions command-center">
   <span
@@ -1026,7 +1188,10 @@
           </p>
 
           <h2>
-            Issues requiring attention
+             Issues requiring attention
+        <span id="issues-site-label">
+            All Sites
+        </span>
           </h2>
         </div>
 

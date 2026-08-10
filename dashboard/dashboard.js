@@ -2,6 +2,7 @@ const byId = id => document.getElementById(id);
 
 let currentRun = null;
 let currentIssues = [];
+let activeSiteFilter = 'all';
 
 const CLASSIFICATION_LABELS = {
   'product-bug': 'Product bug',
@@ -240,32 +241,109 @@ function renderReleaseAssessment(run) {
 }
 
 function renderMetrics(run) {
-  const health = clamp(run.health);
-  const counts =
-    run.classificationSummary ??
-    classificationCounts(run.tests ?? []);
+  const isAllSites =
+    activeSiteFilter === 'all';
 
-  setText('health-value', `${health}%`);
-  setText('health-label', qualityLabel(health));
-  setText('passed-value', run.passed ?? 0);
-  setText('failed-value', run.failed ?? 0);
-  setText('critical-value', counts.productBugs ?? 0);
-  setText('content-value', counts.contentBugs ?? 0);
+  const siteStats =
+    !isAllSites
+      ? run.siteStatistics?.[
+          activeSiteFilter
+        ]
+      : null;
+
+  const siteTests =
+    isAllSites
+      ? run.tests ?? []
+      : (run.tests ?? []).filter(
+          test =>
+            test.site ===
+            activeSiteFilter
+        );
+
+  const health =
+    clamp(
+      siteStats?.health ??
+      run.health ??
+      0
+    );
+
+  const counts =
+    isAllSites
+      ? (
+          run.classificationSummary ??
+          classificationCounts(
+            run.tests ?? []
+          )
+        )
+      : classificationCounts(
+          siteTests
+        );
+
+  const passed =
+    siteStats?.passed ??
+    run.passed ??
+    0;
+
+  const failed =
+    siteStats?.failed ??
+    run.failed ??
+    0;
+
+  const averageDuration =
+    siteStats?.averageDuration ??
+    run.performance?.averageDuration ??
+    0;
+
+  setText(
+    'health-value',
+    `${health}%`
+  );
+
+  setText(
+    'health-label',
+    qualityLabel(health)
+  );
+
+  setText(
+    'passed-value',
+    passed
+  );
+
+  setText(
+    'failed-value',
+    failed
+  );
+
+  setText(
+    'critical-value',
+    counts.productBugs ?? 0
+  );
+
+  setText(
+    'content-value',
+    counts.contentBugs ?? 0
+  );
+
   setText(
     'automation-value',
     counts.automationIssues ?? 0
   );
+
   setText(
     'warnings-value',
     (counts.warnings ?? 0) +
-      (counts.needsInvestigation ?? 0)
-  );
-  setText(
-    'average-value',
-    formatMs(run.performance?.averageDuration)
+    (counts.needsInvestigation ?? 0)
   );
 
-  const ring = byId('health-ring');
+  setText(
+    'average-value',
+    formatMs(
+      averageDuration
+    )
+  );
+
+  const ring =
+    byId('health-ring');
 
   if (ring) {
     ring.style.setProperty(
@@ -274,11 +352,31 @@ function renderMetrics(run) {
     );
   }
 
-  const status = String(run.status ?? 'unknown');
-  const statusElement = byId('run-status');
+  let status;
+
+  if (isAllSites) {
+    status =
+      String(
+        run.status ??
+        'unknown'
+      );
+  } else if (
+    (siteStats?.failed ?? 0) > 0 ||
+    (siteStats?.timedOut ?? 0) > 0 ||
+    (siteStats?.interrupted ?? 0) > 0
+  ) {
+    status = 'failed';
+  } else {
+    status = 'passed';
+  }
+
+  const statusElement =
+    byId('run-status');
 
   if (statusElement) {
-    statusElement.textContent = status.toUpperCase();
+    statusElement.textContent =
+      status.toUpperCase();
+
     statusElement.style.color =
       status === 'passed'
         ? 'var(--good)'
@@ -660,14 +758,34 @@ function issueMatchesFilters(issue) {
 }
 
 function renderIssues() {
+  const visibleIssues =
+  activeSiteFilter === 'all'
+    ? currentIssues
+    : currentIssues.filter(
+        issue =>
+          issue.site === activeSiteFilter
+      );
+
   const container = byId('issues-list');
 
   if (!container) return;
 
-  const issues = currentIssues.filter(
+  const issues = visibleIssues.filter(
     issueMatchesFilters
   );
 
+  const siteLabel =
+  activeSiteFilter === 'nation'
+    ? 'Nation'
+    : activeSiteFilter === 'ai-skills'
+      ? 'AI Skills'
+      : 'All Sites';
+
+setText(
+  'issues-site-label',
+  siteLabel
+);
+ 
   setText(
     'issue-count',
     `${issues.length} issue${
@@ -1036,6 +1154,152 @@ function renderControlCenter(
   );
 }
 
+function renderSiteStatistics(siteStatistics) {
+  const sites = {
+    nation: {
+      prefix: 'nation-site',
+      cardSelector:
+        '.site-health-card[data-site="nation"]',
+    },
+
+    'ai-skills': {
+      prefix: 'ai-skills-site',
+      cardSelector:
+        '.site-health-card[data-site="ai-skills"]',
+    },
+  };
+
+  for (const [siteId, config] of Object.entries(sites)) {
+    const stats =
+      siteStatistics?.[siteId];
+
+    const card =
+      document.querySelector(
+        config.cardSelector
+      );
+
+    if (!stats) {
+      setText(
+        `${config.prefix}-health`,
+        '--%'
+      );
+
+      setText(
+        `${config.prefix}-total`,
+        '--'
+      );
+
+      setText(
+        `${config.prefix}-passed`,
+        '--'
+      );
+
+      setText(
+        `${config.prefix}-failed`,
+        '--'
+      );
+
+      setText(
+        `${config.prefix}-warnings`,
+        '--'
+      );
+
+      setText(
+        `${config.prefix}-duration`,
+        '--'
+      );
+
+      const bar =
+        byId(
+          `${config.prefix}-health-bar`
+        );
+
+      if (bar) {
+        bar.style.width = '0%';
+      }
+
+      card?.classList.remove(
+        'health-good',
+        'health-warning',
+        'health-critical'
+      );
+
+      continue;
+    }
+
+    const health =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          Number(stats.health) || 0
+        )
+      );
+
+    setText(
+      `${config.prefix}-health`,
+      `${health}%`
+    );
+
+    setText(
+      `${config.prefix}-total`,
+      stats.total ?? 0
+    );
+
+    setText(
+      `${config.prefix}-passed`,
+      stats.passed ?? 0
+    );
+
+    setText(
+      `${config.prefix}-failed`,
+      stats.failed ?? 0
+    );
+
+    setText(
+      `${config.prefix}-warnings`,
+      stats.warnings ?? 0
+    );
+
+    setText(
+      `${config.prefix}-duration`,
+      `${stats.averageDuration ?? 0} ms`
+    );
+
+    const bar =
+      byId(
+        `${config.prefix}-health-bar`
+      );
+
+    if (bar) {
+      bar.style.width =
+        `${health}%`;
+    }
+
+    if (card) {
+      card.classList.remove(
+        'health-good',
+        'health-warning',
+        'health-critical'
+      );
+
+      if (health >= 90) {
+        card.classList.add(
+          'health-good'
+        );
+      } else if (health >= 70) {
+        card.classList.add(
+          'health-warning'
+        );
+      } else {
+        card.classList.add(
+          'health-critical'
+        );
+      }
+    }
+  }
+}
+
 async function render() {
   const [run, history, issues] =
     await Promise.all([
@@ -1060,6 +1324,10 @@ async function render() {
   renderMetadata(run);
   renderReleaseAssessment(run);
   renderMetrics(run);
+
+  renderSiteStatistics(
+  run.siteStatistics ?? {}
+);
   renderControlCenter(
   run,
   history
@@ -1199,6 +1467,100 @@ document.addEventListener(
   }
 );
 
+function bindSiteFilters() {
+  document
+    .querySelectorAll('.site-health-card')
+    .forEach(card => {
+      card.addEventListener(
+        'click',
+        () => {
+          const site =
+            card.dataset.site;
+
+          if (!site) {
+            return;
+          }
+
+          if (activeSiteFilter === site) {
+            setActiveSiteFilter('all');
+          } else {
+            setActiveSiteFilter(site);
+          }
+        }
+      );
+    });
+}
+
+document
+  .querySelectorAll('.site-health-card')
+  .forEach(card => {
+    card.addEventListener(
+      'click',
+      () => {
+        const site =
+          card.dataset.site;
+
+        if (!site) {
+          return;
+        }
+
+        if (activeSiteFilter === site) {
+          setActiveSiteFilter('all');
+        } else {
+          setActiveSiteFilter(site);
+        }
+      }
+    );
+  });
+
+  function setActiveSiteFilter(site) {
+  activeSiteFilter = site;
+
+  document
+    .querySelectorAll('.site-health-card')
+    .forEach(card => {
+      const isActive =
+        site !== 'all' &&
+        card.dataset.site === site;
+
+      card.classList.toggle(
+        'site-active',
+        isActive
+      );
+    });
+
+ if (currentRun) {
+  renderMetrics(
+    currentRun
+  );
+}
+
+renderIssues();
+}
+
+document
+  .querySelectorAll('.site-health-card')
+  .forEach(card => {
+    card.addEventListener(
+      'click',
+      () => {
+        const site =
+          card.dataset.site;
+
+        if (!site) {
+          return;
+        }
+
+        if (activeSiteFilter === site) {
+          setActiveSiteFilter('all');
+        } else {
+          setActiveSiteFilter(site);
+        }
+      }
+    );
+  });
+
 bindFilters();
+bindSiteFilters();
 refreshDashboard();
 startAutoRefresh();

@@ -65,6 +65,7 @@ export interface DashboardTestResult {
   column: number;
 
   project: string;
+  site: string;
   browserFamily: string;
 
   status: string;
@@ -212,6 +213,20 @@ export interface DashboardRun {
 
   browserStatistics: BrowserStatistics;
   categoryStatistics: CategoryStatistics;
+  
+  siteStatistics?: Record<string, {
+  site: string;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  timedOut: number;
+  interrupted: number;
+  flaky: number;
+  warnings: number;
+  averageDuration: number;
+  health: number;
+}>;
 
   classificationSummary?: ClassificationSummary;
 releaseAssessment?: ReleaseAssessment;
