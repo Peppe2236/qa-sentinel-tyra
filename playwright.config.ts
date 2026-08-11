@@ -153,8 +153,10 @@ export default defineConfig({
       name:
         'nation-chromium',
 
-      testMatch:
-        /nation\/.*\.spec\.ts/,
+      testMatch: [
+  /nation\/.*\.spec\.ts/,
+  /discovery\/.*\.spec\.ts/,
+],
 
       use: {
         ...devices[
@@ -266,8 +268,10 @@ export default defineConfig({
   name:
     'ai-skills-chromium',
 
-  testMatch:
+  testMatch: [
   'skills/**/*.spec.ts',
+  'discovery/**/*.spec.ts',
+],
 
   use: {
     ...devices[

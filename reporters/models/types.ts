@@ -1,3 +1,7 @@
+import type {
+  DashboardDiscoveryIssue,
+} from '../utils/discovery-issues';
+
 export type IssueClassification =
   | 'product-bug'
   | 'content-bug'
@@ -233,6 +237,10 @@ releaseAssessment?: ReleaseAssessment;
 
 metadata?: RunMetadata;
 
-  prioritizedIssues: DashboardTestResult[];
-  tests: DashboardTestResult[];
+prioritizedIssues: DashboardTestResult[];
+
+discoveryIssues:
+  DashboardDiscoveryIssue[];
+
+tests: DashboardTestResult[];
 }

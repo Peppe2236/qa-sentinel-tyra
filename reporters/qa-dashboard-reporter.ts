@@ -11,6 +11,10 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 
 import {
+  loadDiscoveryIssues,
+} from './utils/discovery-issues';
+
+import {
   detectCategory,
   VITAL_RANK,
 } from './analyzers/sentinel-category';
@@ -658,8 +662,30 @@ browserFamily:
     this.results
   );
 
+const discoveryDirectory =
+  path.resolve(
+    process.cwd(),
+    'reports',
+    'discovery'
+  );
+
+const nationDiscoveryFile =
+  path.join(
+    discoveryDirectory,
+    'nation.json'
+  );
+
+const aiSkillsDiscoveryFile =
+  path.join(
+    discoveryDirectory,
+    'ai-skills.json'
+  );
+
     const prioritizedIssues =
       sortIssues(this.results);
+
+      const discoveryIssues =
+  loadDiscoveryIssues();
 
     const classificationSummary =
       buildClassificationSummary(
@@ -715,6 +741,8 @@ browserFamily:
       metadata,
 
       prioritizedIssues,
+      discoveryIssues,
+      
       tests:
         this.results,
     };
