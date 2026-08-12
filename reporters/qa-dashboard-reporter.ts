@@ -681,11 +681,24 @@ const aiSkillsDiscoveryFile =
     'ai-skills.json'
   );
 
+        const discoveryIssues =
+  loadDiscoveryIssues();
+
     const prioritizedIssues =
       sortIssues(this.results);
 
-      const discoveryIssues =
-  loadDiscoveryIssues();
+      const unifiedIssues = [
+  ...prioritizedIssues.map(
+    issue => ({
+      source:
+        'test' as const,
+
+      ...issue,
+    })
+  ),
+
+  ...discoveryIssues,
+];
 
     const classificationSummary =
       buildClassificationSummary(
@@ -778,6 +791,12 @@ const outputRun: SentinelOutput = {
         'issues.json'
       );
 
+      const unifiedIssuesFile =
+  path.join(
+    dataDirectory,
+    'unified-issues.json'
+  );
+
     writeJson(
       latestRunFile,
       outputRun
@@ -787,6 +806,16 @@ const outputRun: SentinelOutput = {
       issuesFile,
       prioritizedIssues
     );
+
+    writeJson(
+  unifiedIssuesFile,
+  unifiedIssues
+);
+
+    writeJson(
+  unifiedIssuesFile,
+  unifiedIssues
+);
 
     const history =
       readJson<SentinelOutput[]>(
@@ -918,6 +947,9 @@ const htmlReportFile =
     );
     console.log(
       `Issues file: ${issuesFile}`
+    );
+    console.log(
+      `Unified issues file: ${unifiedIssuesFile}`
     );
     console.log(
       `History file: ${historyFile}`

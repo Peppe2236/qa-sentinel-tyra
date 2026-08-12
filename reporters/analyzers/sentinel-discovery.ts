@@ -379,41 +379,151 @@ function categoryWeight(
   }
 }
 
+function criticalRouteWeight(
+  routes: string[]
+): number {
+  const criticalRoutes = [
+    '/signin',
+    '/signup',
+    '/profile',
+    '/assessment',
+    '/path',
+    '/skills',
+    '/practice',
+  ];
+
+  const importantRoutes = [
+    '/',
+    '/home',
+    '/jobs',
+    '/benchmarks',
+    '/forgot-password',
+  ];
+
+  let weight = 0;
+
+  for (const route of routes) {
+    if (
+      criticalRoutes.some(
+        critical =>
+          route === critical ||
+          route.startsWith(
+            `${critical}/`
+          )
+      )
+    ) {
+      weight += 3;
+      continue;
+    }
+
+    if (
+      importantRoutes.includes(
+        route
+      )
+    ) {
+      weight += 1;
+    }
+  }
+
+  return Math.min(
+    15,
+    weight
+  );
+}
 
 function calculatePriorityScore(
   severity: DiscoverySeverity,
-  category: DiscoveryCategory
+  category: DiscoveryCategory,
+  affectedRoutes: string[] = []
 ): number {
-  return (
+  const baseScore =
     severityWeight(severity) +
-    categoryWeight(category)
+    categoryWeight(category);
+
+  const routeCount =
+    Math.max(
+      1,
+      affectedRoutes.length
+    );
+
+  const scopeBonus =
+    Math.min(
+      15,
+      Math.max(
+        0,
+        routeCount - 1
+      )
+    );
+
+  const criticalityBonus =
+    criticalRouteWeight(
+      affectedRoutes
+    );
+
+  return (
+    baseScore +
+    scopeBonus +
+    criticalityBonus
   );
 }
+
 function priorityFromScore(
-  score: number
+  score: number,
+  severity: DiscoverySeverity
 ):
   | 'P0'
   | 'P1'
   | 'P2'
   | 'P3'
   | 'P4' {
+  let priority:
+    | 'P0'
+    | 'P1'
+    | 'P2'
+    | 'P3'
+    | 'P4';
+
   if (score >= 120) {
-    return 'P0';
+    priority = 'P0';
+  } else if (score >= 95) {
+    priority = 'P1';
+  } else if (score >= 70) {
+    priority = 'P2';
+  } else if (score >= 45) {
+    priority = 'P3';
+  } else {
+    priority = 'P4';
   }
 
-  if (score >= 95) {
-    return 'P1';
-  }
+  /*
+   * Guardrails:
+   *
+   * Scope and route criticality may increase the score,
+   * but they must not turn a low-severity observation
+   * into a release-level issue by themselves.
+   */
 
-  if (score >= 70) {
-    return 'P2';
-  }
-
-  if (score >= 45) {
+  if (
+    severity === 'low' &&
+    ['P0', 'P1', 'P2'].includes(priority)
+  ) {
     return 'P3';
   }
 
-  return 'P4';
+  if (
+    severity === 'info'
+  ) {
+    return 'P4';
+  }
+
+  if (
+    severity === 'medium' &&
+    ['P0', 'P1'].includes(priority)
+  ) {
+    return 'P2';
+  }
+
+  return priority;
 }
 
 /* =========================================================
@@ -457,7 +567,8 @@ function createFinding(
 const priorityScore =
   calculatePriorityScore(
     data.severity,
-    data.category
+    data.category,
+    [data.route]
   );
 
 const fingerprint =
@@ -509,7 +620,8 @@ const fingerprint =
 
 priority:
   priorityFromScore(
-    priorityScore
+    priorityScore,
+    data.severity
   ),
 
 occurrences: 1,
@@ -1280,20 +1392,18 @@ for (
       finding.route,
     ]);
 
-  /*
-   * Keep the highest priority score if several
-   * observations resolve to the same root finding.
-   */
-  if (
-    finding.priorityScore >
-    existing.priorityScore
-  ) {
-    existing.priorityScore =
-      finding.priorityScore;
+existing.priorityScore =
+  calculatePriorityScore(
+    existing.severity,
+    existing.category,
+    existing.affectedRoutes
+  );
 
-    existing.priority =
-      finding.priority;
-  }
+existing.priority =
+  priorityFromScore(
+    existing.priorityScore,
+    existing.severity
+  );
 }
 
 site.findings =
