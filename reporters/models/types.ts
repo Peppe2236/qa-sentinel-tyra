@@ -71,6 +71,7 @@ export interface DashboardTestResult {
   project: string;
   site: string;
   browserFamily: string;
+  profile: string;
 
   status: string;
   expectedStatus: string;
@@ -217,6 +218,7 @@ export interface DashboardRun {
 
   browserStatistics: BrowserStatistics;
   categoryStatistics: CategoryStatistics;
+  profileStatistics: BrowserStatistics;
   
   siteStatistics?: Record<string, {
   site: string;

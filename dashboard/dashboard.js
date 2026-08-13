@@ -1301,12 +1301,12 @@ function renderSiteStatistics(siteStatistics) {
 }
 
 async function render() {
-  const [run, history, issues] =
-    await Promise.all([
-      loadJson('./data/latest-run.json', null),
-      loadJson('./data/history.json', []),
-      loadJson('./data/issues.json', []),
-    ]);
+  cconst [run, history, unifiedIssues] =
+  await Promise.all([
+    loadJson('./data/latest-run.json', null),
+    loadJson('./data/history.json', []),
+    loadJson('./data/unified-issues.json', []),
+  ]);
 
   if (!run) {
     setText(
@@ -1318,8 +1318,8 @@ async function render() {
 
   currentRun = run;
   currentIssues = issues.length
-    ? issues
-    : run.prioritizedIssues ?? [];
+  ? issues
+  : run.prioritizedIssues ?? [];
 
   renderMetadata(run);
   renderReleaseAssessment(run);

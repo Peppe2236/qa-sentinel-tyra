@@ -63,8 +63,18 @@ The goal is simple:
 | Severity analysis | ✅ |
 | Category statistics | ✅ |
 | Browser health | ✅ |
+| Browser-family normalization | ✅ |
+| Device/profile intelligence | ✅ |
+| Browser Matrix | ✅ |
+| Profile Matrix | ✅ |
 | Performance statistics | ✅ |
 | Prioritized test issue queue | ✅ |
+| Cross-browser test issue deduplication | ✅ |
+| Affected-project tracking | ✅ |
+| Affected-browser tracking | ✅ |
+| Affected-profile tracking | ✅ |
+| Affected-site tracking | ✅ |
+| Actionable issue consolidation | ✅ |
 | Historical run data | ✅ |
 | Executive HTML report | ✅ |
 | Markdown report | ✅ |
@@ -86,6 +96,12 @@ The goal is simple:
 | Critical-route weighting | ✅ |
 | Severity priority guardrails | ✅ |
 | Unified issue queue foundation | ✅ |
+| Unified issue data export | ✅ |
+| Consolidated release issue counting | ✅ |
+| Blocking vs non-blocking issue assessment | ✅ |
+| Diagnostic intelligence foundation | ✅ |
+| Markdown actionable-issue reporting | ✅ |
+| HTML actionable-issue reporting | ✅ |
 | AI-assisted root-cause intelligence | 🚧 In progress |
 | Unified dashboard intelligence | 🚧 In progress |
 | Discovery-aware release readiness | 🚧 Planned |
@@ -401,6 +417,55 @@ The next development phase will connect this unified model to:
 
 ---
 
+## Cross-browser and profile intelligence
+
+QA Sentinel Tyra now separates the browser engine from the execution profile.
+
+Browser families are normalized into:
+
+```text
+Chromium
+Firefox
+WebKit
+```
+
+Execution profiles are tracked independently:
+
+```text
+Desktop
+Mobile Chrome
+Mobile Safari
+Tablet
+```
+
+This prevents device profiles such as Tablet from being treated as browser families and makes cross-environment reporting more accurate.
+
+The reporting model now provides both a **Browser Matrix** and a **Profile Matrix**.
+
+### Cross-browser actionable issue deduplication
+
+A single underlying defect can fail across several Playwright projects, browsers and profiles. QA Sentinel Tyra consolidates those repeated failures into actionable issues instead of presenting every failed execution as a separate defect.
+
+Consolidated test issues can retain:
+
+```text
+fingerprint
+occurrences
+affectedProjects
+affectedBrowsers
+affectedProfiles
+affectedSites
+sourceTestIds
+rootCause
+confidence
+recommendation
+userImpact
+```
+
+This preserves the full impact scope while keeping one root cause as one actionable issue. Release assessment can therefore reason about consolidated issues instead of artificially inflating issue counts because the same defect reproduced in multiple environments.
+
+---
+
 ## Reports
 
 Every completed run can produce multiple views of the same quality data.
@@ -505,7 +570,7 @@ qa-sentinel-tyra/
 
 QA Sentinel Tyra evaluates more than the raw number of failing tests.
 
-The reporter can combine test outcomes with classified findings to produce a release assessment containing:
+The reporter combines test outcomes with classified and consolidated actionable findings to produce a release assessment containing:
 
 - status
 - risk
@@ -525,7 +590,9 @@ Blocking issues: 0
 Verdict: The build is generally stable, but unresolved issues should be reviewed before release.
 ```
 
-The next phase of development will extend this model so Deep Discovery findings can participate safely in release-readiness decisions through the unified issue architecture.
+Cross-browser duplicates are consolidated before release issue counts are calculated, preventing the same root cause from being counted repeatedly simply because it reproduces in multiple environments.
+
+The next release-readiness phase will extend this model so Deep Discovery findings participate more deeply in release decisions through the unified issue architecture.
 
 ---
 
@@ -588,8 +655,7 @@ This creates a foundation for future regression detection and performance budget
 - issue classification
 - severity analysis
 - performance intelligence
-- HTML reports
-- Markdown reports
+- HTML and Markdown reports
 - historical run data
 - prioritized test issue queue
 - Git repository
@@ -597,60 +663,73 @@ This creates a foundation for future regression detection and performance budget
 ### Milestone 2 — Discovery Intelligence ✅
 
 - multi-site Deep Discovery
-- Nation discovery support
-- AI Skills discovery support
+- Nation and AI Skills discovery support
 - automatic route crawling
-- runtime signal collection
-- network failure analysis
-- security and CSP signal analysis
-- intelligent discovery noise filtering
-- root-cause fingerprinting
-- duplicate consolidation
-- occurrence tracking
-- affected-route tracking
+- runtime, network and security/CSP signal analysis
+- discovery noise filtering
+- root-cause fingerprinting and duplicate consolidation
+- occurrence and affected-route tracking
 - P0–P4 discovery prioritization
 - scope-aware priority scoring
 - critical-route weighting
 - severity priority guardrails
 
-### Milestone 3 — Unified Quality Intelligence 🚧
+### Milestone 3 — Actionable Quality Intelligence ✅
 
-- unified issue queue foundation ✅
-- combine Playwright and Discovery findings
-- connect unified issues to the live dashboard
+- cross-browser test issue fingerprinting
+- test issue deduplication and consolidation
+- occurrence tracking across repeated failures
+- affected-project, browser, profile and site tracking
+- normalized browser-family intelligence
+- Desktop / Mobile / Tablet profile intelligence
+- Browser Matrix
+- Profile Matrix
+- consolidated actionable issue reporting
+- blocking vs non-blocking issue assessment
+- release counts based on actionable issues instead of raw duplicate failures
+- Markdown and HTML actionable-issue intelligence
+- unified issue queue foundation and data export
+- diagnostic intelligence foundation
+
+### Milestone 4 — Unified Quality Command Center 🚧
+
+- connect the unified issue model fully to the live dashboard
 - source-aware issue presentation
+- filtering by source, P0–P4 priority, category, browser and profile
 - discovery-aware release readiness
 - critical-flow intelligence
-- richer root-cause analysis
-- dashboard filtering by source
-- dashboard filtering by priority
-- dashboard filtering by category
+- richer automated root-cause diagnosis
 - unified executive reporting
+- clearer actionable vs informational presentation
+- richer trend and regression views
 
-### Milestone 4 — Presentation
+### Milestone 5 — CI/CD & Release Automation
 
-- professional GitHub presentation
-- architecture documentation
-- screenshots
-- richer product documentation
-- usage examples
-- setup documentation improvements
+- GitHub Actions integration
+- automated quality gates
+- configurable release policies and thresholds
+- pull-request quality summaries
+- baseline and regression comparison
+- historical release trend intelligence
+- performance regression detection
+- CI report artifacts
 
-### Milestone 5 — Product
+### Milestone 6 — Product & Distribution
 
-- simplified setup
-- reusable configuration
+- simplified setup and reusable configuration
 - package / CLI preparation
 - report plugins
-- PDF export
-- GitHub Actions integration
-- richer trend analytics
-- regression intelligence
-- configurable quality policies
+- PDF executive reports
+- configuration templates
+- multi-project dashboard improvements
+- richer documentation, examples and onboarding
 
-### Milestone 6 — TYRA Labs
+### Milestone 7 — TYRA Labs
 
 - shared visual identity
+- professional GitHub presentation
+- architecture diagrams
+- screenshots and product demonstrations
 - portfolio site
 - documentation hub
 - additional developer tools

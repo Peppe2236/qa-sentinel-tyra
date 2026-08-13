@@ -21,7 +21,10 @@ export function buildBrowserStatistics(
   const output: Record<string, BrowserStats> = {};
 
   for (const test of tests) {
-    output[test.project] ??= {
+    const browser =
+      test.browserFamily || 'Unknown';
+
+    output[browser] ??= {
       total: 0,
       passed: 0,
       failed: 0,
@@ -32,29 +35,142 @@ export function buildBrowserStatistics(
       health: 0,
     };
 
-    const stats = output[test.project];
+    const stats = output[browser];
+
     stats.total += 1;
 
-    if (test.status === 'passed') stats.passed += 1;
-    if (test.status === 'failed') stats.failed += 1;
-    if (test.status === 'skipped') stats.skipped += 1;
-    if (test.status === 'timedOut') stats.timedOut += 1;
-    if (test.status === 'interrupted') stats.interrupted += 1;
+    if (test.status === 'passed') {
+      stats.passed += 1;
+    }
+
+    if (test.status === 'failed') {
+      stats.failed += 1;
+    }
+
+    if (test.status === 'skipped') {
+      stats.skipped += 1;
+    }
+
+    if (test.status === 'timedOut') {
+      stats.timedOut += 1;
+    }
+
+    if (test.status === 'interrupted') {
+      stats.interrupted += 1;
+    }
   }
 
-  for (const [project, stats] of Object.entries(output)) {
-    const projectTests = tests.filter(test => test.project === project);
-    const duration = projectTests.reduce(
-      (sum, test) => sum + test.duration,
-      0
-    );
+  for (
+    const [browser, stats]
+    of Object.entries(output)
+  ) {
+    const browserTests =
+      tests.filter(
+        test =>
+          test.browserFamily === browser
+      );
+
+    const duration =
+      browserTests.reduce(
+        (sum, test) =>
+          sum + test.duration,
+        0
+      );
 
     stats.averageDuration =
-      stats.total > 0 ? Math.round(duration / stats.total) : 0;
+      stats.total > 0
+        ? Math.round(
+            duration / stats.total
+          )
+        : 0;
 
     stats.health =
       stats.total > 0
-        ? Math.round((stats.passed / stats.total) * 100)
+        ? Math.round(
+            (stats.passed / stats.total) *
+              100
+          )
+        : 0;
+  }
+
+  return output;
+}
+
+export function buildProfileStatistics(
+  tests: DashboardTestResult[]
+): Record<string, BrowserStats> {
+  const output: Record<string, BrowserStats> = {};
+
+  for (const test of tests) {
+    const profile =
+      test.profile || 'Unknown';
+
+    output[profile] ??= {
+      total: 0,
+      passed: 0,
+      failed: 0,
+      skipped: 0,
+      timedOut: 0,
+      interrupted: 0,
+      averageDuration: 0,
+      health: 0,
+    };
+
+    const stats = output[profile];
+
+    stats.total += 1;
+
+    if (test.status === 'passed') {
+      stats.passed += 1;
+    }
+
+    if (test.status === 'failed') {
+      stats.failed += 1;
+    }
+
+    if (test.status === 'skipped') {
+      stats.skipped += 1;
+    }
+
+    if (test.status === 'timedOut') {
+      stats.timedOut += 1;
+    }
+
+    if (test.status === 'interrupted') {
+      stats.interrupted += 1;
+    }
+  }
+
+  for (
+    const [profile, stats]
+    of Object.entries(output)
+  ) {
+    const profileTests =
+      tests.filter(
+        test =>
+          test.profile === profile
+      );
+
+    const duration =
+      profileTests.reduce(
+        (sum, test) =>
+          sum + test.duration,
+        0
+      );
+
+    stats.averageDuration =
+      stats.total > 0
+        ? Math.round(
+            duration / stats.total
+          )
+        : 0;
+
+    stats.health =
+      stats.total > 0
+        ? Math.round(
+            (stats.passed / stats.total) *
+              100
+          )
         : 0;
   }
 

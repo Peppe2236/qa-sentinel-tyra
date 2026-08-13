@@ -7,6 +7,14 @@ import type {
   IssueClassification,
 } from '../models/types';
 
+import {
+  consolidateTestIssues,
+} from './test-issue-dedup';
+
+import type {
+  ActionableTestIssue,
+} from './test-issue-dedup';
+
 const CLASSIFICATION_LABELS: Record<
   IssueClassification,
   string
@@ -66,6 +74,141 @@ function releaseStatusLabel(
     default:
       return 'UNKNOWN';
   }
+}
+
+function buildActionableIssueSection(
+  issue: ActionableTestIssue,
+  index: number
+): string {
+  const classification =
+    issue.classification ??
+    'needs-investigation';
+
+  const projects =
+    issue.affectedProjects.length
+      ? issue.affectedProjects.join(', ')
+      : '—';
+
+  const browsers =
+    issue.affectedBrowsers.length
+      ? issue.affectedBrowsers.join(', ')
+      : '—';
+
+      const profiles =
+  issue.affectedProfiles.length
+    ? issue.affectedProfiles.join(', ')
+    : '—';
+
+  const lines: string[] = [
+    `## ${index + 1}. ${escapeMarkdown(issue.title)}`,
+    '',
+    '| Field | Value |',
+    '|---|---|',
+    `| Classification | ${CLASSIFICATION_LABELS[classification]} |`,
+    `| Severity | ${String(issue.severity).toUpperCase()} |`,
+    `| Category | ${escapeMarkdown(issue.category)} |`,
+    `| Occurrences | ${issue.occurrences} |`,
+    `| Affected environments | ${issue.affectedProjects.length} |`,
+    `| Browsers | ${escapeMarkdown(browsers)} |`,
+    `| Profiles | ${escapeMarkdown(profiles)} |`,
+    `| File | \`${escapeMarkdown(issue.file)}:${issue.line}\` |`,
+  ];
+
+  if (
+    issue.confidence !==
+    undefined
+  ) {
+    lines.push(
+      `| Confidence | ${issue.confidence}% |`
+    );
+  }
+
+  lines.push('');
+
+  if (issue.rootSymptom) {
+    lines.push(
+      '### Root symptom',
+      '',
+      escapeMarkdown(
+        issue.rootSymptom
+      ),
+      ''
+    );
+  }
+
+  if (
+    issue.classificationReason
+  ) {
+    lines.push(
+      '### Finding',
+      '',
+      escapeMarkdown(
+        issue.classificationReason
+      ),
+      ''
+    );
+  }
+
+  if (issue.userImpact) {
+    lines.push(
+      '### User impact',
+      '',
+      escapeMarkdown(
+        issue.userImpact
+      ),
+      ''
+    );
+  }
+
+  if (issue.rootCause) {
+    lines.push(
+      '### Likely root cause',
+      '',
+      escapeMarkdown(
+        issue.rootCause
+      ),
+      ''
+    );
+  }
+
+  if (issue.recommendation) {
+    lines.push(
+      '### Recommended action',
+      '',
+      escapeMarkdown(
+        issue.recommendation
+      ),
+      ''
+    );
+  }
+
+  lines.push(
+    '### Affected environments',
+    '',
+    escapeMarkdown(projects),
+    ''
+  );
+
+  if (issue.errorMessage) {
+    lines.push(
+      '<details>',
+      '<summary>Technical evidence</summary>',
+      '',
+      '```text',
+      issue.errorMessage,
+      '```',
+      '',
+      '</details>',
+      ''
+    );
+  }
+
+  lines.push(
+    '---',
+    ''
+  );
+
+  return lines.join('\n');
 }
 
 function buildIssueSection(
@@ -231,6 +374,31 @@ function buildBrowserTable(
   ].join('\n');
 }
 
+function buildProfileTable(
+  run: DashboardRun
+): string {
+  const entries = Object.entries(
+    run.profileStatistics ?? {}
+  );
+
+  if (entries.length === 0) {
+    return 'No profile statistics available.';
+  }
+
+  const lines = [
+    '| Profile | Passed | Failed | Skipped | Health |',
+    '|---|---:|---:|---:|---:|',
+  ];
+
+  for (const [profile, stats] of entries) {
+    lines.push(
+      `| ${escapeMarkdown(profile)} | ${stats.passed} | ${stats.failed} | ${stats.skipped} | ${stats.health}% |`
+    );
+  }
+
+  return lines.join('\n');
+}
+
 function buildCategoryTable(
   run: DashboardRun
 ): string {
@@ -264,9 +432,13 @@ export function buildMarkdownReport(
   const assessment = run.releaseAssessment;
   const summary = run.classificationSummary;
 
-  const issues = run.prioritizedIssues.filter(
+ const issues =
+  consolidateTestIssues(
+    run.tests
+  ).filter(
     issue =>
-      issue.classification !== 'none'
+      issue.classification !==
+      'none'
   );
 
   const metadata = run.metadata ?? {};
@@ -379,11 +551,15 @@ export function buildMarkdownReport(
     '',
     buildBrowserTable(run),
     '',
-    '## Quality by Category',
+   '## Profile Matrix',
     '',
-    buildCategoryTable(run),
+   buildProfileTable(run),
+   '',
+   '## Quality by Category',
+   '',
+   buildCategoryTable(run),
     '',
-    `## Priority Issues (${issues.length})`,
+    `## Actionable Issues (${issues.length})`,
     ''
   );
 
@@ -394,8 +570,13 @@ export function buildMarkdownReport(
     );
   } else {
     issues.forEach((issue, index) => {
-      lines.push(buildIssueSection(issue, index));
-    });
+  lines.push(
+    buildActionableIssueSection(
+      issue,
+      index
+    )
+  );
+});
   }
 
   lines.push(

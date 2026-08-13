@@ -39,6 +39,7 @@ import {
   browserFamily,
   buildBrowserStatistics,
   buildCategoryStatistics,
+  buildProfileStatistics,
 } from './analyzers/sentinel-statistics';
 
 
@@ -67,6 +68,13 @@ import {
   writeJson,
 } from './utils/json-store';
 
+import {
+  consolidateTestIssues,
+} from './utils/test-issue-dedup';
+
+import type {
+  ActionableTestIssue,
+} from './utils/test-issue-dedup';
 
 import {
   writeMarkdownReport,
@@ -84,6 +92,80 @@ import type {
   RiskLevel,
   RunMetadata,
 } from './models/types';
+
+function resolveBrowserFamily(
+  projectName: string,
+  configuredBrowserName?: string
+): string {
+  const browser =
+    configuredBrowserName?.toLowerCase();
+
+  if (browser === 'chromium') {
+    return 'Chromium';
+  }
+
+  if (browser === 'firefox') {
+    return 'Firefox';
+  }
+
+  if (browser === 'webkit') {
+    return 'WebKit';
+  }
+
+  const normalized =
+    projectName.toLowerCase();
+
+  if (normalized.includes('firefox')) {
+    return 'Firefox';
+  }
+
+  if (
+    normalized.includes('webkit') ||
+    normalized.includes('safari')
+  ) {
+    return 'WebKit';
+  }
+
+  if (
+    normalized.includes('chromium') ||
+    normalized.includes('chrome')
+  ) {
+    return 'Chromium';
+  }
+
+  if (normalized.includes('tablet')) {
+    return 'Chromium';
+  }
+
+  return 'Unknown';
+}
+
+function resolveProfile(
+  projectName: string
+): string {
+  const normalized =
+    projectName.toLowerCase();
+
+  if (
+    normalized.includes('mobile-chrome')
+  ) {
+    return 'Mobile Chrome';
+  }
+
+  if (
+    normalized.includes('mobile-safari')
+  ) {
+    return 'Mobile Safari';
+  }
+
+  if (
+    normalized.includes('tablet')
+  ) {
+    return 'Tablet';
+  }
+
+  return 'Desktop';
+}
 
 
 function countClassification(
@@ -340,31 +422,30 @@ function releaseRisk(
 function buildReleaseAssessment(
   health: number,
   summary: ClassificationSummary,
-  tests: DashboardTestResult[]
+  tests: DashboardTestResult[],
+  actionableIssues: ActionableTestIssue[]
 ): ReleaseAssessment {
   const risk =
     releaseRisk(summary, tests);
 
   const blockingIssues =
-    summary.securityIssues +
-    tests.filter(
-      test =>
-        test.classification === 'product-bug' &&
-        ['critical', 'high'].includes(test.severity)
-    ).length;
+  actionableIssues.filter(
+    issue =>
+      (
+        issue.classification === 'product-bug' &&
+        ['critical', 'high'].includes(issue.severity)
+      ) ||
+      issue.classification === 'security-issue'
+  ).length;
 
-  const totalIssues =
-    summary.productBugs +
-    summary.contentBugs +
-    summary.automationIssues +
-    summary.accessibilityIssues +
-    summary.performanceIssues +
-    summary.securityIssues +
-    summary.needsInvestigation +
-    summary.warnings;
+const totalIssues =
+  actionableIssues.length;
 
-  const nonBlockingIssues =
-    Math.max(0, totalIssues - blockingIssues);
+const nonBlockingIssues =
+  Math.max(
+    0,
+    totalIssues - blockingIssues
+  );
 
   if (
     blockingIssues > 0 ||
@@ -549,7 +630,17 @@ site:
     : 'nation',
 
 browserFamily:
-  browserFamily(project),
+  resolveBrowserFamily(
+    project,
+    this.config?.projects.find(
+      configuredProject =>
+        configuredProject.name === project
+    )?.use?.browserName
+  ),
+
+profile:
+  resolveProfile(project),
+
       status: result.status,
       expectedStatus:
         test.expectedStatus,
@@ -652,6 +743,11 @@ browserFamily:
         this.results
       );
 
+      const profileStatistics =
+  buildProfileStatistics(
+    this.results
+  );
+
     const categoryStatistics =
       buildCategoryStatistics(
         this.results
@@ -681,22 +777,33 @@ const aiSkillsDiscoveryFile =
     'ai-skills.json'
   );
 
-        const discoveryIssues =
-  loadDiscoveryIssues();
+     const hasDiscoveryRun =
+  this.results.some(
+    test =>
+      test.file.includes(
+        'discovery'
+      ) ||
+      test.title
+        .toLowerCase()
+        .includes(
+          'discover configured site'
+        )
+  );
 
-    const prioritizedIssues =
-      sortIssues(this.results);
+const discoveryIssues =
+  hasDiscoveryRun
+    ? loadDiscoveryIssues()
+    : [];
 
-      const unifiedIssues = [
-  ...prioritizedIssues.map(
-    issue => ({
-      source:
-        'test' as const,
+const prioritizedIssues =
+  sortIssues(this.results);
+const actionableTestIssues =
+  consolidateTestIssues(
+    this.results
+  );
 
-      ...issue,
-    })
-  ),
-
+const unifiedIssues = [
+  ...actionableTestIssues,
   ...discoveryIssues,
 ];
 
@@ -706,11 +813,12 @@ const aiSkillsDiscoveryFile =
       );
 
     const releaseAssessment =
-      buildReleaseAssessment(
-        health.health,
-        classificationSummary,
-        this.results
-      );
+  buildReleaseAssessment(
+    health.health,
+    classificationSummary,
+    this.results,
+    actionableTestIssues
+  );
 
     const metadata =
       buildMetadata();
@@ -748,6 +856,7 @@ const aiSkillsDiscoveryFile =
       browserStatistics,
       categoryStatistics,
       siteStatistics,
+      profileStatistics,
 
       classificationSummary,
       releaseAssessment,

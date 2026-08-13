@@ -13,6 +13,10 @@
  * Sentinel can analyze, prioritize and display.
  */
 
+import {
+  buildDiagnosis,
+} from './sentinel-diagnostics';
+
 export type DiscoverySeverity =
   | 'critical'
   | 'high'
@@ -108,6 +112,25 @@ export interface SentinelDiscoveryFinding {
   userImpact: string;
 
   recommendation: string;
+
+  diagnosisStatus:
+  | 'confirmed'
+  | 'likely'
+  | 'needs-investigation';
+
+rootCause: string;
+
+diagnosisConfidence: number;
+
+releaseImpact:
+  | 'blocking'
+  | 'warning'
+  | 'non-blocking'
+  | 'informational';
+
+verificationSteps: string[];
+
+expectedResolution: string;
 
   priorityScore: number;
   priority:
@@ -580,6 +603,21 @@ const fingerprint =
     ].join('|')
   );
 
+  const diagnosis =
+  buildDiagnosis({
+    category:
+      data.category,
+
+    severity:
+      data.severity,
+
+    title:
+      data.title,
+
+    evidence:
+      data.evidence,
+  });
+
   return {
     id:
       findingId(
@@ -615,6 +653,24 @@ const fingerprint =
 
     recommendation:
       data.recommendation,
+
+      diagnosisStatus:
+  diagnosis.diagnosisStatus,
+
+rootCause:
+  diagnosis.rootCause,
+
+diagnosisConfidence:
+  diagnosis.diagnosisConfidence,
+
+releaseImpact:
+  diagnosis.releaseImpact,
+
+verificationSteps:
+  diagnosis.verificationSteps,
+
+expectedResolution:
+  diagnosis.expectedResolution,
 
    priorityScore,
 

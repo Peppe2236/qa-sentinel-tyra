@@ -153,11 +153,11 @@ export default defineConfig({
       name:
         'nation-chromium',
 
-      testMatch: [
+ testMatch: [
   /nation\/.*\.spec\.ts/,
   /discovery\/.*\.spec\.ts/,
+  /diagnostics\/.*\.spec\.ts/,
 ],
-
       use: {
         ...devices[
           'Desktop Chrome'

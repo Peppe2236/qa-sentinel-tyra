@@ -15,6 +15,16 @@ function escapeHtml(value?: unknown): string {
     .replaceAll("'", '&#039;');
 }
 
+function stripAnsi(
+  value: string
+): string {
+  return value.replace(
+    // eslint-disable-next-line no-control-regex
+    /\u001B\[[0-?]*[ -/]*[@-~]/g,
+    ''
+  );
+}
+
 function formatDuration(milliseconds?: number): string {
   const value = Number(milliseconds);
 
@@ -106,7 +116,7 @@ function issueHtml(
       <details>
         <summary>Technical error</summary>
 
-        <pre>${escapeHtml(issue.error.message)}</pre>
+       <pre>${escapeHtml(stripAnsi(issue.error.message))}</pre>
       </details>
     `
     : '';

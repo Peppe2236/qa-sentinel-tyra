@@ -3,6 +3,10 @@ import type {
   Severity,
 } from '../models/types';
 
+import {
+  consolidateTestIssues,
+} from '../utils/test-issue-dedup';
+
 export interface HealthSummary {
   health: number;
 
@@ -13,12 +17,17 @@ export interface HealthSummary {
   interrupted: number;
   flaky: number;
 
-  criticalBugs: number;
+   criticalBugs: number;
   highBugs: number;
   mediumBugs: number;
   lowBugs: number;
 
   warnings: number;
+
+  actionableIssues: number;
+
+  blockingIssues: number;
+  nonBlockingIssues: number;
 }
 
 function testHealthScore(test: DashboardTestResult): number {
@@ -131,6 +140,28 @@ export function analyzeHealth(
     );
   }).length;
 
+  const actionableTestIssues =
+  consolidateTestIssues(
+    tests
+  );
+
+const blockingIssues =
+  actionableTestIssues.filter(
+    issue =>
+      issue.classification ===
+        'product-bug' &&
+      (
+        issue.severity ===
+          'critical' ||
+        issue.severity ===
+          'high'
+      )
+  ).length;
+
+const nonBlockingIssues =
+  actionableTestIssues.length -
+  blockingIssues;
+
   const health =
     tests.length === 0
       ? 0
@@ -143,20 +174,27 @@ export function analyzeHealth(
         );
 
   return {
-    health: Math.max(0, Math.min(100, health)),
+  health: Math.max(0, Math.min(100, health)),
 
-    passed,
-    failed,
-    skipped,
-    timedOut,
-    interrupted,
-    flaky,
+  passed,
+  failed,
+  skipped,
+  timedOut,
+  interrupted,
+  flaky,
 
-    criticalBugs,
-    highBugs,
-    mediumBugs,
-    lowBugs,
+  criticalBugs,
+  highBugs,
+  mediumBugs,
+  lowBugs,
 
-    warnings,
-  };
+  warnings,
+
+  actionableIssues:
+    actionableTestIssues.length,
+
+  blockingIssues,
+
+  nonBlockingIssues,
+};
 }
