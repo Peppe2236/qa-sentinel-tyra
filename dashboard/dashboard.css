@@ -1021,9 +1021,8 @@ main {
   display: grid;
 
   grid-template-columns:
-    minmax(220px, 1fr)
-    minmax(180px, auto)
-    minmax(150px, auto);
+    minmax(240px, 2fr)
+    repeat(4, minmax(140px, 1fr));
 
   gap: 0.7rem;
 
@@ -1032,6 +1031,7 @@ main {
 
 .search-field {
   display: block;
+  grid-column: span 2;
 }
 
 .issue-toolbar input,
@@ -1649,4 +1649,62 @@ footer {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2.5rem;
+  padding: 0.28rem 0.5rem;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  background: var(--surface-input);
+  color: var(--text);
+
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+
+.classification-discovery-finding {
+  color: var(--muted-strong);
+
+  border: 1px solid var(--border-strong);
+
+  background: var(--accent-soft);
+}
+
+
+.issue-context {
+  margin: 0.9rem 0 0;
+  padding: 0.8rem;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  background: var(--surface-input);
+}
+
+.issue-context strong {
+  display: block;
+
+  margin-bottom: 0.25rem;
+
+  color: var(--muted-strong);
+
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.issue-context p {
+  margin: 0;
+
+  color: var(--text-soft);
+  line-height: 1.6;
 }

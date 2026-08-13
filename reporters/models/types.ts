@@ -23,6 +23,1141 @@ export type Severity =
 
 export type Category = string;
 
+export type QualityDimension =
+  | 'requirements-functionality'
+  | 'critical-flows'
+  | 'ux-ui'
+  | 'security-performance'
+  | 'compatibility'
+  | 'api-backend';
+
+export type IntelligenceSource =
+  | 'test'
+  | 'discovery'
+  | 'api'
+  | 'backend';
+
+export type IntelligencePriority =
+  | 'P0'
+  | 'P1'
+  | 'P2'
+  | 'P3'
+  | 'P4';
+
+export type RequirementStatus =
+  | 'pass'
+  | 'fail'
+  | 'partially-verified'
+  | 'not-tested';
+
+
+export interface RequirementAcceptanceCriterion {
+  id: string;
+  title: string;
+
+  critical?: boolean;
+}
+
+
+export interface RequirementDefinition {
+  id: string;
+  title: string;
+
+  description?: string;
+
+  site?: string;
+
+  acceptanceCriteria?:
+    RequirementAcceptanceCriterion[];
+
+  qualityDimensions?:
+    QualityDimension[];
+
+  critical?: boolean;
+}
+
+
+export type RequirementEvidenceStatus =
+  | 'passed'
+  | 'failed'
+  | 'unknown';
+
+
+export interface RequirementEvidence {
+  source:
+    IntelligenceSource;
+
+  evidenceId: string;
+
+  requirementId: string;
+
+  acceptanceCriteriaIds?:
+    string[];
+
+  status:
+    RequirementEvidenceStatus;
+
+  title?: string;
+
+  issueFingerprint?: string;
+}
+
+
+export interface RequirementCriterionCoverage {
+  criterionId: string;
+  title: string;
+
+  critical: boolean;
+
+  status:
+    RequirementStatus;
+
+  evidenceCount: number;
+
+  passedEvidenceCount: number;
+  failedEvidenceCount: number;
+}
+
+
+export interface RequirementCoverage {
+  requirementId: string;
+  title: string;
+
+  critical: boolean;
+
+  status:
+    RequirementStatus;
+
+  reason: string;
+
+  evidenceCount: number;
+
+  passedEvidenceCount: number;
+  failedEvidenceCount: number;
+
+  coveredBySources:
+    IntelligenceSource[];
+
+  issueFingerprints:
+    string[];
+
+  criteria:
+    RequirementCriterionCoverage[];
+}
+
+
+
+export type CriticalFlowStatus =
+  | 'pass'
+  | 'fail'
+  | 'degraded'
+  | 'not-tested';
+
+
+export type CriticalFlowScenarioType =
+  | 'happy-path'
+  | 'edge-case'
+  | 'error-handling'
+  | 'recovery';
+
+
+export interface CriticalFlowScenario {
+  id: string;
+
+  title: string;
+
+  type:
+    CriticalFlowScenarioType;
+
+  critical?: boolean;
+
+  requirementIds?:
+    string[];
+}
+
+
+export interface CriticalFlowDefinition {
+  id: string;
+
+  title: string;
+
+  description?: string;
+
+  site?: string;
+
+  critical?: boolean;
+
+  requirementIds?:
+    string[];
+
+  scenarios:
+    CriticalFlowScenario[];
+}
+
+
+export interface CriticalFlowEvidence {
+  source:
+    IntelligenceSource;
+
+  evidenceId: string;
+
+  flowId: string;
+
+  scenarioIds?:
+    string[];
+
+  status:
+    RequirementEvidenceStatus;
+
+  title?: string;
+
+  issueFingerprint?: string;
+}
+
+
+export interface CriticalFlowScenarioCoverage {
+  scenarioId: string;
+
+  title: string;
+
+  type:
+    CriticalFlowScenarioType;
+
+  critical: boolean;
+
+  status:
+    CriticalFlowStatus;
+
+  evidenceCount: number;
+
+  passedEvidenceCount: number;
+
+  failedEvidenceCount: number;
+}
+
+
+export interface CriticalFlowCoverage {
+  flowId: string;
+
+  title: string;
+
+  critical: boolean;
+
+  status:
+    CriticalFlowStatus;
+
+  reason: string;
+
+  evidenceCount: number;
+
+  passedEvidenceCount: number;
+
+  failedEvidenceCount: number;
+
+  coveredBySources:
+    IntelligenceSource[];
+
+  issueFingerprints:
+    string[];
+
+  scenarios:
+    CriticalFlowScenarioCoverage[];
+}
+
+
+export type UxUiStatus =
+  | 'healthy'
+  | 'degraded'
+  | 'poor'
+  | 'not-verified';
+
+
+export type UxUiArea =
+  | 'usability'
+  | 'navigation'
+  | 'interaction'
+  | 'forms-validation'
+  | 'accessibility'
+  | 'visual-stability'
+  | 'responsive-usability'
+  | 'content-clarity';
+
+
+export interface UxUiAreaAssessment {
+  area:
+    UxUiArea;
+
+  status:
+    UxUiStatus;
+
+  score?: number;
+
+  evidenceCount: number;
+
+  issueCount: number;
+
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+
+  affectedBrowsers:
+    string[];
+
+  affectedProfiles:
+    string[];
+
+  evidenceSources: IntelligenceSource[];
+}
+
+
+export interface UxUiAssessment {
+  status:
+    UxUiStatus;
+
+  score?: number;
+
+  evidenceCount: number;
+
+  issueCount: number;
+
+  verifiedAreas:
+    UxUiArea[];
+
+  unverifiedAreas:
+    UxUiArea[];
+
+  areas:
+    UxUiAreaAssessment[];
+
+  sourceCoverage: IntelligenceSource[];
+  affectedBrowsers: string[];
+  affectedProfiles: string[];
+}
+
+
+export type UnifiedDecisionUnitKind =
+  | 'cross-layer-incident'
+  | 'standalone-issue';
+
+
+export type UnifiedDecisionDisposition =
+  | 'block'
+  | 'warn';
+
+
+export type UnifiedDecisionState =
+  | 'ready'
+  | 'ready-with-warnings'
+  | 'not-ready'
+  | 'not-verified';
+
+
+export type UnifiedScoreBasis =
+  | 'decision-units'
+  | 'blocking-gate'
+  | 'verification-gaps'
+  | 'verified-clean'
+  | 'not-verified';
+
+
+export type UnifiedDecisionEvidenceState =
+  | 'confirmed'
+  | 'uncertain'
+  | 'automation';
+
+
+export interface UnifiedDecisionUnit {
+  id:
+    string;
+
+  kind:
+    UnifiedDecisionUnitKind;
+
+  disposition:
+    UnifiedDecisionDisposition;
+
+  sources:
+    IntelligenceSource[];
+
+  issueFingerprints:
+    string[];
+
+  priority:
+    IntelligencePriority;
+
+  priorityScore:
+    number;
+
+  severity:
+    Severity;
+
+  blocking:
+    boolean;
+
+  evidenceState:
+    UnifiedDecisionEvidenceState;
+
+  riskEligible:
+    boolean;
+
+  confidence:
+    number | null;
+
+  rootCauseLayer?:
+    CrossLayerRootCauseLayer;
+
+  rootCause?:
+    string;
+
+  userImpact?:
+    string;
+
+  recommendation?:
+    string;
+
+  qualityDimensions:
+    QualityDimension[];
+
+  requirementIds:
+    string[];
+
+  criticalFlowIds:
+    string[];
+
+  flowScenarioIds:
+    string[];
+}
+
+
+export interface UnifiedDecisionGateSummary {
+  complete:
+    boolean;
+
+  blockingRequirements:
+    number;
+
+  requirementGaps:
+    number;
+
+  blockingFlows:
+    number;
+
+  flowGaps:
+    number;
+
+  blockingUxAreas:
+    number;
+
+  uxUiGaps:
+    number;
+
+  blockingSecurityAreas:
+    number;
+
+  blockingPerformanceAreas:
+    number;
+
+  securityGaps:
+    number;
+
+  performanceGaps:
+    number;
+
+  blockingCompatibilityRegressions:
+    number;
+
+  compatibilityGaps:
+    number;
+
+  blockingApiIssues:
+    number;
+
+  blockingBackendIssues:
+    number;
+
+  apiIntelligenceGaps:
+    number;
+
+  backendIntelligenceGaps:
+    number;
+}
+
+
+export interface UnifiedDecisionAssessment {
+  state:
+    UnifiedDecisionState;
+
+  scoreBasis:
+    UnifiedScoreBasis;
+
+  rawIssueCount:
+    number;
+
+  decisionUnitCount:
+    number;
+
+  incidentUnits:
+    number;
+
+  standaloneUnits:
+    number;
+
+  blockingUnits:
+    number;
+
+  warningUnits:
+    number;
+
+  correlatedEvidenceCount:
+    number;
+
+  correlationSavings:
+    number;
+
+  unresolvedStandaloneFingerprints:
+    string[];
+
+  riskScore:
+    number | null;
+
+  qualityScore:
+    number | null;
+
+  confidence:
+    number | null;
+
+  highestPriority:
+    IntelligencePriority | null;
+
+  highestSeverity:
+    Severity | null;
+
+  gateSummary:
+    UnifiedDecisionGateSummary;
+
+  blockingGateDimensions:
+    string[];
+
+  verificationGapDimensions:
+    string[];
+
+  decisionUnits:
+    UnifiedDecisionUnit[];
+}
+
+
+export type CrossLayerCorrelationState =
+  | 'correlated'
+  | 'partial'
+  | 'standalone-only'
+  | 'no-evidence';
+
+
+export type CrossLayerRootCauseLayer =
+  | 'frontend'
+  | 'api'
+  | 'backend'
+  | 'dependency'
+  | 'cross-layer'
+  | 'unknown';
+
+
+export type CrossLayerConfidenceBand =
+  | 'high'
+  | 'medium'
+  | 'low';
+
+
+export type CrossLayerCorrelationReason =
+  | 'origin-fingerprint'
+  | 'endpoint'
+  | 'service'
+  | 'requirement'
+  | 'critical-flow'
+  | 'route'
+  | 'site'
+  | 'status-code'
+  | 'root-cause-similarity';
+
+
+export interface CrossLayerEvidenceNode {
+  issueFingerprint:
+    string;
+
+  originFingerprint?:
+    string;
+
+  source:
+    IntelligenceSource;
+
+  title:
+    string;
+
+  site:
+    string;
+
+  endpoint?:
+    string;
+
+  service?:
+    string;
+
+  statusCode?:
+    number;
+
+  rootCause?:
+    string;
+
+  confidence?:
+    number;
+
+  priority?:
+    IntelligencePriority;
+
+  severity?:
+    Severity;
+
+  requirementIds:
+    string[];
+
+  criticalFlowIds:
+    string[];
+
+  flowScenarioIds:
+    string[];
+}
+
+
+export interface CrossLayerIncident {
+  id:
+    string;
+
+  title:
+    string;
+
+  sources:
+    IntelligenceSource[];
+
+  issueFingerprints:
+    string[];
+
+  originFingerprints:
+    string[];
+
+  evidenceChain:
+    CrossLayerEvidenceNode[];
+
+  correlationScore:
+    number;
+
+  confidence:
+    number;
+
+  confidenceBand:
+    CrossLayerConfidenceBand;
+
+  reasons:
+    CrossLayerCorrelationReason[];
+
+  rootCauseLayer:
+    CrossLayerRootCauseLayer;
+
+  rootCause?:
+    string;
+
+  userImpact?:
+    string;
+
+  recommendation?:
+    string;
+
+  priority:
+    IntelligencePriority;
+
+  severity:
+    Severity;
+
+  blocking:
+    boolean;
+
+  requirementIds:
+    string[];
+
+  criticalFlowIds:
+    string[];
+
+  flowScenarioIds:
+    string[];
+
+  endpoints:
+    string[];
+
+  services:
+    string[];
+
+  routes:
+    string[];
+
+  sites:
+    string[];
+
+  statusCodes:
+    number[];
+}
+
+
+export interface CrossLayerAssessment {
+  state:
+    CrossLayerCorrelationState;
+
+  issueCount:
+    number;
+
+  correlatedIssueCount:
+    number;
+
+  standaloneIssueCount:
+    number;
+
+  incidentCount:
+    number;
+
+  blockingIncidents:
+    number;
+
+  sourceCoverage:
+    IntelligenceSource[];
+
+  incidents:
+    CrossLayerIncident[];
+
+  standaloneIssueFingerprints:
+    string[];
+}
+
+
+export type ApiBackendStatus =
+  | 'healthy'
+  | 'degraded'
+  | 'poor'
+  | 'critical'
+  | 'not-verified';
+
+
+export interface ApiIntelligenceAssessment {
+  status: ApiBackendStatus;
+
+  issueCount: number;
+  blockingIssues: number;
+
+  endpointCount: number;
+  unresolvedEndpointCount: number;
+
+  serverErrors: number;
+  authFailures: number;
+  notFoundResponses: number;
+  timeouts: number;
+
+  affectedEndpoints: string[];
+
+  sourceCoverage:
+    IntelligenceSource[];
+
+  originSources:
+    IntelligenceSource[];
+}
+
+
+export interface BackendIntelligenceAssessment {
+  status: ApiBackendStatus;
+
+  issueCount: number;
+  blockingIssues: number;
+
+  serviceCount: number;
+  unresolvedServiceCount: number;
+
+  serverErrors: number;
+  timeouts: number;
+
+  dependencyFailures: number;
+  infrastructureFailures: number;
+
+  affectedServices: string[];
+
+  sourceCoverage:
+    IntelligenceSource[];
+
+  originSources:
+    IntelligenceSource[];
+}
+
+
+export interface ApiBackendAssessment {
+  status: ApiBackendStatus;
+
+  api:
+    ApiIntelligenceAssessment;
+
+  backend:
+    BackendIntelligenceAssessment;
+
+  promotedApiIssues: number;
+  promotedBackendIssues: number;
+
+  sourceCoverage:
+    IntelligenceSource[];
+
+  originSources:
+    IntelligenceSource[];
+}
+
+
+export type CompatibilityStatus =
+  | 'healthy'
+  | 'degraded'
+  | 'poor'
+  | 'critical'
+  | 'not-verified';
+
+
+export type CompatibilityEnvironmentKind =
+  | 'browser'
+  | 'profile'
+  | 'project';
+
+
+export type CompatibilityCorrelationPattern =
+  | 'consistent-pass'
+  | 'universal-failure'
+  | 'browser-specific'
+  | 'profile-specific'
+  | 'mobile-specific'
+  | 'isolated-environment'
+  | 'mixed-regression'
+  | 'uncertain'
+  | 'not-comparable';
+
+
+export interface CompatibilityExpectedCoverage {
+  browsers?: string[];
+  profiles?: string[];
+  projects?: string[];
+}
+
+
+export interface CompatibilityEnvironmentAssessment {
+  kind:
+    CompatibilityEnvironmentKind;
+
+  environment:
+    string;
+
+  status:
+    CompatibilityStatus;
+
+  evidenceCount:
+    number;
+
+  totalTests:
+    number;
+
+  passed:
+    number;
+
+  compatibilityFailures:
+    number;
+
+  uncertainFailures:
+    number;
+
+  issueCount:
+    number;
+
+  evidenceSources:
+    IntelligenceSource[];
+}
+
+
+export interface CompatibilityCorrelation {
+  key:
+    string;
+
+  title:
+    string;
+
+  file:
+    string;
+
+  site:
+    string;
+
+  status:
+    CompatibilityStatus;
+
+  pattern:
+    CompatibilityCorrelationPattern;
+
+  totalEnvironments:
+    number;
+
+  passingEnvironments:
+    string[];
+
+  failingEnvironments:
+    string[];
+
+  uncertainEnvironments:
+    string[];
+
+  browsers:
+    string[];
+
+  profiles:
+    string[];
+}
+
+
+export interface CompatibilityAssessment {
+  status:
+    CompatibilityStatus;
+
+  evidenceCount:
+    number;
+
+  comparableTests:
+    number;
+
+  regressions:
+    number;
+
+  browserAssessments:
+    CompatibilityEnvironmentAssessment[];
+
+  profileAssessments:
+    CompatibilityEnvironmentAssessment[];
+
+  projectAssessments:
+    CompatibilityEnvironmentAssessment[];
+
+  correlations:
+    CompatibilityCorrelation[];
+
+  sourceCoverage:
+    IntelligenceSource[];
+
+  missingBrowsers:
+    string[];
+
+  missingProfiles:
+    string[];
+
+  missingProjects:
+    string[];
+}
+
+
+export type SecurityPerformanceStatus =
+  | 'healthy'
+  | 'degraded'
+  | 'poor'
+  | 'critical'
+  | 'not-verified';
+
+
+export type SecurityArea =
+  | 'authentication'
+  | 'authorization'
+  | 'content-security-policy'
+  | 'security-headers'
+  | 'session-cookies'
+  | 'data-exposure'
+  | 'transport'
+  | 'dependency-security';
+
+
+export type PerformanceArea =
+  | 'test-duration'
+  | 'page-load'
+  | 'api-latency'
+  | 'backend-latency'
+  | 'timeout-resilience'
+  | 'regression';
+
+
+export interface SecurityAreaAssessment {
+  area:
+    SecurityArea;
+
+  status:
+    SecurityPerformanceStatus;
+
+  evidenceCount:
+    number;
+
+  issueCount:
+    number;
+
+  critical:
+    number;
+
+  high:
+    number;
+
+  medium:
+    number;
+
+  low:
+    number;
+
+  evidenceSources:
+    IntelligenceSource[];
+}
+
+
+export interface SecurityAssessment {
+  status:
+    SecurityPerformanceStatus;
+
+  evidenceCount:
+    number;
+
+  issueCount:
+    number;
+
+  verifiedAreas:
+    SecurityArea[];
+
+  unverifiedAreas:
+    SecurityArea[];
+
+  areas:
+    SecurityAreaAssessment[];
+
+  sourceCoverage:
+    IntelligenceSource[];
+}
+
+
+export interface PerformanceObservedMetrics {
+  totalDuration?:
+    number;
+
+  wallClockDuration?:
+    number;
+
+  averageDuration?:
+    number;
+
+  medianDuration?:
+    number;
+
+  p95Duration?:
+    number;
+}
+
+
+export interface PerformanceAreaAssessment {
+  area:
+    PerformanceArea;
+
+  status:
+    SecurityPerformanceStatus;
+
+  evidenceCount:
+    number;
+
+  issueCount:
+    number;
+
+  observedValueMs?:
+    number;
+
+  thresholdMs?:
+    number;
+
+  thresholdConfigured:
+    boolean;
+
+  evidenceSources:
+    IntelligenceSource[];
+}
+
+
+export interface PerformanceAssessment {
+  status:
+    SecurityPerformanceStatus;
+
+  evidenceCount:
+    number;
+
+  issueCount:
+    number;
+
+  thresholdsConfigured:
+    boolean;
+
+  observed:
+    PerformanceObservedMetrics;
+
+  verifiedAreas:
+    PerformanceArea[];
+
+  unverifiedAreas:
+    PerformanceArea[];
+
+  areas:
+    PerformanceAreaAssessment[];
+
+  sourceCoverage:
+    IntelligenceSource[];
+}
+
+
+export interface SecurityPerformanceAssessment {
+  status:
+    SecurityPerformanceStatus;
+
+  security:
+    SecurityAssessment;
+
+  performance:
+    PerformanceAssessment;
+
+  sourceCoverage:
+    IntelligenceSource[];
+}
+
+
+export interface QualityDimensionStats {
+  dimension:
+    QualityDimension;
+
+  issueCount: number;
+
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  info: number;
+
+  sourceCounts:
+    Partial<
+      Record<
+        IntelligenceSource,
+        number
+      >
+    >;
+}
+
+export type QualityDimensionStatistics =
+  Record<
+    QualityDimension,
+    QualityDimensionStats
+  >;
+
+
 export type AttachmentKind =
   | 'screenshot'
   | 'video'
@@ -33,7 +1168,13 @@ export type AttachmentKind =
 export type ReleaseReadiness =
   | 'ready'
   | 'ready-with-warnings'
-  | 'not-ready';
+  | 'not-ready'
+  | 'not-verified';
+
+export type ReleaseDecisionSource =
+  | 'legacy-v4'
+  | 'unified-v5';
+
 
 export type RiskLevel =
   | 'low'
@@ -83,6 +1224,23 @@ export interface DashboardTestResult {
   category: Category;
   vitalRank: number;
 
+  qualityDimensions?:
+    QualityDimension[];
+
+  requirementIds?:
+    string[];
+
+  acceptanceCriteriaIds?:
+    string[];
+
+  criticalFlow?:
+    string;
+
+  criticalFlowIds?:
+    string[];
+
+  flowScenarioIds?:
+    string[];
   tags: string[];
   annotations: DashboardAnnotation[];
 
@@ -100,6 +1258,131 @@ export interface DashboardTestResult {
   estimatedFixMinutes?: number;
   userImpact?: string;
 }
+
+export interface ApiIntelligenceIssue {
+  source: 'api';
+
+  fingerprint: string;
+
+  title: string;
+  site: string;
+
+  category: Category;
+  severity: Severity;
+
+  classification?:
+    IssueClassification;
+
+  qualityDimensions:
+    QualityDimension[];
+
+  priority:
+    IntelligencePriority;
+
+  priorityScore?: number;
+
+  endpoint: string;
+  method?: string;
+
+  expectedStatus?:
+    number | string;
+
+  statusCode?: number;
+
+  latencyMs?: number;
+
+  occurrences: number;
+
+  affectedEndpoints?:
+    string[];
+
+  requirementIds?:
+    string[];
+
+  acceptanceCriteriaIds?:
+    string[];
+
+  evidence?: string;
+
+  rootCause?: string;
+  userImpact?: string;
+  recommendation?: string;
+
+  confidence?: number;
+
+  criticalFlowIds?:
+    string[];
+
+  flowScenarioIds?:
+    string[];
+
+  originSource?: IntelligenceSource;
+  originFingerprint?: string;
+  endpointResolved?: boolean;
+}
+
+export interface BackendIntelligenceIssue {
+  source: 'backend';
+
+  fingerprint: string;
+
+  title: string;
+  site: string;
+
+  category: Category;
+  severity: Severity;
+
+  classification?:
+    IssueClassification;
+
+  qualityDimensions:
+    QualityDimension[];
+
+  priority:
+    IntelligencePriority;
+
+  priorityScore?: number;
+
+  service?: string;
+  operation?: string;
+  dependency?: string;
+
+  occurrences: number;
+
+  affectedServices?:
+    string[];
+
+  affectedEndpoints?:
+    string[];
+
+  requirementIds?:
+    string[];
+
+  acceptanceCriteriaIds?:
+    string[];
+
+  evidence?: string;
+
+  rootCause?: string;
+  userImpact?: string;
+  recommendation?: string;
+
+  confidence?: number;
+
+  criticalFlowIds?:
+    string[];
+
+  flowScenarioIds?:
+    string[];
+
+  originSource?: IntelligenceSource;
+  originFingerprint?: string;
+  statusCode?: number;
+  latencyMs?: number;
+  serviceResolved?: boolean;
+  infrastructureSignal?: boolean;
+}
+
 
 export interface PerformanceTestSummary {
   id?: string;
@@ -174,8 +1457,37 @@ export interface ReleaseAssessment {
   blockingIssues: number;
   nonBlockingIssues: number;
 
+  blockingRequirements?:
+    number;
+
+  requirementGaps?:
+    number;
+
+  blockingFlows?:
+    number;
+
+  flowGaps?:
+    number;
+
+
   verdict: string;
   recommendedAction: string;
+
+  blockingUxAreas?: number;
+  uxUiGaps?: number;
+
+  blockingSecurityAreas?: number;
+  blockingPerformanceAreas?: number;
+  securityGaps?: number;
+  performanceGaps?: number;
+
+  blockingCompatibilityRegressions?: number;
+  compatibilityGaps?: number;
+
+  blockingApiIssues?: number;
+  blockingBackendIssues?: number;
+  apiIntelligenceGaps?: number;
+  backendIntelligenceGaps?: number;
 }
 
 export interface RunMetadata {
@@ -237,12 +1549,64 @@ export interface DashboardRun {
   classificationSummary?: ClassificationSummary;
 releaseAssessment?: ReleaseAssessment;
 
+legacyReleaseAssessment?:
+  ReleaseAssessment;
+
+releaseDecisionSource?:
+  ReleaseDecisionSource;
+
+
 metadata?: RunMetadata;
 
+qualityDimensionStatistics?:
+  QualityDimensionStatistics;
+
+  uxUiAssessment?:
+    UxUiAssessment;
+
+
+  requirements?:
+    RequirementDefinition[];
+
+requirementCoverage?:
+  RequirementCoverage[];
+
+  criticalFlows?:
+    CriticalFlowDefinition[];
+
+  criticalFlowCoverage?:
+    CriticalFlowCoverage[];
+
+
+apiIssues?:
+  ApiIntelligenceIssue[];
+
+backendIssues?:
+  BackendIntelligenceIssue[];
 prioritizedIssues: DashboardTestResult[];
 
 discoveryIssues:
   DashboardDiscoveryIssue[];
 
 tests: DashboardTestResult[];
+
+  securityPerformanceAssessment?:
+    SecurityPerformanceAssessment;
+
+
+  compatibilityAssessment?:
+    CompatibilityAssessment;
+
+
+  apiBackendAssessment?:
+    ApiBackendAssessment;
+
+
+  crossLayerAssessment?:
+    CrossLayerAssessment;
+
+
+  unifiedDecisionAssessment?:
+    UnifiedDecisionAssessment;
+
 }

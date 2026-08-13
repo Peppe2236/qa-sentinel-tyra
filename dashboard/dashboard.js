@@ -384,6 +384,3945 @@ function renderMetrics(run) {
   }
 }
 
+
+function renderUxUi(run) {
+  const panel =
+    byId('ux-ui-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const assessment =
+    run?.uxUiAssessment;
+
+  const release =
+    run?.releaseAssessment ??
+    {};
+
+
+  const areaContainer =
+    byId('ux-ui-areas');
+
+
+  const STATUS_LABELS = {
+    healthy:
+      'HEALTHY',
+
+    degraded:
+      'DEGRADED',
+
+    poor:
+      'POOR',
+
+    'not-verified':
+      'NOT VERIFIED',
+  };
+
+
+  const AREA_LABELS = {
+    usability:
+      'Usability',
+
+    navigation:
+      'Navigation',
+
+    interaction:
+      'Interaction',
+
+    'forms-validation':
+      'Forms & Validation',
+
+    accessibility:
+      'Accessibility',
+
+    'visual-stability':
+      'Visual Stability',
+
+    'responsive-usability':
+      'Responsive Usability',
+
+    'content-clarity':
+      'Content Clarity',
+  };
+
+
+  const AREA_ORDER = [
+    'usability',
+    'navigation',
+    'interaction',
+    'forms-validation',
+    'accessibility',
+    'visual-stability',
+    'responsive-usability',
+    'content-clarity',
+  ];
+
+
+  function safeStatus(value) {
+    const normalized =
+      String(
+        value ??
+        'not-verified'
+      ).toLowerCase();
+
+    return (
+      Object.prototype.hasOwnProperty.call(
+        STATUS_LABELS,
+        normalized
+      )
+        ? normalized
+        : 'not-verified'
+    );
+  }
+
+
+  function listText(
+    values,
+    fallback = 'None recorded'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function numericText(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  // This branch intentionally supports
+  // pre-Milestone-5 dashboard data.
+  if (
+    !assessment ||
+    typeof assessment !== 'object'
+  ) {
+    panel.dataset.status =
+      'not-verified';
+
+    setText(
+      'ux-ui-status',
+      'AWAITING FRESH QA RUN'
+    );
+
+    setText(
+      'ux-ui-score',
+      '—'
+    );
+
+    setText(
+      'ux-ui-evidence',
+      '—'
+    );
+
+    setText(
+      'ux-ui-issue-count',
+      '—'
+    );
+
+    setText(
+      'ux-ui-blockers',
+      '—'
+    );
+
+    setText(
+      'ux-ui-gaps',
+      '—'
+    );
+
+    setText(
+      'ux-ui-source-coverage',
+      'No UX/UI assessment in this run'
+    );
+
+    setText(
+      'ux-ui-browser-scope',
+      '—'
+    );
+
+    setText(
+      'ux-ui-profile-scope',
+      '—'
+    );
+
+
+    if (areaContainer) {
+      areaContainer.innerHTML =
+        AREA_ORDER
+          .map(
+            area => `
+              <article
+                class="ux-ui-area-card"
+                data-status="not-verified"
+              >
+                <div class="ux-ui-area-card-header">
+                  <strong>
+                    ${escapeHtml(
+                      AREA_LABELS[area]
+                    )}
+                  </strong>
+
+                  <span>
+                    NOT GENERATED
+                  </span>
+                </div>
+
+                <p>
+                  Awaiting a fresh QA run.
+                </p>
+              </article>
+            `
+          )
+          .join('');
+    }
+
+    return;
+  }
+
+
+  const status =
+    safeStatus(
+      assessment.status
+    );
+
+
+  panel.dataset.status =
+    status;
+
+
+  setText(
+    'ux-ui-status',
+    STATUS_LABELS[status]
+  );
+
+
+  const score =
+    Number(
+      assessment.score
+    );
+
+
+  setText(
+    'ux-ui-score',
+    Number.isFinite(score)
+      ? `${Math.round(score)}%`
+      : '—'
+  );
+
+
+  setText(
+    'ux-ui-evidence',
+    numericText(
+      assessment.evidenceCount
+    )
+  );
+
+
+  setText(
+    'ux-ui-issue-count',
+    numericText(
+      assessment.issueCount
+    )
+  );
+
+
+  setText(
+    'ux-ui-blockers',
+    numericText(
+      release.blockingUxAreas
+    )
+  );
+
+
+  setText(
+    'ux-ui-gaps',
+    numericText(
+      release.uxUiGaps
+    )
+  );
+
+
+  setText(
+    'ux-ui-source-coverage',
+    listText(
+      assessment.sourceCoverage,
+      'No verified sources'
+    )
+  );
+
+
+  setText(
+    'ux-ui-browser-scope',
+    listText(
+      assessment.affectedBrowsers
+    )
+  );
+
+
+  setText(
+    'ux-ui-profile-scope',
+    listText(
+      assessment.affectedProfiles
+    )
+  );
+
+
+  if (!areaContainer) {
+    return;
+  }
+
+
+  const areas =
+    Array.isArray(
+      assessment.areas
+    )
+      ? assessment.areas
+      : [];
+
+
+  areaContainer.innerHTML =
+    AREA_ORDER
+      .map(
+        areaId => {
+
+          const area =
+            areas.find(
+              item =>
+                item?.area ===
+                areaId
+            );
+
+
+          if (!area) {
+            return `
+              <article
+                class="ux-ui-area-card"
+                data-status="not-verified"
+              >
+                <div class="ux-ui-area-card-header">
+                  <strong>
+                    ${escapeHtml(
+                      AREA_LABELS[areaId]
+                    )}
+                  </strong>
+
+                  <span>
+                    NOT VERIFIED
+                  </span>
+                </div>
+
+                <p>
+                  No assessment was generated
+                  for this quality area.
+                </p>
+              </article>
+            `;
+          }
+
+
+          const areaStatus =
+            safeStatus(
+              area.status
+            );
+
+
+          const areaScore =
+            Number(
+              area.score
+            );
+
+
+          const severityText = [
+            `C ${Number(
+              area.critical ?? 0
+            )}`,
+
+            `H ${Number(
+              area.high ?? 0
+            )}`,
+
+            `M ${Number(
+              area.medium ?? 0
+            )}`,
+
+            `L ${Number(
+              area.low ?? 0
+            )}`,
+          ].join(' · ');
+
+
+          return `
+            <article
+              class="ux-ui-area-card"
+              data-status="${escapeHtml(
+                areaStatus
+              )}"
+            >
+              <div class="ux-ui-area-card-header">
+
+                <strong>
+                  ${escapeHtml(
+                    AREA_LABELS[areaId]
+                  )}
+                </strong>
+
+                <span>
+                  ${escapeHtml(
+                    STATUS_LABELS[
+                      areaStatus
+                    ]
+                  )}
+                </span>
+
+              </div>
+
+
+              <div class="ux-ui-area-score">
+
+                <b>
+                  ${
+                    Number.isFinite(
+                      areaScore
+                    )
+                      ? `${Math.round(
+                          areaScore
+                        )}%`
+                      : '—'
+                  }
+                </b>
+
+                <small>
+                  ${escapeHtml(
+                    severityText
+                  )}
+                </small>
+
+              </div>
+
+
+              <div class="ux-ui-area-meta">
+
+                <span>
+                  Evidence
+                  <strong>
+                    ${Number(
+                      area.evidenceCount ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+                <span>
+                  Issues
+                  <strong>
+                    ${Number(
+                      area.issueCount ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+              </div>
+
+
+              <p>
+                Sources:
+                ${escapeHtml(
+                  listText(
+                    area.evidenceSources,
+                    'None'
+                  )
+                )}
+              </p>
+
+            </article>
+          `;
+        }
+      )
+      .join('');
+}
+
+
+
+function renderSecurityPerformance(run) {
+  const panel =
+    byId('security-performance-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const assessment =
+    run?.securityPerformanceAssessment;
+
+  const release =
+    run?.releaseAssessment ??
+    {};
+
+
+  const securityContainer =
+    byId('sp-security-areas');
+
+  const performanceContainer =
+    byId('sp-performance-areas');
+
+
+  const STATUS_LABELS = {
+    healthy:
+      'HEALTHY',
+
+    degraded:
+      'DEGRADED',
+
+    poor:
+      'POOR',
+
+    critical:
+      'CRITICAL',
+
+    'not-verified':
+      'NOT VERIFIED',
+  };
+
+
+  const SECURITY_LABELS = {
+    authentication:
+      'Authentication',
+
+    authorization:
+      'Authorization',
+
+    'content-security-policy':
+      'Content Security Policy',
+
+    'security-headers':
+      'Security Headers',
+
+    'session-cookies':
+      'Session / Cookies',
+
+    'data-exposure':
+      'Data Exposure',
+
+    transport:
+      'Transport Security',
+
+    'dependency-security':
+      'Dependency Security',
+  };
+
+
+  const PERFORMANCE_LABELS = {
+    'test-duration':
+      'Test Duration',
+
+    'page-load':
+      'Page Load',
+
+    'api-latency':
+      'API Latency',
+
+    'backend-latency':
+      'Backend Latency',
+
+    'timeout-resilience':
+      'Timeout Resilience',
+
+    regression:
+      'Regression',
+  };
+
+
+  const SECURITY_ORDER = [
+    'authentication',
+    'authorization',
+    'content-security-policy',
+    'security-headers',
+    'session-cookies',
+    'data-exposure',
+    'transport',
+    'dependency-security',
+  ];
+
+
+  const PERFORMANCE_ORDER = [
+    'test-duration',
+    'page-load',
+    'api-latency',
+    'backend-latency',
+    'timeout-resilience',
+    'regression',
+  ];
+
+
+  function safeStatus(value) {
+    const normalized =
+      String(
+        value ??
+        'not-verified'
+      ).toLowerCase();
+
+    return (
+      Object.prototype.hasOwnProperty.call(
+        STATUS_LABELS,
+        normalized
+      )
+        ? normalized
+        : 'not-verified'
+    );
+  }
+
+
+  function numericText(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  function msText(value) {
+    const number =
+      Number(value);
+
+    if (!Number.isFinite(number)) {
+      return '—';
+    }
+
+    if (number >= 1000) {
+      return (
+        `${(number / 1000).toFixed(2)} s`
+      );
+    }
+
+    return (
+      `${Math.round(number)} ms`
+    );
+  }
+
+
+  function listText(
+    values,
+    fallback = 'None recorded'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function emptySecurityAreas() {
+    if (!securityContainer) {
+      return;
+    }
+
+    securityContainer.innerHTML =
+      SECURITY_ORDER
+        .map(
+          area => `
+            <article
+              class="sp-area-card"
+              data-status="not-verified"
+            >
+              <div class="sp-area-header">
+                <strong>
+                  ${escapeHtml(
+                    SECURITY_LABELS[area]
+                  )}
+                </strong>
+
+                <span>
+                  NOT GENERATED
+                </span>
+              </div>
+
+              <p>
+                Awaiting a fresh QA run.
+              </p>
+            </article>
+          `
+        )
+        .join('');
+  }
+
+
+  function emptyPerformanceAreas() {
+    if (!performanceContainer) {
+      return;
+    }
+
+    performanceContainer.innerHTML =
+      PERFORMANCE_ORDER
+        .map(
+          area => `
+            <article
+              class="sp-area-card"
+              data-status="not-verified"
+            >
+              <div class="sp-area-header">
+                <strong>
+                  ${escapeHtml(
+                    PERFORMANCE_LABELS[area]
+                  )}
+                </strong>
+
+                <span>
+                  NOT GENERATED
+                </span>
+              </div>
+
+              <p>
+                Awaiting a fresh QA run.
+              </p>
+            </article>
+          `
+        )
+        .join('');
+  }
+
+
+  if (
+    !assessment ||
+    typeof assessment !== 'object'
+  ) {
+    panel.dataset.status =
+      'not-verified';
+
+    setText(
+      'sp-status',
+      'AWAITING FRESH QA RUN'
+    );
+
+    setText(
+      'sp-overall-status',
+      '—'
+    );
+
+    setText(
+      'sp-security-status',
+      '—'
+    );
+
+    setText(
+      'sp-performance-status',
+      '—'
+    );
+
+    setText(
+      'sp-security-blockers',
+      '—'
+    );
+
+    setText(
+      'sp-performance-blockers',
+      '—'
+    );
+
+    setText(
+      'sp-security-gaps',
+      '—'
+    );
+
+    setText(
+      'sp-performance-gaps',
+      '—'
+    );
+
+    setText(
+      'sp-source-coverage',
+      'No Security/Performance assessment in this run'
+    );
+
+    setText(
+      'sp-threshold-status',
+      '—'
+    );
+
+    setText(
+      'sp-average',
+      '—'
+    );
+
+    setText(
+      'sp-median',
+      '—'
+    );
+
+    setText(
+      'sp-p95',
+      '—'
+    );
+
+    setText(
+      'sp-wall-clock',
+      '—'
+    );
+
+    emptySecurityAreas();
+    emptyPerformanceAreas();
+
+    return;
+  }
+
+
+  const overallStatus =
+    safeStatus(
+      assessment.status
+    );
+
+
+  const security =
+    assessment.security ??
+    {};
+
+  const performance =
+    assessment.performance ??
+    {};
+
+
+  const securityStatus =
+    safeStatus(
+      security.status
+    );
+
+  const performanceStatus =
+    safeStatus(
+      performance.status
+    );
+
+
+  panel.dataset.status =
+    overallStatus;
+
+
+  setText(
+    'sp-status',
+    STATUS_LABELS[
+      overallStatus
+    ]
+  );
+
+
+  setText(
+    'sp-overall-status',
+    STATUS_LABELS[
+      overallStatus
+    ]
+  );
+
+
+  setText(
+    'sp-security-status',
+    STATUS_LABELS[
+      securityStatus
+    ]
+  );
+
+
+  setText(
+    'sp-performance-status',
+    STATUS_LABELS[
+      performanceStatus
+    ]
+  );
+
+
+  setText(
+    'sp-security-blockers',
+    numericText(
+      release
+        .blockingSecurityAreas
+    )
+  );
+
+
+  setText(
+    'sp-performance-blockers',
+    numericText(
+      release
+        .blockingPerformanceAreas
+    )
+  );
+
+
+  setText(
+    'sp-security-gaps',
+    numericText(
+      release.securityGaps
+    )
+  );
+
+
+  setText(
+    'sp-performance-gaps',
+    numericText(
+      release.performanceGaps
+    )
+  );
+
+
+  setText(
+    'sp-source-coverage',
+    listText(
+      assessment.sourceCoverage,
+      'No verified sources'
+    )
+  );
+
+
+  setText(
+    'sp-threshold-status',
+    performance
+      .thresholdsConfigured
+        ? 'CONFIGURED'
+        : 'NOT CONFIGURED'
+  );
+
+
+  const observed =
+    performance.observed ??
+    {};
+
+
+  setText(
+    'sp-average',
+    msText(
+      observed.averageDuration
+    )
+  );
+
+
+  setText(
+    'sp-median',
+    msText(
+      observed.medianDuration
+    )
+  );
+
+
+  setText(
+    'sp-p95',
+    msText(
+      observed.p95Duration
+    )
+  );
+
+
+  setText(
+    'sp-wall-clock',
+    msText(
+      observed.wallClockDuration
+    )
+  );
+
+
+  if (securityContainer) {
+    const areas =
+      Array.isArray(
+        security.areas
+      )
+        ? security.areas
+        : [];
+
+
+    securityContainer.innerHTML =
+      SECURITY_ORDER
+        .map(
+          areaId => {
+
+            const area =
+              areas.find(
+                item =>
+                  item?.area ===
+                  areaId
+              );
+
+
+            if (!area) {
+              return `
+                <article
+                  class="sp-area-card"
+                  data-status="not-verified"
+                >
+                  <div class="sp-area-header">
+
+                    <strong>
+                      ${escapeHtml(
+                        SECURITY_LABELS[
+                          areaId
+                        ]
+                      )}
+                    </strong>
+
+                    <span>
+                      NOT VERIFIED
+                    </span>
+
+                  </div>
+
+                  <p>
+                    No assessment generated.
+                  </p>
+                </article>
+              `;
+            }
+
+
+            const status =
+              safeStatus(
+                area.status
+              );
+
+
+            const severityText = [
+              `C ${Number(
+                area.critical ?? 0
+              )}`,
+
+              `H ${Number(
+                area.high ?? 0
+              )}`,
+
+              `M ${Number(
+                area.medium ?? 0
+              )}`,
+
+              `L ${Number(
+                area.low ?? 0
+              )}`,
+            ].join(' · ');
+
+
+            return `
+              <article
+                class="sp-area-card"
+                data-status="${escapeHtml(
+                  status
+                )}"
+              >
+
+                <div class="sp-area-header">
+
+                  <strong>
+                    ${escapeHtml(
+                      SECURITY_LABELS[
+                        areaId
+                      ]
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(
+                      STATUS_LABELS[
+                        status
+                      ]
+                    )}
+                  </span>
+
+                </div>
+
+
+                <div class="sp-area-meta">
+
+                  <span>
+                    Evidence
+                    <strong>
+                      ${Number(
+                        area.evidenceCount ??
+                        0
+                      )}
+                    </strong>
+                  </span>
+
+                  <span>
+                    Issues
+                    <strong>
+                      ${Number(
+                        area.issueCount ??
+                        0
+                      )}
+                    </strong>
+                  </span>
+
+                </div>
+
+
+                <p>
+                  ${escapeHtml(
+                    severityText
+                  )}
+                </p>
+
+
+                <p>
+                  Sources:
+                  ${escapeHtml(
+                    listText(
+                      area.evidenceSources,
+                      'None'
+                    )
+                  )}
+                </p>
+
+              </article>
+            `;
+          }
+        )
+        .join('');
+  }
+
+
+  if (performanceContainer) {
+    const areas =
+      Array.isArray(
+        performance.areas
+      )
+        ? performance.areas
+        : [];
+
+
+    performanceContainer.innerHTML =
+      PERFORMANCE_ORDER
+        .map(
+          areaId => {
+
+            const area =
+              areas.find(
+                item =>
+                  item?.area ===
+                  areaId
+              );
+
+
+            if (!area) {
+              return `
+                <article
+                  class="sp-area-card"
+                  data-status="not-verified"
+                >
+                  <div class="sp-area-header">
+
+                    <strong>
+                      ${escapeHtml(
+                        PERFORMANCE_LABELS[
+                          areaId
+                        ]
+                      )}
+                    </strong>
+
+                    <span>
+                      NOT VERIFIED
+                    </span>
+
+                  </div>
+
+                  <p>
+                    No assessment generated.
+                  </p>
+                </article>
+              `;
+            }
+
+
+            const status =
+              safeStatus(
+                area.status
+              );
+
+
+            const observedValue =
+              msText(
+                area.observedValueMs
+              );
+
+
+            const threshold =
+              msText(
+                area.thresholdMs
+              );
+
+
+            return `
+              <article
+                class="sp-area-card"
+                data-status="${escapeHtml(
+                  status
+                )}"
+              >
+
+                <div class="sp-area-header">
+
+                  <strong>
+                    ${escapeHtml(
+                      PERFORMANCE_LABELS[
+                        areaId
+                      ]
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(
+                      STATUS_LABELS[
+                        status
+                      ]
+                    )}
+                  </span>
+
+                </div>
+
+
+                <div class="sp-area-meta">
+
+                  <span>
+                    Evidence
+                    <strong>
+                      ${Number(
+                        area.evidenceCount ??
+                        0
+                      )}
+                    </strong>
+                  </span>
+
+                  <span>
+                    Issues
+                    <strong>
+                      ${Number(
+                        area.issueCount ??
+                        0
+                      )}
+                    </strong>
+                  </span>
+
+                </div>
+
+
+                <p>
+                  Observed:
+                  ${escapeHtml(
+                    observedValue
+                  )}
+                </p>
+
+
+                <p>
+                  Threshold:
+                  ${escapeHtml(
+                    area.thresholdConfigured
+                      ? threshold
+                      : 'Not configured'
+                  )}
+                </p>
+
+
+                <p>
+                  Sources:
+                  ${escapeHtml(
+                    listText(
+                      area.evidenceSources,
+                      'None'
+                    )
+                  )}
+                </p>
+
+              </article>
+            `;
+          }
+        )
+        .join('');
+  }
+}
+
+
+
+function renderCompatibility(run) {
+  const panel =
+    byId('compatibility-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const assessment =
+    run?.compatibilityAssessment;
+
+  const release =
+    run?.releaseAssessment ??
+    {};
+
+
+  const browserGrid =
+    byId('compatibility-browser-grid');
+
+  const profileGrid =
+    byId('compatibility-profile-grid');
+
+  const correlationList =
+    byId('compatibility-correlations');
+
+
+  const STATUS_LABELS = {
+    healthy:
+      'HEALTHY',
+
+    degraded:
+      'DEGRADED',
+
+    poor:
+      'POOR',
+
+    critical:
+      'CRITICAL',
+
+    'not-verified':
+      'NOT VERIFIED',
+  };
+
+
+  const PATTERN_LABELS = {
+    'consistent-pass':
+      'CONSISTENT PASS',
+
+    'universal-failure':
+      'UNIVERSAL FAILURE',
+
+    'browser-specific':
+      'BROWSER SPECIFIC',
+
+    'profile-specific':
+      'PROFILE SPECIFIC',
+
+    'mobile-specific':
+      'MOBILE SPECIFIC',
+
+    'isolated-environment':
+      'ISOLATED ENVIRONMENT',
+
+    'mixed-regression':
+      'MIXED REGRESSION',
+
+    uncertain:
+      'UNCERTAIN',
+
+    'not-comparable':
+      'NOT COMPARABLE',
+  };
+
+
+  function safeStatus(value) {
+    const normalized =
+      String(
+        value ??
+        'not-verified'
+      ).toLowerCase();
+
+    return (
+      Object.prototype.hasOwnProperty.call(
+        STATUS_LABELS,
+        normalized
+      )
+        ? normalized
+        : 'not-verified'
+    );
+  }
+
+
+  function numericText(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  function listText(
+    values,
+    fallback = 'None'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function environmentCards(
+    assessments,
+    fallbackText
+  ) {
+    if (
+      !Array.isArray(assessments) ||
+      assessments.length === 0
+    ) {
+      return `
+        <div class="compatibility-empty">
+          ${escapeHtml(fallbackText)}
+        </div>
+      `;
+    }
+
+
+    return assessments
+      .map(
+        environment => {
+
+          const status =
+            safeStatus(
+              environment.status
+            );
+
+
+          return `
+            <article
+              class="compatibility-env-card"
+              data-status="${escapeHtml(
+                status
+              )}"
+            >
+
+              <div class="compatibility-env-header">
+
+                <strong>
+                  ${escapeHtml(
+                    environment.environment ??
+                    'Unknown'
+                  )}
+                </strong>
+
+                <span>
+                  ${escapeHtml(
+                    STATUS_LABELS[
+                      status
+                    ]
+                  )}
+                </span>
+
+              </div>
+
+
+              <div class="compatibility-env-metrics">
+
+                <span>
+                  Tests
+                  <strong>
+                    ${Number(
+                      environment.totalTests ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+                <span>
+                  Passed
+                  <strong>
+                    ${Number(
+                      environment.passed ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+                <span>
+                  Regressions
+                  <strong>
+                    ${Number(
+                      environment.compatibilityFailures ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+                <span>
+                  Uncertain
+                  <strong>
+                    ${Number(
+                      environment.uncertainFailures ??
+                      0
+                    )}
+                  </strong>
+                </span>
+
+              </div>
+
+
+              <p>
+                Issues:
+                ${Number(
+                  environment.issueCount ??
+                  0
+                )}
+              </p>
+
+
+              <p>
+                Sources:
+                ${escapeHtml(
+                  listText(
+                    environment.evidenceSources,
+                    'None'
+                  )
+                )}
+              </p>
+
+            </article>
+          `;
+        }
+      )
+      .join('');
+  }
+
+
+  if (
+    !assessment ||
+    typeof assessment !== 'object'
+  ) {
+    panel.dataset.status =
+      'not-verified';
+
+    setText(
+      'compatibility-status',
+      'AWAITING FRESH QA RUN'
+    );
+
+    setText(
+      'compatibility-overall-status',
+      '—'
+    );
+
+    setText(
+      'compatibility-comparable',
+      '—'
+    );
+
+    setText(
+      'compatibility-regressions',
+      '—'
+    );
+
+    setText(
+      'compatibility-blockers',
+      '—'
+    );
+
+    setText(
+      'compatibility-gaps',
+      '—'
+    );
+
+    setText(
+      'compatibility-sources',
+      'No Compatibility assessment in this run'
+    );
+
+    setText(
+      'compatibility-missing-browsers',
+      '—'
+    );
+
+    setText(
+      'compatibility-missing-profiles',
+      '—'
+    );
+
+    setText(
+      'compatibility-missing-projects',
+      '—'
+    );
+
+
+    if (browserGrid) {
+      browserGrid.innerHTML = `
+        <div class="compatibility-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+
+    if (profileGrid) {
+      profileGrid.innerHTML = `
+        <div class="compatibility-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+
+    if (correlationList) {
+      correlationList.innerHTML = `
+        <div class="compatibility-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+
+  const status =
+    safeStatus(
+      assessment.status
+    );
+
+
+  panel.dataset.status =
+    status;
+
+
+  setText(
+    'compatibility-status',
+    STATUS_LABELS[status]
+  );
+
+
+  setText(
+    'compatibility-overall-status',
+    STATUS_LABELS[status]
+  );
+
+
+  setText(
+    'compatibility-comparable',
+    numericText(
+      assessment.comparableTests
+    )
+  );
+
+
+  setText(
+    'compatibility-regressions',
+    numericText(
+      assessment.regressions
+    )
+  );
+
+
+  setText(
+    'compatibility-blockers',
+    numericText(
+      release
+        .blockingCompatibilityRegressions
+    )
+  );
+
+
+  setText(
+    'compatibility-gaps',
+    numericText(
+      release.compatibilityGaps
+    )
+  );
+
+
+  setText(
+    'compatibility-sources',
+    listText(
+      assessment.sourceCoverage,
+      'No verified sources'
+    )
+  );
+
+
+  setText(
+    'compatibility-missing-browsers',
+    listText(
+      assessment.missingBrowsers,
+      'None'
+    )
+  );
+
+
+  setText(
+    'compatibility-missing-profiles',
+    listText(
+      assessment.missingProfiles,
+      'None'
+    )
+  );
+
+
+  setText(
+    'compatibility-missing-projects',
+    listText(
+      assessment.missingProjects,
+      'None'
+    )
+  );
+
+
+  if (browserGrid) {
+    browserGrid.innerHTML =
+      environmentCards(
+        assessment.browserAssessments,
+        'No browser compatibility data.'
+      );
+  }
+
+
+  if (profileGrid) {
+    profileGrid.innerHTML =
+      environmentCards(
+        assessment.profileAssessments,
+        'No profile compatibility data.'
+      );
+  }
+
+
+  if (!correlationList) {
+    return;
+  }
+
+
+  const correlations =
+    Array.isArray(
+      assessment.correlations
+    )
+      ? assessment.correlations
+      : [];
+
+
+  const interesting =
+    correlations.filter(
+      correlation =>
+        correlation.pattern !==
+          'consistent-pass' &&
+        correlation.pattern !==
+          'not-comparable'
+    );
+
+
+  correlationList.innerHTML =
+    interesting.length
+      ? interesting
+          .slice(0, 12)
+          .map(
+            correlation => {
+
+              const status =
+                safeStatus(
+                  correlation.status
+                );
+
+
+              const pattern =
+                PATTERN_LABELS[
+                  correlation.pattern
+                ] ??
+                String(
+                  correlation.pattern ??
+                  'UNKNOWN'
+                ).toUpperCase();
+
+
+              return `
+                <article
+                  class="compatibility-correlation"
+                  data-status="${escapeHtml(
+                    status
+                  )}"
+                >
+
+                  <div class="compatibility-correlation-header">
+
+                    <div>
+                      <strong>
+                        ${escapeHtml(
+                          correlation.title ??
+                          'Unnamed test'
+                        )}
+                      </strong>
+
+                      <small>
+                        ${escapeHtml(
+                          correlation.site ??
+                          'Unknown site'
+                        )}
+                      </small>
+                    </div>
+
+                    <span>
+                      ${escapeHtml(
+                        pattern
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div class="compatibility-correlation-grid">
+
+                    <div>
+                      <span>
+                        Passing
+                      </span>
+
+                      <strong>
+                        ${escapeHtml(
+                          listText(
+                            correlation
+                              .passingEnvironments,
+                            'None'
+                          )
+                        )}
+                      </strong>
+                    </div>
+
+
+                    <div>
+                      <span>
+                        Failing
+                      </span>
+
+                      <strong>
+                        ${escapeHtml(
+                          listText(
+                            correlation
+                              .failingEnvironments,
+                            'None'
+                          )
+                        )}
+                      </strong>
+                    </div>
+
+
+                    <div>
+                      <span>
+                        Uncertain
+                      </span>
+
+                      <strong>
+                        ${escapeHtml(
+                          listText(
+                            correlation
+                              .uncertainEnvironments,
+                            'None'
+                          )
+                        )}
+                      </strong>
+                    </div>
+
+                  </div>
+
+                </article>
+              `;
+            }
+          )
+          .join('')
+      : `
+          <div class="compatibility-empty">
+            No environment-specific regressions
+            are currently recorded.
+          </div>
+        `;
+}
+
+
+
+function renderApiBackend(run) {
+  const panel =
+    byId('api-backend-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const assessment =
+    run?.apiBackendAssessment;
+
+  const release =
+    run?.releaseAssessment ??
+    {};
+
+  const apiIssues =
+    Array.isArray(
+      run?.apiIssues
+    )
+      ? run.apiIssues
+      : [];
+
+  const backendIssues =
+    Array.isArray(
+      run?.backendIssues
+    )
+      ? run.backendIssues
+      : [];
+
+
+  const apiContainer =
+    byId('api-intelligence-issues');
+
+  const backendContainer =
+    byId('backend-intelligence-issues');
+
+
+  const STATUS_LABELS = {
+    healthy:
+      'HEALTHY',
+
+    degraded:
+      'DEGRADED',
+
+    poor:
+      'POOR',
+
+    critical:
+      'CRITICAL',
+
+    'not-verified':
+      'NOT VERIFIED',
+  };
+
+
+  function safeStatus(value) {
+    const normalized =
+      String(
+        value ??
+        'not-verified'
+      ).toLowerCase();
+
+    return (
+      Object.prototype.hasOwnProperty.call(
+        STATUS_LABELS,
+        normalized
+      )
+        ? normalized
+        : 'not-verified'
+    );
+  }
+
+
+  function numericText(value) {
+    if (
+      value === undefined ||
+      value === null ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  function listText(
+    values,
+    fallback = 'None'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function issueCards(
+    issues,
+    kind
+  ) {
+    if (
+      !Array.isArray(issues) ||
+      issues.length === 0
+    ) {
+      return `
+        <div class="api-backend-empty">
+          No ${escapeHtml(kind)} findings
+          are recorded in this run.
+        </div>
+      `;
+    }
+
+
+    return issues
+      .slice(0, 10)
+      .map(
+        issue => {
+
+          const source =
+            issue.source ??
+            kind.toLowerCase();
+
+          const severity =
+            String(
+              issue.severity ??
+              'unknown'
+            ).toUpperCase();
+
+          const priority =
+            issue.priority ??
+            '—';
+
+          const statusCode =
+            issue.statusCode ??
+            null;
+
+          const target =
+            kind === 'API'
+              ? (
+                  issue.endpoint ??
+                  'Unresolved endpoint'
+                )
+              : (
+                  issue.service ??
+                  'Unresolved service'
+                );
+
+          const confidence =
+            typeof issue.confidence ===
+              'number'
+              ? `${Math.round(
+                  issue.confidence
+                )}%`
+              : '—';
+
+
+          return `
+            <article
+              class="api-backend-issue"
+              data-severity="${escapeHtml(
+                String(
+                  issue.severity ??
+                  'unknown'
+                ).toLowerCase()
+              )}"
+            >
+
+              <div class="api-backend-issue-header">
+
+                <div>
+
+                  <strong>
+                    ${escapeHtml(
+                      issue.title ??
+                      `${kind} finding`
+                    )}
+                  </strong>
+
+                  <small>
+                    ${escapeHtml(
+                      target
+                    )}
+                  </small>
+
+                </div>
+
+
+                <div class="api-backend-badges">
+
+                  <span>
+                    ${escapeHtml(
+                      priority
+                    )}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      severity
+                    )}
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="api-backend-issue-meta">
+
+                <span>
+                  Source
+                  <strong>
+                    ${escapeHtml(
+                      source
+                    )}
+                  </strong>
+                </span>
+
+
+                <span>
+                  HTTP
+                  <strong>
+                    ${escapeHtml(
+                      statusCode === null
+                        ? '—'
+                        : String(
+                            statusCode
+                          )
+                    )}
+                  </strong>
+                </span>
+
+
+                <span>
+                  Confidence
+                  <strong>
+                    ${escapeHtml(
+                      confidence
+                    )}
+                  </strong>
+                </span>
+
+
+                <span>
+                  Origin
+                  <strong>
+                    ${escapeHtml(
+                      issue.originSource ??
+                      '—'
+                    )}
+                  </strong>
+                </span>
+
+              </div>
+
+
+              ${
+                issue.rootCause
+                  ? `
+                    <p>
+                      <strong>
+                        Root cause:
+                      </strong>
+                      ${escapeHtml(
+                        issue.rootCause
+                      )}
+                    </p>
+                  `
+                  : ''
+              }
+
+
+              ${
+                issue.userImpact
+                  ? `
+                    <p>
+                      <strong>
+                        User impact:
+                      </strong>
+                      ${escapeHtml(
+                        issue.userImpact
+                      )}
+                    </p>
+                  `
+                  : ''
+              }
+
+            </article>
+          `;
+        }
+      )
+      .join('');
+  }
+
+
+  if (
+    !assessment ||
+    typeof assessment !== 'object'
+  ) {
+    panel.dataset.status =
+      'not-verified';
+
+
+    setText(
+      'api-backend-status',
+      'AWAITING FRESH QA RUN'
+    );
+
+    setText(
+      'api-backend-overall-status',
+      '—'
+    );
+
+    setText(
+      'api-backend-api-count',
+      '—'
+    );
+
+    setText(
+      'api-backend-backend-count',
+      '—'
+    );
+
+    setText(
+      'api-backend-api-blockers',
+      '—'
+    );
+
+    setText(
+      'api-backend-backend-blockers',
+      '—'
+    );
+
+    setText(
+      'api-backend-source-coverage',
+      'No API/Backend assessment in this run'
+    );
+
+    setText(
+      'api-backend-origin-sources',
+      '—'
+    );
+
+    setText(
+      'api-backend-api-gaps',
+      '—'
+    );
+
+    setText(
+      'api-backend-backend-gaps',
+      '—'
+    );
+
+
+    setText(
+      'api-intelligence-status',
+      'NOT VERIFIED'
+    );
+
+    setText(
+      'backend-intelligence-status',
+      'NOT VERIFIED'
+    );
+
+
+    for (const id of [
+      'api-endpoint-count',
+      'api-unresolved-count',
+      'api-server-errors',
+      'api-auth-failures',
+      'api-not-found',
+      'api-timeouts',
+      'backend-service-count',
+      'backend-unresolved-count',
+      'backend-server-errors',
+      'backend-timeouts',
+      'backend-dependencies',
+      'backend-infrastructure',
+    ]) {
+      setText(
+        id,
+        '—'
+      );
+    }
+
+
+    if (apiContainer) {
+      apiContainer.innerHTML = `
+        <div class="api-backend-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+
+    if (backendContainer) {
+      backendContainer.innerHTML = `
+        <div class="api-backend-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+
+  const overallStatus =
+    safeStatus(
+      assessment.status
+    );
+
+
+  const api =
+    assessment.api ??
+    {};
+
+  const backend =
+    assessment.backend ??
+    {};
+
+
+  const apiStatus =
+    safeStatus(
+      api.status
+    );
+
+
+  const backendStatus =
+    safeStatus(
+      backend.status
+    );
+
+
+  panel.dataset.status =
+    overallStatus;
+
+
+  setText(
+    'api-backend-status',
+    STATUS_LABELS[
+      overallStatus
+    ]
+  );
+
+
+  setText(
+    'api-backend-overall-status',
+    STATUS_LABELS[
+      overallStatus
+    ]
+  );
+
+
+  setText(
+    'api-backend-api-count',
+    numericText(
+      assessment.promotedApiIssues
+    )
+  );
+
+
+  setText(
+    'api-backend-backend-count',
+    numericText(
+      assessment.promotedBackendIssues
+    )
+  );
+
+
+  setText(
+    'api-backend-api-blockers',
+    numericText(
+      release.blockingApiIssues
+    )
+  );
+
+
+  setText(
+    'api-backend-backend-blockers',
+    numericText(
+      release.blockingBackendIssues
+    )
+  );
+
+
+  setText(
+    'api-backend-source-coverage',
+    listText(
+      assessment.sourceCoverage,
+      'None'
+    )
+  );
+
+
+  setText(
+    'api-backend-origin-sources',
+    listText(
+      assessment.originSources,
+      'None'
+    )
+  );
+
+
+  setText(
+    'api-backend-api-gaps',
+    numericText(
+      release.apiIntelligenceGaps
+    )
+  );
+
+
+  setText(
+    'api-backend-backend-gaps',
+    numericText(
+      release.backendIntelligenceGaps
+    )
+  );
+
+
+  setText(
+    'api-intelligence-status',
+    STATUS_LABELS[
+      apiStatus
+    ]
+  );
+
+
+  setText(
+    'backend-intelligence-status',
+    STATUS_LABELS[
+      backendStatus
+    ]
+  );
+
+
+  setText(
+    'api-endpoint-count',
+    numericText(
+      api.endpointCount
+    )
+  );
+
+
+  setText(
+    'api-unresolved-count',
+    numericText(
+      api.unresolvedEndpointCount
+    )
+  );
+
+
+  setText(
+    'api-server-errors',
+    numericText(
+      api.serverErrors
+    )
+  );
+
+
+  setText(
+    'api-auth-failures',
+    numericText(
+      api.authFailures
+    )
+  );
+
+
+  setText(
+    'api-not-found',
+    numericText(
+      api.notFoundResponses
+    )
+  );
+
+
+  setText(
+    'api-timeouts',
+    numericText(
+      api.timeouts
+    )
+  );
+
+
+  setText(
+    'backend-service-count',
+    numericText(
+      backend.serviceCount
+    )
+  );
+
+
+  setText(
+    'backend-unresolved-count',
+    numericText(
+      backend.unresolvedServiceCount
+    )
+  );
+
+
+  setText(
+    'backend-server-errors',
+    numericText(
+      backend.serverErrors
+    )
+  );
+
+
+  setText(
+    'backend-timeouts',
+    numericText(
+      backend.timeouts
+    )
+  );
+
+
+  setText(
+    'backend-dependencies',
+    numericText(
+      backend.dependencyFailures
+    )
+  );
+
+
+  setText(
+    'backend-infrastructure',
+    numericText(
+      backend.infrastructureFailures
+    )
+  );
+
+
+  if (apiContainer) {
+    apiContainer.innerHTML =
+      issueCards(
+        apiIssues,
+        'API'
+      );
+  }
+
+
+  if (backendContainer) {
+    backendContainer.innerHTML =
+      issueCards(
+        backendIssues,
+        'Backend'
+      );
+  }
+}
+
+
+function renderCrossLayer(run) {
+  const panel =
+    byId('cross-layer-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const assessment =
+    run?.crossLayerAssessment;
+
+
+  const incidentContainer =
+    byId('cross-layer-incidents');
+
+  const standaloneContainer =
+    byId('cross-layer-standalone');
+
+
+  const STATE_LABELS = {
+    correlated:
+      'CORRELATED',
+
+    partial:
+      'PARTIAL',
+
+    'standalone-only':
+      'STANDALONE ONLY',
+
+    'no-evidence':
+      'NO EVIDENCE',
+  };
+
+
+  function safeState(value) {
+    const normalized =
+      String(
+        value ??
+        'no-evidence'
+      ).toLowerCase();
+
+    return (
+      Object.prototype.hasOwnProperty.call(
+        STATE_LABELS,
+        normalized
+      )
+        ? normalized
+        : 'no-evidence'
+    );
+  }
+
+
+  function numericText(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  function listText(
+    values,
+    fallback = 'None'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function percentage(
+    part,
+    total
+  ) {
+    const numerator =
+      Number(part);
+
+    const denominator =
+      Number(total);
+
+    if (
+      !Number.isFinite(numerator) ||
+      !Number.isFinite(denominator) ||
+      denominator <= 0
+    ) {
+      return '—';
+    }
+
+    return `${
+      Math.round(
+        (
+          numerator /
+          denominator
+        ) * 100
+      )
+    }%`;
+  }
+
+
+  function evidenceChainHtml(
+    chain
+  ) {
+    if (
+      !Array.isArray(chain) ||
+      chain.length === 0
+    ) {
+      return `
+        <div class="cross-layer-chain-empty">
+          No evidence chain recorded.
+        </div>
+      `;
+    }
+
+
+    return chain
+      .map(
+        (
+          node,
+          index
+        ) => {
+
+          const target =
+            node.endpoint ??
+            node.service ??
+            node.site ??
+            'Unknown target';
+
+
+          return `
+            <div class="cross-layer-node">
+
+              <div class="cross-layer-node-index">
+                ${index + 1}
+              </div>
+
+
+              <div class="cross-layer-node-body">
+
+                <div class="cross-layer-node-heading">
+
+                  <span class="cross-layer-source">
+                    ${escapeHtml(
+                      String(
+                        node.source ??
+                        'unknown'
+                      ).toUpperCase()
+                    )}
+                  </span>
+
+
+                  <strong>
+                    ${escapeHtml(
+                      node.title ??
+                      'Unnamed evidence'
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <small>
+                  ${escapeHtml(
+                    target
+                  )}
+                </small>
+
+
+                ${
+                  typeof node.statusCode ===
+                    'number'
+                    ? `
+                      <span class="cross-layer-http">
+                        HTTP ${Number(
+                          node.statusCode
+                        )}
+                      </span>
+                    `
+                    : ''
+                }
+
+              </div>
+
+            </div>
+          `;
+        }
+      )
+      .join('');
+  }
+
+
+  function incidentHtml(
+    incident
+  ) {
+    const blocking =
+      Boolean(
+        incident.blocking
+      );
+
+
+    const confidence =
+      typeof incident.confidence ===
+        'number'
+        ? `${Math.round(
+            incident.confidence
+          )}%`
+        : '—';
+
+
+    const correlationScore =
+      typeof incident.correlationScore ===
+        'number'
+        ? `${Math.round(
+            incident.correlationScore
+          )}`
+        : '—';
+
+
+    return `
+      <article
+        class="cross-layer-incident"
+        data-blocking="${
+          blocking
+            ? 'true'
+            : 'false'
+        }"
+      >
+
+        <div class="cross-layer-incident-header">
+
+          <div>
+
+            <span class="cross-layer-incident-id">
+              ${escapeHtml(
+                incident.id ??
+                'incident:unknown'
+              )}
+            </span>
+
+            <h4>
+              ${escapeHtml(
+                incident.title ??
+                'Correlated incident'
+              )}
+            </h4>
+
+          </div>
+
+
+          <div class="cross-layer-badges">
+
+            <span>
+              ${escapeHtml(
+                incident.priority ??
+                '—'
+              )}
+            </span>
+
+            <span>
+              ${escapeHtml(
+                String(
+                  incident.severity ??
+                  'unknown'
+                ).toUpperCase()
+              )}
+            </span>
+
+            ${
+              blocking
+                ? `
+                  <span class="cross-layer-blocking-badge">
+                    BLOCKING
+                  </span>
+                `
+                : ''
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="cross-layer-incident-metrics">
+
+          <div>
+            <span>
+              Sources
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                listText(
+                  incident.sources,
+                  'None'
+                )
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Correlation
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                correlationScore
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Confidence
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                confidence
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Root layer
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                incident.rootCauseLayer ??
+                'unknown'
+              )}
+            </strong>
+          </div>
+
+        </div>
+
+
+        <div class="cross-layer-reasons">
+
+          <span>
+            Correlation evidence
+          </span>
+
+          <strong>
+            ${escapeHtml(
+              listText(
+                incident.reasons,
+                'None'
+              )
+            )}
+          </strong>
+
+        </div>
+
+
+        <div class="cross-layer-chain">
+          ${evidenceChainHtml(
+            incident.evidenceChain
+          )}
+        </div>
+
+
+        ${
+          incident.endpoints?.length
+            ? `
+              <p>
+                <strong>
+                  Endpoints:
+                </strong>
+                ${escapeHtml(
+                  listText(
+                    incident.endpoints
+                  )
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          incident.services?.length
+            ? `
+              <p>
+                <strong>
+                  Services:
+                </strong>
+                ${escapeHtml(
+                  listText(
+                    incident.services
+                  )
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          incident.rootCause
+            ? `
+              <p>
+                <strong>
+                  Root cause:
+                </strong>
+                ${escapeHtml(
+                  incident.rootCause
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          incident.userImpact
+            ? `
+              <p>
+                <strong>
+                  User impact:
+                </strong>
+                ${escapeHtml(
+                  incident.userImpact
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          incident.recommendation
+            ? `
+              <p>
+                <strong>
+                  Recommendation:
+                </strong>
+                ${escapeHtml(
+                  incident.recommendation
+                )}
+              </p>
+            `
+            : ''
+        }
+
+      </article>
+    `;
+  }
+
+
+  if (
+    !assessment ||
+    typeof assessment !== 'object'
+  ) {
+    panel.dataset.state =
+      'no-evidence';
+
+
+    setText(
+      'cross-layer-state',
+      'AWAITING FRESH QA RUN'
+    );
+
+    setText(
+      'cross-layer-overall-state',
+      '—'
+    );
+
+    setText(
+      'cross-layer-issue-count',
+      '—'
+    );
+
+    setText(
+      'cross-layer-correlated-count',
+      '—'
+    );
+
+    setText(
+      'cross-layer-incident-count',
+      '—'
+    );
+
+    setText(
+      'cross-layer-blocking-count',
+      '—'
+    );
+
+    setText(
+      'cross-layer-source-coverage',
+      'No Cross-layer assessment in this run'
+    );
+
+    setText(
+      'cross-layer-standalone-count',
+      '—'
+    );
+
+    setText(
+      'cross-layer-correlation-rate',
+      '—'
+    );
+
+    setText(
+      'cross-layer-root-incidents',
+      '—'
+    );
+
+
+    if (incidentContainer) {
+      incidentContainer.innerHTML = `
+        <div class="cross-layer-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+
+    if (standaloneContainer) {
+      standaloneContainer.innerHTML = `
+        <div class="cross-layer-empty">
+          Awaiting a fresh QA run.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+
+  const state =
+    safeState(
+      assessment.state
+    );
+
+
+  panel.dataset.state =
+    state;
+
+
+  setText(
+    'cross-layer-state',
+    STATE_LABELS[state]
+  );
+
+
+  setText(
+    'cross-layer-overall-state',
+    STATE_LABELS[state]
+  );
+
+
+  setText(
+    'cross-layer-issue-count',
+    numericText(
+      assessment.issueCount
+    )
+  );
+
+
+  setText(
+    'cross-layer-correlated-count',
+    numericText(
+      assessment.correlatedIssueCount
+    )
+  );
+
+
+  setText(
+    'cross-layer-incident-count',
+    numericText(
+      assessment.incidentCount
+    )
+  );
+
+
+  setText(
+    'cross-layer-blocking-count',
+    numericText(
+      assessment.blockingIncidents
+    )
+  );
+
+
+  setText(
+    'cross-layer-source-coverage',
+    listText(
+      assessment.sourceCoverage,
+      'None'
+    )
+  );
+
+
+  setText(
+    'cross-layer-standalone-count',
+    numericText(
+      assessment.standaloneIssueCount
+    )
+  );
+
+
+  setText(
+    'cross-layer-correlation-rate',
+    percentage(
+      assessment.correlatedIssueCount,
+      assessment.issueCount
+    )
+  );
+
+
+  setText(
+    'cross-layer-root-incidents',
+    numericText(
+      assessment.incidentCount
+    )
+  );
+
+
+  const incidents =
+    Array.isArray(
+      assessment.incidents
+    )
+      ? assessment.incidents
+      : [];
+
+
+  if (incidentContainer) {
+    incidentContainer.innerHTML =
+      incidents.length
+        ? incidents
+            .slice(0, 12)
+            .map(
+              incidentHtml
+            )
+            .join('')
+        : `
+            <div class="cross-layer-empty">
+              No correlated cross-layer incidents
+              are recorded in this run.
+            </div>
+          `;
+  }
+
+
+  const standalone =
+    Array.isArray(
+      assessment.standaloneIssueFingerprints
+    )
+      ? assessment.standaloneIssueFingerprints
+      : [];
+
+
+  if (standaloneContainer) {
+    standaloneContainer.innerHTML =
+      standalone.length
+        ? `
+            <div class="cross-layer-standalone-list">
+
+              ${standalone
+                .slice(0, 30)
+                .map(
+                  fingerprint =>
+                    `
+                      <span>
+                        ${escapeHtml(
+                          fingerprint
+                        )}
+                      </span>
+                    `
+                )
+                .join('')}
+
+            </div>
+          `
+        : `
+            <div class="cross-layer-empty">
+              No standalone issue evidence remains.
+            </div>
+          `;
+  }
+}
+
+
+
+function renderUnifiedDecision(run) {
+  const panel =
+    byId('unified-decision-panel');
+
+  if (!panel) {
+    return;
+  }
+
+
+  const isUnifiedCanonical =
+    run?.releaseDecisionSource ===
+      'unified-v5' ||
+    Number(
+      run?.schemaVersion ??
+      0
+    ) >= 5;
+
+  const legacy =
+    run?.legacyReleaseAssessment ??
+    (
+      isUnifiedCanonical
+        ? null
+        : run?.releaseAssessment
+    );
+
+  const unified =
+    run?.unifiedDecisionAssessment;
+
+  const unitContainer =
+    byId('unified-decision-unit-list');
+
+
+  function textValue(
+    value,
+    fallback = '—'
+  ) {
+    if (
+      value === undefined ||
+      value === null ||
+      value === ''
+    ) {
+      return fallback;
+    }
+
+    return String(value);
+  }
+
+
+  function numberValue(
+    value
+  ) {
+    if (
+      value === undefined ||
+      value === null ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '—';
+  }
+
+
+  function percentValue(
+    value
+  ) {
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value)
+    ) {
+      return '—';
+    }
+
+    return `${Math.round(value)}%`;
+  }
+
+
+  function scoreValue(
+    value
+  ) {
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value)
+    ) {
+      return '—';
+    }
+
+    return String(
+      Math.round(value)
+    );
+  }
+
+
+  function listValue(
+    values,
+    fallback = 'None'
+  ) {
+    if (
+      !Array.isArray(values) ||
+      values.length === 0
+    ) {
+      return fallback;
+    }
+
+    return values
+      .map(
+        value =>
+          String(value)
+      )
+      .join(' · ');
+  }
+
+
+  function normalizeState(
+    value
+  ) {
+    return String(
+      value ??
+      'not-verified'
+    )
+      .trim()
+      .toLowerCase();
+  }
+
+
+  function unitHtml(
+    unit
+  ) {
+    const blocking =
+      Boolean(
+        unit.blocking
+      );
+
+
+    return `
+      <article
+        class="unified-decision-unit"
+        data-blocking="${
+          blocking
+            ? 'true'
+            : 'false'
+        }"
+      >
+
+        <div class="unified-decision-unit-header">
+
+          <div>
+
+            <span>
+              ${escapeHtml(
+                String(
+                  unit.kind ??
+                  'decision-unit'
+                ).toUpperCase()
+              )}
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                unit.id ??
+                'Unknown decision unit'
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="unified-decision-unit-badges">
+
+            <span>
+              ${escapeHtml(
+                unit.priority ??
+                '—'
+              )}
+            </span>
+
+            <span>
+              ${escapeHtml(
+                String(
+                  unit.severity ??
+                  'unknown'
+                ).toUpperCase()
+              )}
+            </span>
+
+            ${
+              blocking
+                ? `
+                  <span class="unified-decision-blocking">
+                    BLOCK
+                  </span>
+                `
+                : `
+                  <span>
+                    WARN
+                  </span>
+                `
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="unified-decision-unit-metrics">
+
+          <div>
+            <span>
+              Priority score
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                scoreValue(
+                  unit.priorityScore
+                )
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Confidence
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                percentValue(
+                  unit.confidence
+                )
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Sources
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                listValue(
+                  unit.sources
+                )
+              )}
+            </strong>
+          </div>
+
+
+          <div>
+            <span>
+              Evidence nodes
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                numberValue(
+                  Array.isArray(
+                    unit.issueFingerprints
+                  )
+                    ? unit.issueFingerprints.length
+                    : 0
+                )
+              )}
+            </strong>
+          </div>
+
+        </div>
+
+
+        ${
+          unit.rootCauseLayer
+            ? `
+              <p>
+                <strong>
+                  Root layer:
+                </strong>
+                ${escapeHtml(
+                  unit.rootCauseLayer
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          unit.rootCause
+            ? `
+              <p>
+                <strong>
+                  Root cause:
+                </strong>
+                ${escapeHtml(
+                  unit.rootCause
+                )}
+              </p>
+            `
+            : ''
+        }
+
+
+        ${
+          unit.userImpact
+            ? `
+              <p>
+                <strong>
+                  User impact:
+                </strong>
+                ${escapeHtml(
+                  unit.userImpact
+                )}
+              </p>
+            `
+            : ''
+        }
+
+      </article>
+    `;
+  }
+
+
+  if (
+    !unified ||
+    typeof unified !== 'object'
+  ) {
+    panel.dataset.state =
+      'not-verified';
+
+
+    setText(
+      'unified-decision-mode',
+      'SHADOW · AWAITING FRESH QA RUN'
+    );
+
+
+    const legacyStatus =
+      legacy?.status
+        ? String(
+            legacy.status
+          ).toUpperCase()
+        : '—';
+
+
+    setText(
+      'legacy-release-status',
+      legacyStatus
+    );
+
+    setText(
+      'legacy-release-risk',
+      legacy?.risk
+        ? String(
+            legacy.risk
+          ).toUpperCase()
+        : '—'
+    );
+
+    setText(
+      'legacy-release-confidence',
+      percentValue(
+        legacy?.confidence
+      )
+    );
+
+    setText(
+      'legacy-blocking-issues',
+      numberValue(
+        legacy?.blockingIssues
+      )
+    );
+
+    setText(
+      'legacy-nonblocking-issues',
+      numberValue(
+        legacy?.nonBlockingIssues
+      )
+    );
+
+
+    for (const id of [
+      'unified-decision-state',
+      'unified-risk-score',
+      'unified-quality-score',
+      'unified-confidence',
+      'unified-score-basis',
+      'unified-raw-issues',
+      'unified-decision-units',
+      'unified-incident-units',
+      'unified-standalone-units',
+      'unified-correlation-savings',
+      'unified-blocking-units',
+      'unified-warning-units',
+      'unified-highest-priority',
+      'unified-highest-severity',
+      'unified-correlated-evidence',
+      'unified-blocking-gates',
+      'unified-gap-dimensions',
+    ]) {
+      setText(
+        id,
+        '—'
+      );
+    }
+
+
+    if (unitContainer) {
+      unitContainer.innerHTML = `
+        <div class="unified-decision-empty">
+          Awaiting a fresh QA run with
+          Unified Decision shadow data.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+
+  const state =
+    normalizeState(
+      unified.state
+    );
+
+
+  panel.dataset.state =
+    state;
+
+
+  setText(
+    'unified-decision-mode',
+    'SHADOW MODE'
+  );
+
+
+  setText(
+    'legacy-release-status',
+    legacy?.status
+      ? String(
+          legacy.status
+        ).toUpperCase()
+      : '—'
+  );
+
+
+  setText(
+    'legacy-release-risk',
+    legacy?.risk
+      ? String(
+          legacy.risk
+        ).toUpperCase()
+      : '—'
+  );
+
+
+  setText(
+    'legacy-release-confidence',
+    percentValue(
+      legacy?.confidence
+    )
+  );
+
+
+  setText(
+    'legacy-blocking-issues',
+    numberValue(
+      legacy?.blockingIssues
+    )
+  );
+
+
+  setText(
+    'legacy-nonblocking-issues',
+    numberValue(
+      legacy?.nonBlockingIssues
+    )
+  );
+
+
+  setText(
+    'unified-decision-state',
+    String(
+      unified.state ??
+      'not-verified'
+    ).toUpperCase()
+  );
+
+
+  setText(
+    'unified-risk-score',
+    scoreValue(
+      unified.riskScore
+    )
+  );
+
+
+  setText(
+    'unified-quality-score',
+    scoreValue(
+      unified.qualityScore
+    )
+  );
+
+
+  setText(
+    'unified-confidence',
+    percentValue(
+      unified.confidence
+    )
+  );
+
+
+  setText(
+    'unified-score-basis',
+    textValue(
+      unified.scoreBasis
+    )
+  );
+
+
+  setText(
+    'unified-raw-issues',
+    numberValue(
+      unified.rawIssueCount
+    )
+  );
+
+
+  setText(
+    'unified-decision-units',
+    numberValue(
+      unified.decisionUnitCount
+    )
+  );
+
+
+  setText(
+    'unified-incident-units',
+    numberValue(
+      unified.incidentUnits
+    )
+  );
+
+
+  setText(
+    'unified-standalone-units',
+    numberValue(
+      unified.standaloneUnits
+    )
+  );
+
+
+  setText(
+    'unified-correlation-savings',
+    numberValue(
+      unified.correlationSavings
+    )
+  );
+
+
+  setText(
+    'unified-blocking-units',
+    numberValue(
+      unified.blockingUnits
+    )
+  );
+
+
+  setText(
+    'unified-warning-units',
+    numberValue(
+      unified.warningUnits
+    )
+  );
+
+
+  setText(
+    'unified-highest-priority',
+    textValue(
+      unified.highestPriority
+    )
+  );
+
+
+  setText(
+    'unified-highest-severity',
+    textValue(
+      unified.highestSeverity
+    )
+  );
+
+
+  setText(
+    'unified-correlated-evidence',
+    numberValue(
+      unified.correlatedEvidenceCount
+    )
+  );
+
+
+  setText(
+    'unified-blocking-gates',
+    listValue(
+      unified.blockingGateDimensions,
+      'None'
+    )
+  );
+
+
+  setText(
+    'unified-gap-dimensions',
+    listValue(
+      unified.verificationGapDimensions,
+      'None'
+    )
+  );
+
+
+  const units =
+    Array.isArray(
+      unified.decisionUnits
+    )
+      ? unified.decisionUnits
+      : [];
+
+
+  if (unitContainer) {
+    unitContainer.innerHTML =
+      units.length
+        ? units
+            .slice(0, 20)
+            .map(
+              unitHtml
+            )
+            .join('')
+        : `
+            <div class="unified-decision-empty">
+              No decision units remain after
+              correlation and deduplication.
+            </div>
+          `;
+  }
+
+
+  setText(
+    'unified-decision-mode',
+    isUnifiedCanonical
+      ? 'CANONICAL · UNIFIED v5'
+      : (
+          unified
+            ? 'SHADOW · LEGACY OFFICIAL'
+            : 'SHADOW · AWAITING FRESH QA RUN'
+        )
+  );
+}
+
+
 function renderExecutiveSummary(run) {
   const counts =
     run.classificationSummary ??
@@ -713,6 +4652,68 @@ function renderFailureDistribution(run) {
   `;
 }
 
+function issuePriority(issue) {
+  const explicitPriority =
+    String(
+      issue.priority ?? ''
+    ).toUpperCase();
+
+  if (
+    [
+      'P0',
+      'P1',
+      'P2',
+      'P3',
+      'P4',
+    ].includes(
+      explicitPriority
+    )
+  ) {
+    return explicitPriority;
+  }
+
+  const explicitlyBlocking =
+    issue.blocking === true ||
+    issue.releaseBlocking === true ||
+    issue.isBlocking === true;
+
+  if (explicitlyBlocking) {
+    return 'P0';
+  }
+
+  switch (
+    String(
+      issue.severity ?? ''
+    ).toLowerCase()
+  ) {
+    case 'critical':
+      return 'P1';
+
+    case 'high':
+      return 'P2';
+
+    case 'medium':
+      return 'P3';
+
+    case 'low':
+    case 'info':
+    default:
+      return 'P4';
+  }
+}
+
+function issuePriorityRank(issue) {
+  const ranks = {
+    P0: 5,
+    P1: 4,
+    P2: 3,
+    P3: 2,
+    P4: 1,
+  };
+
+  return ranks[issuePriority(issue)] ?? 0;
+}
+
 function issueMatchesFilters(issue) {
   const search =
     byId('issue-search')?.value
@@ -727,20 +4728,85 @@ function issueMatchesFilters(issue) {
     byId('severity-filter')?.value ??
     'all';
 
+  const priority =
+    byId('priority-filter')?.value ??
+    'all';
+
+  const category =
+    byId('category-filter')?.value ??
+    'all';
+
+  const browser =
+    byId('browser-filter')?.value ??
+    'all';
+
+  const profile =
+    byId('profile-filter')?.value ??
+    'all';
+
+  const source =
+    byId('source-filter')?.value ??
+    'all';
+
+  const affectedBrowsers =
+    Array.isArray(issue.affectedBrowsers)
+      ? issue.affectedBrowsers
+      : issue.browser
+        ? [issue.browser]
+        : [];
+
+  const affectedProfiles =
+    Array.isArray(issue.affectedProfiles)
+      ? issue.affectedProfiles
+      : issue.profile
+        ? [issue.profile]
+        : [];
+
   const searchableText = [
     issue.title,
     issue.fullTitle,
     issue.category,
-    issue.project,
+    issue.site,
+    issue.source,
+    issue.classification,
+    issue.severity,
     issue.classificationReason,
+    issue.rootSymptom,
+    issue.rootCause,
     issue.recommendation,
+    issue.userImpact,
+    issue.file,
+    issue.errorMessage,
+    issue.errorSnippet,
+    issue.description,
+    issue.evidence,
+    issue.route,
+
+    ...(Array.isArray(issue.affectedRoutes)
+      ? issue.affectedRoutes
+      : []),
     issue.error?.message,
+    issue.project,
+    issuePriority(issue),
+
+    ...(Array.isArray(issue.affectedProjects)
+      ? issue.affectedProjects
+      : []),
+
+    ...affectedBrowsers,
+    ...affectedProfiles,
+
+    ...(Array.isArray(issue.affectedSites)
+      ? issue.affectedSites
+      : []),
   ]
+    .filter(Boolean)
     .join(' ')
     .toLowerCase();
 
   const matchesSearch =
-    !search || searchableText.includes(search);
+    !search ||
+    searchableText.includes(search);
 
   const matchesClassification =
     classification === 'all' ||
@@ -750,29 +4816,83 @@ function issueMatchesFilters(issue) {
     severity === 'all' ||
     issue.severity === severity;
 
+  const matchesPriority =
+    priority === 'all' ||
+    issuePriority(issue) === priority;
+
+  const matchesCategory =
+    category === 'all' ||
+    issue.category === category;
+
+  const matchesBrowser =
+    browser === 'all' ||
+    affectedBrowsers.includes(browser);
+
+  const matchesProfile =
+    profile === 'all' ||
+    affectedProfiles.includes(profile);
+
+  const matchesSource =
+    source === 'all' ||
+    issue.source === source;
+
   return (
     matchesSearch &&
     matchesClassification &&
-    matchesSeverity
+    matchesSeverity &&
+    matchesPriority &&
+    matchesCategory &&
+    matchesBrowser &&
+    matchesProfile &&
+    matchesSource
   );
 }
 
 function renderIssues() {
   const visibleIssues =
-  activeSiteFilter === 'all'
-    ? currentIssues
-    : currentIssues.filter(
-        issue =>
-          issue.site === activeSiteFilter
-      );
+    activeSiteFilter === 'all'
+      ? currentIssues
+      : currentIssues.filter(issue => {
+          const affectedSites =
+            Array.isArray(issue.affectedSites) &&
+            issue.affectedSites.length
+              ? issue.affectedSites
+              : issue.site
+                ? [issue.site]
+                : [];
+
+          return affectedSites.includes(
+            activeSiteFilter
+          );
+        });
 
   const container = byId('issues-list');
 
   if (!container) return;
 
-  const issues = visibleIssues.filter(
-    issueMatchesFilters
-  );
+  const issues = visibleIssues
+    .filter(issueMatchesFilters)
+    .sort((first, second) => {
+      const priorityDifference =
+        issuePriorityRank(second) -
+        issuePriorityRank(first);
+
+      if (priorityDifference !== 0) {
+        return priorityDifference;
+      }
+
+      const occurrenceDifference =
+        (second.occurrences ?? 1) -
+        (first.occurrences ?? 1);
+
+      if (occurrenceDifference !== 0) {
+        return occurrenceDifference;
+      }
+
+      return String(first.title ?? '').localeCompare(
+        String(second.title ?? '')
+      );
+    });
 
   const siteLabel =
   activeSiteFilter === 'nation'
@@ -806,17 +4926,78 @@ setText(
     .map(issue => {
       const classification =
         issue.classification ??
-        'needs-investigation';
+        (
+          issue.source === 'discovery'
+            ? 'discovery-finding'
+            : 'needs-investigation'
+        );
 
-      const reason = issue.classificationReason
-        ? `
-            <p class="issue-reason">
-              ${escapeHtml(
-                issue.classificationReason
-              )}
-            </p>
-          `
-        : '';
+        const occurrences =
+        issue.occurrences ?? 1;
+
+       const affectedBrowsers =
+         Array.isArray(issue.affectedBrowsers) &&
+         issue.affectedBrowsers.length
+           ? issue.affectedBrowsers.join(', ')
+           : issue.source === 'discovery'
+             ? 'Discovery'
+             : issue.project ?? 'Unknown';
+
+      const affectedProfiles =
+        Array.isArray(issue.affectedProfiles) &&
+       issue.affectedProfiles.length
+     ? issue.affectedProfiles.join(', ')
+     : '';
+
+      const affectedProjects =
+        Array.isArray(issue.affectedProjects) &&
+        issue.affectedProjects.length
+      ? issue.affectedProjects
+      : issue.project
+      ? [issue.project]
+      : [];
+
+     const affectedRoutes =
+       Array.isArray(issue.affectedRoutes) &&
+       issue.affectedRoutes.length
+         ? issue.affectedRoutes
+         : issue.route
+           ? [issue.route]
+           : [];
+
+     const technicalErrorMessage =
+       issue.errorMessage ??
+       issue.error?.message ??
+       issue.evidence ??
+       '';
+
+      const issueContext =
+        issue.classificationReason ??
+        (
+          issue.source === 'discovery'
+            ? issue.description
+            : ''
+        );
+
+      const contextLabel =
+        issue.source === 'discovery'
+          ? 'Discovery finding'
+          : 'Assessment';
+
+      const reason =
+        issueContext
+          ? `
+              <div class="issue-context">
+                <strong>
+                  ${escapeHtml(contextLabel)}
+                </strong>
+
+                <p>
+                  ${escapeHtml(issueContext)}
+                </p>
+              </div>
+            `
+          : '';
 
       const recommendation = issue.recommendation
         ? `
@@ -843,6 +5024,45 @@ setText(
         .filter(Boolean)
         .join(' · ');
 
+      const issueScope = [
+        issue.source === 'discovery'
+          ? (
+              affectedRoutes.length
+                ? `Affected routes: ${affectedRoutes.length}`
+                : null
+            )
+          : (
+              affectedProjects.length
+                ? `Affected environments: ${affectedProjects.length}`
+                : null
+            ),
+
+        affectedProfiles
+          ? `Profiles: ${affectedProfiles}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+      const sourceLocation =
+        issue.file
+          ? `${issue.file}${
+              issue.line
+                ? `:${issue.line}`
+                : ''
+            }`
+          : issue.route ?? '';
+
+      const affectedEnvironmentList =
+        issue.source === 'discovery'
+          ? affectedRoutes.join(', ')
+          : affectedProjects.join(', ');
+
+      const scopeDetailLabel =
+        issue.source === 'discovery'
+          ? 'Affected routes'
+          : 'Affected environments';
+
       const rootCause = issue.rootCause
         ? `
             <div class="root-cause">
@@ -852,16 +5072,16 @@ setText(
           `
         : '';
 
-      const technicalError = issue.error?.message
-        ? `
-            <details class="issue-error">
-              <summary>Technical error</summary>
-              <pre>${escapeHtml(
-                issue.error.message
-              )}</pre>
-            </details>
-          `
-        : '';
+       const technicalError = technicalErrorMessage
+       ? `
+      <details class="issue-error">
+        <summary>Technical evidence</summary>
+        <pre>${escapeHtml(
+          technicalErrorMessage
+        )}</pre>
+      </details>
+      `
+      : '';
 
       return `
         <article
@@ -878,13 +5098,20 @@ setText(
               </h3>
 
               <p class="muted">
-                ${escapeHtml(issue.category)} ·
-                ${escapeHtml(issue.project)} ·
-                ${formatMs(issue.duration)}
+                ${escapeHtml(issue.category)} &middot;
+                ${occurrences} occurrence${
+                  occurrences === 1 ? '' : 's'
+                } &middot;
+                ${escapeHtml(affectedBrowsers)}
               </p>
             </div>
 
             <div class="issue-badges">
+              <span class="priority-badge">
+                ${escapeHtml(
+                  issuePriority(issue)
+                )}
+              </span>
               <span
                 class="classification classification-${escapeHtml(
                   classification
@@ -915,6 +5142,42 @@ setText(
                   <p class="issue-intelligence">
                     ${escapeHtml(intelligence)}
                   </p>
+                `
+              : ''
+          }
+
+          ${
+            issueScope
+              ? `
+                  <p class="muted">
+                    ${escapeHtml(issueScope)}
+                  </p>
+                `
+              : ''
+          }
+
+          ${
+            sourceLocation
+              ? `
+                  <p class="muted">
+                    <strong>Source:</strong>
+                    ${escapeHtml(sourceLocation)}
+                  </p>
+                `
+              : ''
+          }
+
+          ${
+            affectedEnvironmentList
+              ? `
+                  <details class="issue-error">
+                    <summary>
+                     ${escapeHtml(scopeDetailLabel)}
+                   </summary>
+                    <pre>${escapeHtml(
+                      affectedEnvironmentList
+                    )}</pre>
+                  </details>
                 `
               : ''
           }
@@ -1031,13 +5294,60 @@ function renderHistory(history = []) {
 }
 
 function renderSummary(run) {
-  const counts =
-    run.classificationSummary ??
-    classificationCounts(run.tests ?? []);
+  const actionableIssues =
+    Array.isArray(currentIssues)
+      ? currentIssues
+      : [];
+
+  const counts = actionableIssues.reduce(
+    (summary, issue) => {
+      switch (issue.classification) {
+        case 'product-bug':
+          summary.productBugs += 1;
+          break;
+
+        case 'content-bug':
+          summary.contentBugs += 1;
+          break;
+
+        case 'automation-issue':
+          summary.automationIssues += 1;
+          break;
+
+        case 'accessibility-issue':
+          summary.accessibilityIssues += 1;
+          break;
+
+        case 'performance-issue':
+          summary.performanceIssues += 1;
+          break;
+
+        case 'security-issue':
+          summary.securityIssues += 1;
+          break;
+
+        case 'needs-investigation':
+        default:
+          summary.needsInvestigation += 1;
+          break;
+      }
+
+      return summary;
+    },
+    {
+      productBugs: 0,
+      contentBugs: 0,
+      automationIssues: 0,
+      accessibilityIssues: 0,
+      performanceIssues: 0,
+      securityIssues: 0,
+      needsInvestigation: 0,
+    }
+  );
 
   const summary = [];
 
-  if ((counts.productBugs ?? 0) > 0) {
+  if (counts.productBugs > 0) {
     summary.push(
       `${counts.productBugs} confirmed product bug${
         counts.productBugs === 1 ? '' : 's'
@@ -1049,7 +5359,7 @@ function renderSummary(run) {
     );
   }
 
-  if ((counts.contentBugs ?? 0) > 0) {
+  if (counts.contentBugs > 0) {
     summary.push(
       `${counts.contentBugs} content issue${
         counts.contentBugs === 1 ? '' : 's'
@@ -1057,11 +5367,21 @@ function renderSummary(run) {
     );
   }
 
-  if ((counts.automationIssues ?? 0) > 0) {
+  if (counts.automationIssues > 0) {
     summary.push(
       `${counts.automationIssues} Playwright automation issue${
         counts.automationIssues === 1 ? '' : 's'
       } should be updated.`
+    );
+  }
+
+  if (counts.needsInvestigation > 0) {
+    summary.push(
+      `${counts.needsInvestigation} issue${
+        counts.needsInvestigation === 1 ? '' : 's'
+      } require${
+        counts.needsInvestigation === 1 ? 's' : ''
+      } further investigation.`
     );
   }
 
@@ -1077,7 +5397,130 @@ function renderSummary(run) {
       : `P95 duration is ${formatMs(p95)}.`
   );
 
-  setText('summary-text', summary.join(' '));
+  setText(
+    'summary-text',
+    summary.join(' ')
+  );
+}
+
+
+function updateIssueFilterOptions(
+  selectId,
+  values,
+  allLabel
+) {
+  const select = byId(selectId);
+
+  if (!select) {
+    return;
+  }
+
+  const previousValue =
+    select.value || 'all';
+
+  const uniqueValues = [
+    ...new Set(
+      values
+        .filter(Boolean)
+        .map(value => String(value))
+    ),
+  ].sort((first, second) =>
+    first.localeCompare(second)
+  );
+
+  select.replaceChildren();
+
+  const allOption =
+    document.createElement('option');
+
+  allOption.value = 'all';
+  allOption.textContent = allLabel;
+
+  select.appendChild(allOption);
+
+  for (const value of uniqueValues) {
+    const option =
+      document.createElement('option');
+
+    option.value = value;
+    option.textContent = value;
+
+    select.appendChild(option);
+  }
+
+  const previousStillExists =
+    [...select.options].some(
+      option =>
+        option.value === previousValue
+    );
+
+  select.value =
+    previousStillExists
+      ? previousValue
+      : 'all';
+}
+
+function populateIssueFilters() {
+  const issues =
+    Array.isArray(currentIssues)
+      ? currentIssues
+      : [];
+
+  const categories =
+    issues.map(issue => issue.category);
+
+  const sources =
+    issues.map(issue => issue.source);
+
+  const browsers =
+    issues.flatMap(issue => {
+      if (
+        Array.isArray(issue.affectedBrowsers)
+      ) {
+        return issue.affectedBrowsers;
+      }
+
+      return issue.browser
+        ? [issue.browser]
+        : [];
+    });
+
+  const profiles =
+    issues.flatMap(issue => {
+      if (
+        Array.isArray(issue.affectedProfiles)
+      ) {
+        return issue.affectedProfiles;
+      }
+
+      return issue.profile
+        ? [issue.profile]
+        : [];
+    });
+
+  updateIssueFilterOptions(
+    'category-filter',
+    categories,
+    'All categories'
+  );
+
+  updateIssueFilterOptions(
+    'browser-filter',
+    browsers,
+    'All browsers'
+  );
+
+  updateIssueFilterOptions(
+    'profile-filter',
+    profiles,
+    'All profiles'
+  );
+
+  updateIssueFilterOptions(
+    'source-filter',
+    sources,
+    'All sources'
+  );
 }
 
 function bindFilters() {
@@ -1085,6 +5528,11 @@ function bindFilters() {
     byId('issue-search'),
     byId('classification-filter'),
     byId('severity-filter'),
+    byId('priority-filter'),
+    byId('category-filter'),
+    byId('browser-filter'),
+    byId('profile-filter'),
+    byId('source-filter'),
   ].filter(Boolean);
 
   for (const control of controls) {
@@ -1301,10 +5749,11 @@ function renderSiteStatistics(siteStatistics) {
 }
 
 async function render() {
-  cconst [run, history, unifiedIssues] =
+  const [run, history, issues, unifiedIssues] =
   await Promise.all([
     loadJson('./data/latest-run.json', null),
     loadJson('./data/history.json', []),
+    loadJson('./data/issues.json', []),
     loadJson('./data/unified-issues.json', []),
   ]);
 
@@ -1317,9 +5766,15 @@ async function render() {
   }
 
   currentRun = run;
-  currentIssues = issues.length
-  ? issues
-  : run.prioritizedIssues ?? [];
+
+ currentIssues =
+  unifiedIssues.length
+    ? unifiedIssues
+    : issues.length
+      ? issues
+      : run.prioritizedIssues ?? [];
+
+  populateIssueFilters();
 
   renderMetadata(run);
   renderReleaseAssessment(run);
@@ -1332,6 +5787,12 @@ async function render() {
   run,
   history
 );
+  renderUxUi(run);
+  renderSecurityPerformance(run);
+  renderCompatibility(run);
+  renderApiBackend(run);
+  renderCrossLayer(run);
+  renderUnifiedDecision(run);
   renderExecutiveSummary(run);
   renderBrowsers(run.browserStatistics ?? {});
   renderBrowserMatrix(run.browserStatistics ?? {});
@@ -1491,29 +5952,7 @@ function bindSiteFilters() {
     });
 }
 
-document
-  .querySelectorAll('.site-health-card')
-  .forEach(card => {
-    card.addEventListener(
-      'click',
-      () => {
-        const site =
-          card.dataset.site;
-
-        if (!site) {
-          return;
-        }
-
-        if (activeSiteFilter === site) {
-          setActiveSiteFilter('all');
-        } else {
-          setActiveSiteFilter(site);
-        }
-      }
-    );
-  });
-
-  function setActiveSiteFilter(site) {
+function setActiveSiteFilter(site) {
   activeSiteFilter = site;
 
   document
@@ -1537,28 +5976,6 @@ document
 
 renderIssues();
 }
-
-document
-  .querySelectorAll('.site-health-card')
-  .forEach(card => {
-    card.addEventListener(
-      'click',
-      () => {
-        const site =
-          card.dataset.site;
-
-        if (!site) {
-          return;
-        }
-
-        if (activeSiteFilter === site) {
-          setActiveSiteFilter('all');
-        } else {
-          setActiveSiteFilter(site);
-        }
-      }
-    );
-  });
 
 bindFilters();
 bindSiteFilters();

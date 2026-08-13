@@ -1,6 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import type {
+  QualityDimension,
+} from '../models/types';
+
+import {
+  qualityDimensionsForCategory,
+} from '../analyzers/sentinel-quality-intelligence';
+
+
 
 export type DiscoveryPriority =
   | 'P0'
@@ -19,6 +28,14 @@ export interface DashboardDiscoveryIssue {
   category: string;
   severity: string;
 
+  qualityDimensions?:
+    QualityDimension[];
+
+  requirementIds?:
+    string[];
+
+  acceptanceCriteriaIds?:
+    string[];
   title: string;
   description: string;
   evidence?: string;
@@ -33,6 +50,12 @@ export interface DashboardDiscoveryIssue {
   affectedRoutes: string[];
 
   fingerprint: string;
+
+  criticalFlowIds?:
+    string[];
+
+  flowScenarioIds?:
+    string[];
 }
 
 
@@ -74,6 +97,13 @@ function readDiscoveryFile(
 
         source:
           'discovery' as const,
+
+        qualityDimensions:
+          finding.qualityDimensions?.length
+            ? finding.qualityDimensions
+            : qualityDimensionsForCategory(
+                finding.category
+              ),
       })
     );
   } catch {

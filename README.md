@@ -799,3 +799,14 @@ That is the direction of QA Sentinel Tyra.
 <p align="center">
   Built as part of the TYRA Labs ecosystem.
 </p>
+
+## Project status — Milestone 5 complete
+
+**Milestone 5 – Quality Intelligence Framework: ✅ COMPLETE**
+
+QA Sentinel Tyra now includes Requirements & Functionality, Critical Flows, UX/UI, Security & Performance, Compatibility, API & Backend, Cross-layer Correlation, and Unified Scoring & Decisioning.
+
+**Release authority:** Unified Decisioning v5
+**Dashboard schema:** v5
+**Legacy release assessment:** preserved as comparison telemetry
+**Milestone 5:** ✅ COMPLETE

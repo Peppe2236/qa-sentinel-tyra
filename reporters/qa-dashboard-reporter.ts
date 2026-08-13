@@ -1,3 +1,45 @@
+import {
+  analyzeUnifiedDecisioning,
+} from './analyzers/sentinel-unified-scoring';
+
+import {
+  analyzeCrossLayerCorrelation,
+} from './analyzers/sentinel-cross-layer';
+
+import {
+  applyApiBackendReleaseGate,
+  promoteApiBackendIntelligence,
+} from './analyzers/sentinel-api-backend';
+
+import {
+  analyzeCompatibility,
+  applyCompatibilityReleaseGate,
+} from './analyzers/sentinel-compatibility';
+
+import {
+  analyzeSecurityPerformance,
+  applySecurityPerformanceReleaseGate,
+} from './analyzers/sentinel-security-performance';
+
+import {
+  loadSecurityPerformanceConfig,
+} from './utils/security-performance-config';
+
+import {
+  analyzeUxUi,
+  applyUxUiReleaseGate,
+} from './analyzers/sentinel-ux-ui';
+
+import {
+  loadCriticalFlows,
+} from './utils/critical-flows';
+
+import {
+  analyzeCriticalFlowCoverage,
+  applyCriticalFlowReleaseGate,
+  buildCriticalFlowEvidenceFromTests,
+} from './analyzers/sentinel-critical-flows';
+
 import type {
   FullConfig,
   FullResult,
@@ -14,6 +56,10 @@ import {
   loadDiscoveryIssues,
 } from './utils/discovery-issues';
 
+import type {
+  DashboardDiscoveryIssue,
+} from './utils/discovery-issues';
+
 import {
   detectCategory,
   VITAL_RANK,
@@ -22,6 +68,12 @@ import {
 import {
   detectSeverity,
 } from './analyzers/sentinel-severity';
+
+import {
+  analyzeTestQualityContext,
+  buildQualityDimensionStatistics,
+} from './analyzers/sentinel-quality-intelligence';
+
 
 import {
   analyzeAttachments,
@@ -72,9 +124,26 @@ import {
   consolidateTestIssues,
 } from './utils/test-issue-dedup';
 
+import {
+  loadRequirements,
+} from './utils/requirements';
+
+import {
+  analyzeRequirementCoverage,
+  applyRequirementReleaseGate,
+  buildRequirementEvidenceFromTests,
+} from './analyzers/sentinel-requirements';
+
+
 import type {
   ActionableTestIssue,
 } from './utils/test-issue-dedup';
+
+type UnifiedReleaseIssue =
+  | ActionableTestIssue
+  | DashboardDiscoveryIssue
+  | ApiIntelligenceIssue
+  | BackendIntelligenceIssue;
 
 import {
   writeMarkdownReport,
@@ -91,6 +160,8 @@ import type {
   ReleaseAssessment,
   RiskLevel,
   RunMetadata,
+  ApiIntelligenceIssue,
+  BackendIntelligenceIssue,
 } from './models/types';
 
 function resolveBrowserFamily(
@@ -206,6 +277,124 @@ function buildClassificationSummary(
       countClassification(tests, 'warning'),
   };
 }
+
+function buildActionableClassificationSummary(
+  issues: ActionableTestIssue[]
+): ClassificationSummary {
+  const count = (
+    classification: IssueClassification
+  ): number =>
+    issues.filter(
+      issue =>
+        issue.classification === classification
+    ).length;
+
+  return {
+    productBugs:
+      count('product-bug'),
+
+    contentBugs:
+      count('content-bug'),
+
+    automationIssues:
+      count('automation-issue'),
+
+    accessibilityIssues:
+      count('accessibility-issue'),
+
+    performanceIssues:
+      count('performance-issue'),
+
+    securityIssues:
+      count('security-issue'),
+
+    needsInvestigation:
+      count('needs-investigation'),
+
+    warnings:
+      count('warning'),
+  };
+}
+
+
+function uniqueStrings(
+  values: string[]
+): string[] {
+  return [
+    ...new Set(
+      values.filter(Boolean)
+    ),
+  ];
+}
+
+
+function enrichActionableIssueQualityContext(
+  issue: ActionableTestIssue,
+  tests: DashboardTestResult[]
+): ActionableTestIssue {
+  const relatedTests =
+    tests.filter(
+      test =>
+        issue.sourceTestIds.includes(
+          test.id
+        )
+    );
+
+  return {
+    ...issue,
+
+    qualityDimensions:
+      [
+        ...new Set(
+          relatedTests.flatMap(
+            test =>
+              test.qualityDimensions ??
+              []
+          )
+        ),
+      ],
+
+    requirementIds:
+      uniqueStrings(
+        relatedTests.flatMap(
+          test =>
+            test.requirementIds ??
+            []
+        )
+      ),
+
+    acceptanceCriteriaIds:
+      uniqueStrings(
+        relatedTests.flatMap(
+          test =>
+            test.acceptanceCriteriaIds ??
+            []
+        )
+      ),
+
+    criticalFlows:
+      uniqueStrings(
+        relatedTests.flatMap(
+          test =>
+            test.criticalFlowIds?.length
+              ? test.criticalFlowIds
+              : test.criticalFlow
+                ? [test.criticalFlow]
+                : []
+        )
+      ),
+
+    flowScenarioIds:
+      uniqueStrings(
+        relatedTests.flatMap(
+          test =>
+            test.flowScenarioIds ??
+            []
+        )
+      ),
+  };
+}
+
 
 function issueConfidence(
   classification: IssueClassification
@@ -386,24 +575,52 @@ function enrichResult(
 
 function releaseRisk(
   summary: ClassificationSummary,
-  tests: DashboardTestResult[]
+  issues: UnifiedReleaseIssue[]
 ): RiskLevel {
-  const criticalProductBugs = tests.filter(
-    test =>
-      test.classification === 'product-bug' &&
-      test.severity === 'critical'
-  ).length;
+  const criticalProductBugs =
+    issues.filter(
+      issue =>
+        issue.source === 'test' &&
+        issue.classification === 'product-bug' &&
+        issue.severity === 'critical'
+    ).length;
+
+  const hasP0DiscoveryIssue =
+    issues.some(
+      issue =>
+        issue.source === 'discovery' &&
+        issue.priority === 'P0'
+    );
+
+  const hasHighPriorityDiscoveryIssue =
+    issues.some(
+      issue =>
+        issue.source === 'discovery' &&
+        (
+          issue.priority === 'P1' ||
+          issue.priority === 'P2'
+        )
+    );
+
+  const hasMediumPriorityDiscoveryIssue =
+    issues.some(
+      issue =>
+        issue.source === 'discovery' &&
+        issue.priority === 'P3'
+    );
 
   if (
     summary.securityIssues > 0 ||
-    criticalProductBugs > 0
+    criticalProductBugs > 0 ||
+    hasP0DiscoveryIssue
   ) {
     return 'critical';
   }
 
   if (
     summary.productBugs > 1 ||
-    summary.accessibilityIssues > 2
+    summary.accessibilityIssues > 2 ||
+    hasHighPriorityDiscoveryIssue
   ) {
     return 'high';
   }
@@ -411,7 +628,8 @@ function releaseRisk(
   if (
     summary.productBugs > 0 ||
     summary.performanceIssues > 0 ||
-    summary.needsInvestigation > 0
+    summary.needsInvestigation > 0 ||
+    hasMediumPriorityDiscoveryIssue
   ) {
     return 'medium';
   }
@@ -422,30 +640,43 @@ function releaseRisk(
 function buildReleaseAssessment(
   health: number,
   summary: ClassificationSummary,
-  tests: DashboardTestResult[],
-  actionableIssues: ActionableTestIssue[]
+  issues: UnifiedReleaseIssue[]
 ): ReleaseAssessment {
   const risk =
-    releaseRisk(summary, tests);
+    releaseRisk(
+      summary,
+      issues
+    );
 
   const blockingIssues =
-  actionableIssues.filter(
-    issue =>
-      (
-        issue.classification === 'product-bug' &&
-        ['critical', 'high'].includes(issue.severity)
-      ) ||
-      issue.classification === 'security-issue'
-  ).length;
+    issues.filter(
+      issue => {
+        if (
+          issue.source === 'discovery'
+        ) {
+          return issue.priority === 'P0';
+        }
 
-const totalIssues =
-  actionableIssues.length;
+        return (
+          (
+            issue.classification === 'product-bug' &&
+            ['critical', 'high'].includes(
+              issue.severity
+            )
+          ) ||
+          issue.classification === 'security-issue'
+        );
+      }
+    ).length;
 
-const nonBlockingIssues =
-  Math.max(
-    0,
-    totalIssues - blockingIssues
-  );
+  const totalIssues =
+    issues.length;
+
+  const nonBlockingIssues =
+    Math.max(
+      0,
+      totalIssues - blockingIssues
+    );
 
   if (
     blockingIssues > 0 ||
@@ -460,13 +691,15 @@ const nonBlockingIssues =
       verdict:
         'The current build should not be released until blocking issues are resolved.',
       recommendedAction:
-        'Fix critical product or security issues, rerun the affected tests and review the release assessment again.',
+        'Fix critical product, security or P0 discovery issues, rerun the affected tests and review the release assessment again.',
     };
   }
 
   if (
     summary.productBugs > 0 ||
     summary.needsInvestigation > 0 ||
+    risk === 'high' ||
+    risk === 'medium' ||
     health < 90
   ) {
     return {
@@ -478,7 +711,7 @@ const nonBlockingIssues =
       verdict:
         'The build is generally stable, but unresolved issues should be reviewed before release.',
       recommendedAction:
-        'Review confirmed product issues first, then correct content and automation findings.',
+        'Review confirmed product and high-priority discovery issues first, then correct content and automation findings.',
     };
   }
 
@@ -494,6 +727,266 @@ const nonBlockingIssues =
       'Continue monitoring and expand coverage for important user flows.',
   };
 }
+
+
+/*
+ * Milestone 5 - Canonical Unified Release Authority
+ *
+ * RiskLevel is deliberately derived from semantic state,
+ * priority and severity.
+ *
+ * riskScore is NOT converted using arbitrary numeric
+ * thresholds.
+ */
+function canonicalRiskFromUnifiedDecision(
+  decision:
+    ReturnType<
+      typeof analyzeUnifiedDecisioning
+    >
+): RiskLevel {
+
+  const priority =
+    decision.highestPriority;
+
+  const severity =
+    decision.highestSeverity;
+
+
+  if (
+    priority === 'P0' ||
+    severity === 'critical'
+  ) {
+    return 'critical';
+  }
+
+
+  if (
+    priority === 'P1' ||
+    severity === 'high' ||
+    decision.state === 'not-ready'
+  ) {
+    return 'high';
+  }
+
+
+  if (
+    priority === 'P2' ||
+    priority === 'P3' ||
+    severity === 'medium' ||
+    decision.state ===
+      'ready-with-warnings' ||
+    decision.state ===
+      'not-verified'
+  ) {
+    return 'medium';
+  }
+
+
+  return 'low';
+}
+
+
+function buildCanonicalReleaseAssessment(
+  legacy:
+    ReleaseAssessment,
+
+  decision:
+    ReturnType<
+      typeof analyzeUnifiedDecisioning
+    >
+): ReleaseAssessment {
+
+  const gates =
+    decision.gateSummary;
+
+
+  const risk =
+    canonicalRiskFromUnifiedDecision(
+      decision
+    );
+
+
+  /*
+   * Unified confidence is canonical whenever available.
+   *
+   * A clean/no-decision-unit run may legitimately have
+   * null Unified evidence confidence. ReleaseAssessment
+   * historically requires a number, so the already
+   * established release confidence is retained only as
+   * a compatibility fallback in that case.
+   */
+  const confidence =
+    decision.confidence ??
+    legacy.confidence;
+
+
+  const blockers =
+    decision.blockingGateDimensions;
+
+  const gaps =
+    decision.verificationGapDimensions;
+
+
+  let verdict:
+    string;
+
+  let recommendedAction:
+    string;
+
+
+  if (
+    decision.state ===
+      'not-ready'
+  ) {
+
+    verdict =
+      blockers.length > 0
+        ? (
+            'The build is not ready for release. ' +
+            'Unified Decisioning detected blocking ' +
+            'quality gates: ' +
+            blockers.join(', ') +
+            '.'
+          )
+        : (
+            'The build is not ready for release. ' +
+            'Unified Decisioning detected confirmed ' +
+            'release-blocking evidence.'
+          );
+
+
+    recommendedAction =
+      'Resolve the blocking decision units or quality gates, ' +
+      'rerun the affected verification and review the ' +
+      'Unified release assessment again.';
+
+  } else if (
+    decision.state ===
+      'not-verified'
+  ) {
+
+    verdict =
+      'Release readiness cannot currently be verified because ' +
+      'required quality intelligence is incomplete.';
+
+
+    recommendedAction =
+      'Complete the missing quality verification before making ' +
+      'a release decision.';
+
+  } else if (
+    decision.state ===
+      'ready-with-warnings'
+  ) {
+
+    verdict =
+      gaps.length > 0
+        ? (
+            'No confirmed release blocker was detected, but ' +
+            'Unified Decisioning found warnings or verification ' +
+            'gaps in: ' +
+            gaps.join(', ') +
+            '.'
+          )
+        : (
+            'No confirmed release blocker was detected, but ' +
+            'Unified Decisioning found non-blocking issues that ' +
+            'should be reviewed before release.'
+          );
+
+
+    recommendedAction =
+      'Review the Unified warning decision units and complete ' +
+      'remaining verification gaps before release where practical.';
+
+  } else {
+
+    verdict =
+      'Unified Decisioning found no confirmed release blocker, ' +
+      'warning decision unit or unresolved quality gate.';
+
+
+    recommendedAction =
+      'The build is ready according to the current Unified ' +
+      'Quality Intelligence evidence. Continue monitoring ' +
+      'quality trends.';
+  }
+
+
+  return {
+    status:
+      decision.state,
+
+    risk,
+
+    confidence,
+
+    /*
+     * Schema v5 compatibility fields.
+     *
+     * These now represent deduplicated decision units,
+     * not duplicated raw evidence records.
+     */
+    blockingIssues:
+      decision.blockingUnits,
+
+    nonBlockingIssues:
+      decision.warningUnits,
+
+    verdict,
+
+    recommendedAction,
+
+    blockingRequirements:
+      gates.blockingRequirements,
+
+    requirementGaps:
+      gates.requirementGaps,
+
+    blockingFlows:
+      gates.blockingFlows,
+
+    flowGaps:
+      gates.flowGaps,
+
+    blockingUxAreas:
+      gates.blockingUxAreas,
+
+    uxUiGaps:
+      gates.uxUiGaps,
+
+    blockingSecurityAreas:
+      gates.blockingSecurityAreas,
+
+    blockingPerformanceAreas:
+      gates.blockingPerformanceAreas,
+
+    securityGaps:
+      gates.securityGaps,
+
+    performanceGaps:
+      gates.performanceGaps,
+
+    blockingCompatibilityRegressions:
+      gates.blockingCompatibilityRegressions,
+
+    compatibilityGaps:
+      gates.compatibilityGaps,
+
+    blockingApiIssues:
+      gates.blockingApiIssues,
+
+    blockingBackendIssues:
+      gates.blockingBackendIssues,
+
+    apiIntelligenceGaps:
+      gates.apiIntelligenceGaps,
+
+    backendIntelligenceGaps:
+      gates.backendIntelligenceGaps,
+  };
+}
+
 
 function buildMetadata(): RunMetadata {
   return {
@@ -521,6 +1014,7 @@ function printReleaseStatus(
     ready: 'READY FOR RELEASE',
     'ready-with-warnings': 'READY WITH WARNINGS',
     'not-ready': 'DO NOT RELEASE',
+    'not-verified': 'RELEASE NOT VERIFIED',
   }[assessment.status];
 
   console.log('');
@@ -596,6 +1090,13 @@ class QaDashboardReporter implements Reporter {
         category
       );
 
+    const qualityContext =
+      analyzeTestQualityContext(
+        test,
+        result,
+        category
+      );
+
     const fullTitle =
       test.titlePath().join(' > ');
 
@@ -653,6 +1154,24 @@ profile:
 
       vitalRank:
         VITAL_RANK[category],
+
+      qualityDimensions:
+        qualityContext.qualityDimensions,
+
+      requirementIds:
+        qualityContext.requirementIds,
+
+      acceptanceCriteriaIds:
+        qualityContext.acceptanceCriteriaIds,
+
+      criticalFlow:
+        qualityContext.criticalFlow,
+
+      criticalFlowIds:
+        qualityContext.criticalFlowIds,
+
+      flowScenarioIds:
+        qualityContext.flowScenarioIds,
 
       tags: [...test.tags],
 
@@ -800,31 +1319,315 @@ const prioritizedIssues =
 const actionableTestIssues =
   consolidateTestIssues(
     this.results
+  ).map(
+    issue =>
+      enrichActionableIssueQualityContext(
+        issue,
+        this.results
+      )
   );
 
-const unifiedIssues = [
-  ...actionableTestIssues,
-  ...discoveryIssues,
-];
+const baseUnifiedIssues:
+  UnifiedReleaseIssue[] = [
+    ...actionableTestIssues,
+    ...discoveryIssues,
+  ];
+
+
+const apiBackendPromotion =
+  promoteApiBackendIntelligence(
+    [
+      ...actionableTestIssues,
+      ...discoveryIssues,
+    ]
+  );
+
+
+const {
+  apiIssues,
+  backendIssues,
+  assessment:
+    apiBackendAssessment,
+} = apiBackendPromotion;
+
+
+const unifiedIssues:
+  UnifiedReleaseIssue[] = [
+    ...baseUnifiedIssues,
+    ...apiIssues,
+    ...backendIssues,
+  ];
+
+const crossLayerAssessment =
+  analyzeCrossLayerCorrelation(
+    unifiedIssues
+  );
+
+
+const qualityDimensionStatistics =
+  buildQualityDimensionStatistics(
+    unifiedIssues
+  );
+
+const uxUiAssessment =
+  analyzeUxUi(
+    this.results,
+    unifiedIssues
+  );
+
+const securityPerformanceConfig =
+  loadSecurityPerformanceConfig();
+
+const securityPerformanceAssessment =
+  analyzeSecurityPerformance(
+    this.results,
+    unifiedIssues,
+    performance,
+    securityPerformanceConfig
+  );
+
+const configuredCompatibilityProjects =
+  this.config?.projects ??
+  [];
+
+
+const expectedCompatibilityProjects =
+  Array.from(
+    new Set(
+      configuredCompatibilityProjects
+        .map(
+          project =>
+            project.name
+        )
+        .filter(Boolean)
+    )
+  );
+
+
+const expectedCompatibilityBrowsers =
+  Array.from(
+    new Set(
+      configuredCompatibilityProjects
+        .map(
+          project =>
+            resolveBrowserFamily(
+              project.name,
+              project.use?.browserName
+            )
+        )
+        .filter(
+          browser =>
+            browser !== 'Unknown'
+        )
+    )
+  );
+
+
+const expectedCompatibilityProfiles =
+  Array.from(
+    new Set(
+      configuredCompatibilityProjects
+        .map(
+          project =>
+            resolveProfile(
+              project.name
+            )
+        )
+        .filter(Boolean)
+    )
+  );
+
+
+const compatibilityAssessment =
+  analyzeCompatibility(
+    this.results,
+    unifiedIssues,
+    {
+      browsers:
+        expectedCompatibilityBrowsers,
+
+      profiles:
+        expectedCompatibilityProfiles,
+
+      projects:
+        expectedCompatibilityProjects,
+    }
+  );
+
+const requirements =
+  loadRequirements();
+
+const requirementEvidence =
+  buildRequirementEvidenceFromTests(
+    this.results,
+    actionableTestIssues
+  );
+
+const requirementCoverage =
+  analyzeRequirementCoverage(
+    requirements,
+    requirementEvidence
+  );
+
+const criticalFlows =
+  loadCriticalFlows();
+
+const criticalFlowEvidence =
+  buildCriticalFlowEvidenceFromTests(
+    this.results,
+    actionableTestIssues
+  );
+
+const criticalFlowCoverage =
+  analyzeCriticalFlowCoverage(
+    criticalFlows,
+    criticalFlowEvidence
+  );
 
     const classificationSummary =
       buildClassificationSummary(
         this.results
       );
 
-    const releaseAssessment =
-  buildReleaseAssessment(
-    health.health,
-    classificationSummary,
-    this.results,
-    actionableTestIssues
-  );
+    const releaseClassificationSummary =
+      buildActionableClassificationSummary(
+        actionableTestIssues
+      );
+
+    const baseReleaseAssessment =
+      buildReleaseAssessment(
+        health.health,
+        releaseClassificationSummary,
+        baseUnifiedIssues
+      );
+
+    const requirementReleaseAssessment =
+      applyRequirementReleaseGate(
+        baseReleaseAssessment,
+        requirementCoverage
+      );
+
+    const flowReleaseAssessment =
+      applyCriticalFlowReleaseGate(
+        requirementReleaseAssessment,
+        criticalFlowCoverage
+      );
+
+    const uxUiReleaseAssessment =
+      applyUxUiReleaseGate(
+        flowReleaseAssessment,
+        uxUiAssessment
+      );
+
+    const securityPerformanceReleaseAssessment =
+      applySecurityPerformanceReleaseGate(
+        uxUiReleaseAssessment,
+        securityPerformanceAssessment
+      );
+
+    const compatibilityReleaseAssessment =
+      applyCompatibilityReleaseGate(
+        securityPerformanceReleaseAssessment,
+        compatibilityAssessment
+      );
+
+    const legacyReleaseAssessment =
+      applyApiBackendReleaseGate(
+        compatibilityReleaseAssessment,
+        apiBackendAssessment,
+        apiIssues,
+        backendIssues
+      );
 
     const metadata =
       buildMetadata();
 
-    const run: DashboardRun = {
-      schemaVersion: 4,
+        /*
+     * Milestone 5.9 shadow decision.
+     *
+     * IMPORTANT:
+     * legacyReleaseAssessment above remains the official
+     * release decision until shadow comparison is
+     * explicitly approved.
+     */
+    const unifiedDecisionAssessment =
+      analyzeUnifiedDecisioning(
+        unifiedIssues,
+        crossLayerAssessment,
+        {
+          complete:
+            Boolean(
+              requirementCoverage &&
+              criticalFlowCoverage &&
+              uxUiAssessment &&
+              securityPerformanceAssessment &&
+              compatibilityAssessment &&
+              apiBackendAssessment &&
+              crossLayerAssessment
+            ),
+
+          blockingRequirements:
+            legacyReleaseAssessment.blockingRequirements,
+
+          requirementGaps:
+            legacyReleaseAssessment.requirementGaps,
+
+          blockingFlows:
+            legacyReleaseAssessment.blockingFlows,
+
+          flowGaps:
+            legacyReleaseAssessment.flowGaps,
+
+          blockingUxAreas:
+            legacyReleaseAssessment.blockingUxAreas,
+
+          uxUiGaps:
+            legacyReleaseAssessment.uxUiGaps,
+
+          blockingSecurityAreas:
+            legacyReleaseAssessment.blockingSecurityAreas,
+
+          blockingPerformanceAreas:
+            legacyReleaseAssessment.blockingPerformanceAreas,
+
+          securityGaps:
+            legacyReleaseAssessment.securityGaps,
+
+          performanceGaps:
+            legacyReleaseAssessment.performanceGaps,
+
+          blockingCompatibilityRegressions:
+            legacyReleaseAssessment.blockingCompatibilityRegressions,
+
+          compatibilityGaps:
+            legacyReleaseAssessment.compatibilityGaps,
+
+          blockingApiIssues:
+            legacyReleaseAssessment.blockingApiIssues,
+
+          blockingBackendIssues:
+            legacyReleaseAssessment.blockingBackendIssues,
+
+          apiIntelligenceGaps:
+            legacyReleaseAssessment.apiIntelligenceGaps,
+
+          backendIntelligenceGaps:
+            legacyReleaseAssessment.backendIntelligenceGaps,
+        }
+      );
+
+
+
+
+const releaseAssessment =
+  buildCanonicalReleaseAssessment(
+    legacyReleaseAssessment,
+    unifiedDecisionAssessment
+  );
+
+
+const run: DashboardRun = {
+      schemaVersion: 5,
       runId: crypto.randomUUID(),
 
       environment:
@@ -858,8 +1661,34 @@ const unifiedIssues = [
       siteStatistics,
       profileStatistics,
 
+      qualityDimensionStatistics,
+
+      uxUiAssessment,
+
+      securityPerformanceAssessment,
+
+      compatibilityAssessment,
+
+      apiBackendAssessment,
+
+      crossLayerAssessment,
+
+      unifiedDecisionAssessment,
+      apiIssues,
+      backendIssues,
+
+      requirements,
+      requirementCoverage,
+
+      criticalFlows,
+      criticalFlowCoverage,
       classificationSummary,
       releaseAssessment,
+
+  legacyReleaseAssessment,
+
+  releaseDecisionSource:
+    'unified-v5',
       metadata,
 
       prioritizedIssues,

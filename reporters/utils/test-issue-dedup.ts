@@ -22,6 +22,19 @@ export interface ActionableTestIssue {
   category:
     DashboardTestResult['category'];
 
+  qualityDimensions?:
+    DashboardTestResult['qualityDimensions'];
+
+  requirementIds?:
+    string[];
+
+  acceptanceCriteriaIds?:
+    string[];
+
+  criticalFlows?:
+    string[];
+
+
   classification?:
     DashboardTestResult['classification'];
 
@@ -43,6 +56,9 @@ export interface ActionableTestIssue {
 
   errorMessage?: string;
   errorSnippet?: string;
+
+  flowScenarioIds?:
+    string[];
 }
 
 
