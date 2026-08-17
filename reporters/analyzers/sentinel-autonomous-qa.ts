@@ -4,6 +4,8 @@ import type {
   AutonomousQaActionCandidate,
   AutonomousQaAssessment,
   AutonomousQaEvidenceProvenance,
+  AutonomousQaExecutionPhase,
+  AutonomousQaExecutionPlanStep,
   AutonomousQaTestSelectionCandidate,
   AutonomousQaTestSelectionReason,
   DashboardTestResult,
@@ -990,6 +992,393 @@ export function analyzeAutonomousQaTestSelection(
           )
         : (
             'Milestone 6.2 test-selection capability is available, but the current run produced no eligible failed or Unified-linked test candidates. Execution remains disabled.'
+          ),
+  };
+}
+
+const EXECUTION_PHASE_ORDER:
+  AutonomousQaExecutionPhase[] = [
+    'release-blocking',
+    'risk-eligible',
+    'uncertainty-verification',
+    'evidence-follow-up',
+  ];
+
+function executionPhaseFor(
+  candidate:
+    AutonomousQaTestSelectionCandidate
+): AutonomousQaExecutionPhase {
+  if (
+    candidate.disposition === 'block' &&
+    candidate.riskEligible
+  ) {
+    return 'release-blocking';
+  }
+
+  if (candidate.riskEligible) {
+    return 'risk-eligible';
+  }
+
+  if (
+    candidate.evidenceState === 'automation' ||
+    candidate.evidenceState === 'uncertain'
+  ) {
+    return 'uncertainty-verification';
+  }
+
+  return 'evidence-follow-up';
+}
+
+function executionPhaseRank(
+  phase:
+    AutonomousQaExecutionPhase
+): number {
+  return EXECUTION_PHASE_ORDER.indexOf(
+    phase
+  );
+}
+
+function executionPlanRationale(
+  candidate:
+    AutonomousQaTestSelectionCandidate,
+  phase:
+    AutonomousQaExecutionPhase
+): string {
+  switch (phase) {
+    case 'release-blocking':
+      return (
+        'Plan first because existing Unified Decision evidence marks this logical test as blocking and risk-eligible. ' +
+        'The plan reuses existing release semantics and does not introduce a new risk score.'
+      );
+
+    case 'risk-eligible':
+      return (
+        'Plan before non-risk-eligible evidence because existing Unified Decision evidence marks this logical test as risk-eligible. ' +
+        'Existing priority and disposition are reused without additional weighting.'
+      );
+
+    case 'uncertainty-verification':
+      return (
+        'Plan as uncertainty verification because the evidence is automation-derived or uncertain and is not risk-eligible. ' +
+        'The purpose is to resolve uncertainty, not to promote it into confirmed product risk.'
+      );
+
+    case 'evidence-follow-up':
+      return (
+        'Plan as evidence follow-up because the logical test remains relevant to the current run or Unified evidence but is not currently risk-eligible.'
+      );
+  }
+}
+
+function buildExecutionPlanSteps(
+  candidates:
+    AutonomousQaTestSelectionCandidate[]
+): AutonomousQaExecutionPlanStep[] {
+  const prepared =
+    candidates.map(
+      candidate => {
+        const phase =
+          executionPhaseFor(
+            candidate
+          );
+
+        return {
+          candidate,
+          phase,
+        };
+      }
+    );
+
+  prepared.sort(
+    (a, b) => {
+      const phaseDiff =
+        executionPhaseRank(
+          a.phase
+        ) -
+        executionPhaseRank(
+          b.phase
+        );
+
+      if (phaseDiff !== 0) {
+        return phaseDiff;
+      }
+
+      if (
+        a.candidate.priority !==
+        b.candidate.priority
+      ) {
+        if (
+          a.candidate.priority === null
+        ) {
+          return 1;
+        }
+
+        if (
+          b.candidate.priority === null
+        ) {
+          return -1;
+        }
+
+        const priorityDiff =
+          priorityRank(
+            a.candidate.priority
+          ) -
+          priorityRank(
+            b.candidate.priority
+          );
+
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+      }
+
+      return (
+        a.candidate.site.localeCompare(
+          b.candidate.site
+        ) ||
+        a.candidate.file.localeCompare(
+          b.candidate.file
+        ) ||
+        a.candidate.title.localeCompare(
+          b.candidate.title
+        )
+      );
+    }
+  );
+
+  return prepared.map(
+    (
+      {
+        candidate,
+        phase,
+      },
+      index
+    ) => ({
+      id:
+        `execution-plan-${candidate.id}`,
+
+      order:
+        index + 1,
+
+      phase,
+
+      testSelectionCandidateId:
+        candidate.id,
+
+      title:
+        candidate.title,
+
+      file:
+        candidate.file,
+
+      site:
+        candidate.site,
+
+      projects:
+        orderedUnique(
+          candidate.variants.map(
+            variant =>
+              variant.project
+          )
+        ),
+
+      testIds:
+        orderedUnique(
+          candidate.variants.map(
+            variant =>
+              variant.testId
+          )
+        ),
+
+      priority:
+        candidate.priority,
+
+      disposition:
+        candidate.disposition,
+
+      evidenceState:
+        candidate.evidenceState,
+
+      riskEligible:
+        candidate.riskEligible,
+
+      executable:
+        false,
+
+      rationale:
+        executionPlanRationale(
+          candidate,
+          phase
+        ),
+
+      provenance:
+        candidate.provenance,
+    })
+  );
+}
+
+function executionPlanningActions(
+  steps:
+    AutonomousQaExecutionPlanStep[]
+): AutonomousQaActionCandidate[] {
+  return steps.map(
+    step => ({
+      id:
+        `action-${step.id}`,
+
+      kind:
+        'execution-planning',
+
+      state:
+        'candidate',
+
+      title:
+        `Plan ${step.title}`,
+
+      rationale:
+        (
+          step.rationale +
+          ' Autonomous execution remains disabled.'
+        ),
+
+      authority:
+        'advisory-only',
+
+      executable:
+        false,
+
+      confidence:
+        null,
+
+      provenance:
+        step.provenance,
+
+      testSelectionCandidateId:
+        step.testSelectionCandidateId,
+
+      executionPlanStepId:
+        step.id,
+    })
+  );
+}
+
+export function analyzeAutonomousQaExecutionPlanning(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[]
+): AutonomousQaAssessment {
+  const selectionAssessment =
+    analyzeAutonomousQaTestSelection(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues
+    );
+
+  const testSelection =
+    selectionAssessment.testSelection;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !testSelection ||
+    testSelection.status ===
+      'not-verified'
+  ) {
+    return {
+      ...selectionAssessment,
+
+      executionPlan: {
+        status:
+          'not-verified',
+
+        stepCount:
+          0,
+
+        plannedTestCount:
+          0,
+
+        phases:
+          [],
+
+        steps:
+          [],
+      },
+
+      reason:
+        'Risk-based execution planning is not verified because test-selection or Unified Decision evidence is unavailable. Autonomous execution remains disabled.',
+    };
+  }
+
+  const steps =
+    buildExecutionPlanSteps(
+      testSelection.candidates
+    );
+
+  const phases =
+    EXECUTION_PHASE_ORDER.filter(
+      phase =>
+        steps.some(
+          step =>
+            step.phase === phase
+        )
+    );
+
+  const planningActions =
+    executionPlanningActions(
+      steps
+    );
+
+  return {
+    ...selectionAssessment,
+
+    capabilityStatus:
+      'execution-planning-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...selectionAssessment.candidateActions,
+      ...planningActions,
+    ],
+
+    executionPlan: {
+      status:
+        steps.length > 0
+          ? 'available'
+          : 'no-candidates',
+
+      stepCount:
+        steps.length,
+
+      plannedTestCount:
+        steps.reduce(
+          (
+            total,
+            step
+          ) =>
+            total +
+            step.testIds.length,
+          0
+        ),
+
+      phases,
+
+      steps,
+    },
+
+    reason:
+      steps.length > 0
+        ? (
+            'Milestone 6.3 produced an advisory execution plan from Milestone 6.2 logical-test candidates. Ordering reuses existing Unified disposition, risk eligibility and P0-P4 priority semantics; no new weighted score is introduced and execution remains disabled.'
+          )
+        : (
+            'Milestone 6.3 execution-planning capability is available, but there are no eligible test-selection candidates to plan. Execution remains disabled.'
           ),
   };
 }

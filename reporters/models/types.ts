@@ -553,6 +553,7 @@ export type AutonomousQaAuthority =
 export type AutonomousQaCapabilityStatus =
   | 'foundation-only'
   | 'test-selection-advisory'
+  | 'execution-planning-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -631,6 +632,73 @@ export interface AutonomousQaTestSelectionAssessment {
     AutonomousQaTestSelectionCandidate[];
 }
 
+export type AutonomousQaExecutionPhase =
+  | 'release-blocking'
+  | 'risk-eligible'
+  | 'uncertainty-verification'
+  | 'evidence-follow-up';
+
+export type AutonomousQaExecutionPlanStatus =
+  | 'available'
+  | 'no-candidates'
+  | 'not-verified';
+
+export interface AutonomousQaExecutionPlanStep {
+  id: string;
+  order: number;
+
+  phase:
+    AutonomousQaExecutionPhase;
+
+  testSelectionCandidateId:
+    string;
+
+  title: string;
+  file: string;
+  site: string;
+
+  projects:
+    string[];
+
+  testIds:
+    string[];
+
+  priority:
+    IntelligencePriority | null;
+
+  disposition:
+    UnifiedDecisionDisposition | null;
+
+  evidenceState:
+    UnifiedDecisionEvidenceState | null;
+
+  riskEligible:
+    boolean;
+
+  executable:
+    false;
+
+  rationale:
+    string;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+}
+
+export interface AutonomousQaExecutionPlanAssessment {
+  status:
+    AutonomousQaExecutionPlanStatus;
+
+  stepCount: number;
+  plannedTestCount: number;
+
+  phases:
+    AutonomousQaExecutionPhase[];
+
+  steps:
+    AutonomousQaExecutionPlanStep[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -684,6 +752,9 @@ export interface AutonomousQaActionCandidate {
 
   testSelectionCandidateId?:
     string;
+
+  executionPlanStepId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -713,6 +784,9 @@ export interface AutonomousQaAssessment {
 
   testSelection?:
     AutonomousQaTestSelectionAssessment;
+
+  executionPlan?:
+    AutonomousQaExecutionPlanAssessment;
 
   reason:
     string;
