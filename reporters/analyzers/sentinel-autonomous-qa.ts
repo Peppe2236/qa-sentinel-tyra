@@ -6,6 +6,8 @@ import type {
   AutonomousQaEvidenceProvenance,
   AutonomousQaExecutionPhase,
   AutonomousQaExecutionPlanStep,
+  AutonomousQaFailureEvidence,
+  AutonomousQaFailureReproductionRecipe,
   AutonomousQaTestSelectionCandidate,
   AutonomousQaTestSelectionReason,
   DashboardTestResult,
@@ -1379,6 +1381,428 @@ export function analyzeAutonomousQaExecutionPlanning(
           )
         : (
             'Milestone 6.3 execution-planning capability is available, but there are no eligible test-selection candidates to plan. Execution remains disabled.'
+          ),
+  };
+}
+
+function failureEvidenceFor(
+  step:
+    AutonomousQaExecutionPlanStep,
+  tests:
+    DashboardTestResult[]
+): AutonomousQaFailureEvidence[] {
+  const targetTestIds =
+    new Set(step.testIds);
+
+  return tests
+    .filter(
+      test =>
+        targetTestIds.has(test.id) &&
+        isFailedCurrentRun(test)
+    )
+    .sort(
+      (a, b) =>
+        a.project.localeCompare(
+          b.project
+        ) ||
+        a.id.localeCompare(b.id)
+    )
+    .map(
+      test => ({
+        testId:
+          test.id,
+
+        title:
+          test.title,
+
+        fullTitle:
+          test.fullTitle,
+
+        file:
+          test.file,
+
+        line:
+          test.line,
+
+        column:
+          test.column,
+
+        project:
+          test.project,
+
+        site:
+          test.site,
+
+        browserFamily:
+          test.browserFamily,
+
+        profile:
+          test.profile,
+
+        status:
+          test.status,
+
+        expectedStatus:
+          test.expectedStatus,
+
+        duration:
+          test.duration,
+
+        retry:
+          test.retry,
+
+        startedAt:
+          test.startedAt,
+
+        error:
+          test.error,
+
+        attachments:
+          test.attachments,
+
+        classification:
+          test.classification,
+
+        classificationReason:
+          test.classificationReason,
+
+        recommendation:
+          test.recommendation,
+
+        rootCause:
+          test.rootCause,
+
+        confidence:
+          test.confidence,
+
+        userImpact:
+          test.userImpact,
+      })
+    );
+}
+
+function failureReproductionInstructions(
+  step:
+    AutonomousQaExecutionPlanStep,
+  evidence:
+    AutonomousQaFailureEvidence[]
+): string[] {
+  const projects =
+    orderedUnique(
+      evidence.map(
+        item => item.project
+      )
+    );
+
+  const attachmentKinds =
+    orderedUnique(
+      evidence.flatMap(
+        item =>
+          item.attachments.map(
+            attachment =>
+              attachment.kind ??
+              'other'
+          )
+      )
+    );
+
+  const capturedEvidence =
+    attachmentKinds.length > 0
+      ? (
+          `Review the recorded ${attachmentKinds.join(', ')} evidence before assigning a new classification.`
+        )
+      : (
+          'No screenshot, video, trace or log attachment was captured; collect new evidence before assigning a new classification.'
+        );
+
+  return [
+    `Locate the recorded logical test in ${step.file}.`,
+    `Use only the recorded failing Playwright project metadata: ${projects.join(', ')}.`,
+    'Reproduce the recorded browser and profile variants and compare the observed status with expectedStatus.',
+    'Review the captured error message, stack and snippet without changing their original meaning.',
+    capturedEvidence,
+    'Record whether the failure reproduces and submit the new evidence for review; do not change release authority automatically.',
+  ];
+}
+
+function buildFailureReproductionRecipes(
+  steps:
+    AutonomousQaExecutionPlanStep[],
+  tests:
+    DashboardTestResult[],
+  candidates:
+    AutonomousQaTestSelectionCandidate[]
+): AutonomousQaFailureReproductionRecipe[] {
+  const candidateById =
+    new Map<
+      string,
+      AutonomousQaTestSelectionCandidate
+    >();
+
+  for (const candidate of candidates) {
+    candidateById.set(
+      candidate.id,
+      candidate
+    );
+  }
+
+  const recipes:
+    AutonomousQaFailureReproductionRecipe[] = [];
+
+  for (const step of steps) {
+    const evidence =
+      failureEvidenceFor(
+        step,
+        tests
+      );
+
+    if (evidence.length === 0) {
+      continue;
+    }
+
+    const candidate =
+      candidateById.get(
+        step.testSelectionCandidateId
+      );
+
+    recipes.push({
+      id:
+        `failure-reproduction-${step.id}`,
+
+      order:
+        step.order,
+
+      executionPlanStepId:
+        step.id,
+
+      testSelectionCandidateId:
+        step.testSelectionCandidateId,
+
+      phase:
+        step.phase,
+
+      title:
+        step.title,
+
+      file:
+        step.file,
+
+      site:
+        step.site,
+
+      projects:
+        orderedUnique(
+          evidence.map(
+            item => item.project
+          )
+        ),
+
+      testIds:
+        evidence.map(
+          item => item.testId
+        ),
+
+      evidenceCount:
+        evidence.length,
+
+      attachmentCount:
+        evidence.reduce(
+          (total, item) =>
+            total +
+            item.attachments.length,
+          0
+        ),
+
+      confidence:
+        candidate?.confidence ??
+        null,
+
+      instructions:
+        failureReproductionInstructions(
+          step,
+          evidence
+        ),
+
+      evidence,
+
+      provenance:
+        step.provenance,
+
+      executable:
+        false,
+    });
+  }
+
+  return recipes;
+}
+
+function failureReproductionActions(
+  recipes:
+    AutonomousQaFailureReproductionRecipe[]
+): AutonomousQaActionCandidate[] {
+  return recipes.map(
+    recipe => ({
+      id:
+        `action-${recipe.id}`,
+
+      kind:
+        'failure-reproduction',
+
+      state:
+        'candidate',
+
+      title:
+        `Reproduce ${recipe.title}`,
+
+      rationale:
+        (
+          'Current-run failure evidence exists for a test already selected and ordered by the advisory execution plan. ' +
+          'The recipe preserves the recorded environment and evidence; autonomous execution remains disabled.'
+        ),
+
+      authority:
+        'advisory-only',
+
+      executable:
+        false,
+
+      confidence:
+        recipe.confidence,
+
+      provenance:
+        recipe.provenance,
+
+      testSelectionCandidateId:
+        recipe.testSelectionCandidateId,
+
+      executionPlanStepId:
+        recipe.executionPlanStepId,
+
+      failureReproductionRecipeId:
+        recipe.id,
+    })
+  );
+}
+
+export function analyzeAutonomousQaFailureReproduction(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[]
+): AutonomousQaAssessment {
+  const planningAssessment =
+    analyzeAutonomousQaExecutionPlanning(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues
+    );
+
+  const executionPlan =
+    planningAssessment.executionPlan;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !executionPlan ||
+    executionPlan.status ===
+      'not-verified'
+  ) {
+    return {
+      ...planningAssessment,
+
+      failureReproduction: {
+        status:
+          'not-verified',
+
+        recipeCount:
+          0,
+
+        failedTestCount:
+          0,
+
+        attachmentCount:
+          0,
+
+        recipes:
+          [],
+      },
+
+      reason:
+        'Failure reproduction is not verified because the advisory execution plan or Unified Decision evidence is unavailable. Autonomous execution remains disabled.',
+    };
+  }
+
+  const recipes =
+    buildFailureReproductionRecipes(
+      executionPlan.steps,
+      tests,
+      planningAssessment
+        .testSelection?.candidates ??
+        []
+    );
+
+  const reproductionActions =
+    failureReproductionActions(
+      recipes
+    );
+
+  const failedTestCount =
+    recipes.reduce(
+      (total, recipe) =>
+        total +
+        recipe.evidenceCount,
+      0
+    );
+
+  const attachmentCount =
+    recipes.reduce(
+      (total, recipe) =>
+        total +
+        recipe.attachmentCount,
+      0
+    );
+
+  return {
+    ...planningAssessment,
+
+    capabilityStatus:
+      'failure-reproduction-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...planningAssessment.candidateActions,
+      ...reproductionActions,
+    ],
+
+    failureReproduction: {
+      status:
+        recipes.length > 0
+          ? 'available'
+          : 'no-failures',
+
+      recipeCount:
+        recipes.length,
+
+      failedTestCount,
+
+      attachmentCount,
+
+      recipes,
+    },
+
+    reason:
+      recipes.length > 0
+        ? (
+            'Milestone 6.4 created advisory failure-reproduction recipes only for current-run non-passing test variants already selected and ordered by Milestones 6.2 and 6.3. Existing error and attachment evidence is preserved; no command is generated or executed and autonomous execution remains disabled.'
+          )
+        : (
+            'Milestone 6.4 failure-reproduction capability is available, but the advisory execution plan contains no current-run non-passing test variants. No command is generated or executed and autonomous execution remains disabled.'
           ),
   };
 }

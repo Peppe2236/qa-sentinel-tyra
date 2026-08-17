@@ -554,6 +554,7 @@ export type AutonomousQaCapabilityStatus =
   | 'foundation-only'
   | 'test-selection-advisory'
   | 'execution-planning-advisory'
+  | 'failure-reproduction-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -699,6 +700,92 @@ export interface AutonomousQaExecutionPlanAssessment {
     AutonomousQaExecutionPlanStep[];
 }
 
+export type AutonomousQaFailureReproductionStatus =
+  | 'available'
+  | 'no-failures'
+  | 'not-verified';
+
+export interface AutonomousQaFailureEvidence {
+  testId: string;
+  title: string;
+  fullTitle: string;
+
+  file: string;
+  line: number;
+  column: number;
+
+  project: string;
+  site: string;
+  browserFamily: string;
+  profile: string;
+
+  status: string;
+  expectedStatus: string;
+
+  duration: number;
+  retry: number;
+  startedAt?: string;
+
+  error?: DashboardError;
+  attachments:
+    DashboardAttachment[];
+
+  classification?:
+    IssueClassification;
+
+  classificationReason?: string;
+  recommendation?: string;
+  rootCause?: string;
+  confidence?: number;
+  userImpact?: string;
+}
+
+export interface AutonomousQaFailureReproductionRecipe {
+  id: string;
+  order: number;
+
+  executionPlanStepId: string;
+  testSelectionCandidateId: string;
+
+  phase:
+    AutonomousQaExecutionPhase;
+
+  title: string;
+  file: string;
+  site: string;
+
+  projects: string[];
+  testIds: string[];
+
+  evidenceCount: number;
+  attachmentCount: number;
+
+  confidence:
+    number | null;
+
+  instructions: string[];
+
+  evidence:
+    AutonomousQaFailureEvidence[];
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  executable: false;
+}
+
+export interface AutonomousQaFailureReproductionAssessment {
+  status:
+    AutonomousQaFailureReproductionStatus;
+
+  recipeCount: number;
+  failedTestCount: number;
+  attachmentCount: number;
+
+  recipes:
+    AutonomousQaFailureReproductionRecipe[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -755,6 +842,9 @@ export interface AutonomousQaActionCandidate {
 
   executionPlanStepId?:
     string;
+
+  failureReproductionRecipeId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -787,6 +877,9 @@ export interface AutonomousQaAssessment {
 
   executionPlan?:
     AutonomousQaExecutionPlanAssessment;
+
+  failureReproduction?:
+    AutonomousQaFailureReproductionAssessment;
 
   reason:
     string;
