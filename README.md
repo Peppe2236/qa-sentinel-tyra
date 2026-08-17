@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Enterprise Quality Intelligence for Playwright</strong><br/>
-  Live dashboards, deep discovery, intelligent issue classification, release readiness, performance insights and executive reporting.
+  Unified Decisioning, advisory Autonomous QA, Deep Discovery, live dashboards and executive reporting.
 </p>
 
 <p align="center">
@@ -16,36 +16,38 @@
   <img src="https://img.shields.io/badge/Reports-HTML%20%2B%20Markdown-7B61FF" alt="Reports" />
   <img src="https://img.shields.io/badge/Dashboard-Live-00C2FF" alt="Live Dashboard" />
   <img src="https://img.shields.io/badge/Deep%20Discovery-Active-success" alt="Deep Discovery" />
+  <img src="https://img.shields.io/badge/Unified%20Decision-v5-00A6A6" alt="Unified Decision v5" />
+  <img src="https://img.shields.io/badge/Milestone%206-Advisory%20QA-success" alt="Milestone 6 complete" />
 </p>
 
 ---
 
 ## What is QA Sentinel Tyra?
 
-QA Sentinel Tyra is a custom Playwright quality-intelligence platform built to turn raw automated test results and discovered application signals into information that is easier to understand, prioritize and act on.
+QA Sentinel Tyra is a custom Playwright quality-intelligence platform that turns raw test results, discovered application signals and cross-layer evidence into information that is easier to understand, prioritize and act on.
 
 Instead of stopping at **passed** or **failed**, QA Sentinel Tyra adds:
 
-- quality and health scoring
-- release-readiness assessment
-- issue classification
-- severity and priority analysis
-- Deep Discovery
-- automatic route exploration
+- requirements and functionality intelligence
+- critical-flow coverage and impact analysis
+- UX/UI, security, performance and compatibility intelligence
+- API and backend intelligence
+- Deep Discovery and automatic route exploration
 - runtime, network and security signal analysis
-- root-cause deduplication
-- P0–P4 prioritization
-- scope and critical-route intelligence
-- browser and category statistics
-- performance analysis
-- historical trend data
-- live dashboard reporting
-- executive HTML reports
-- technical Markdown reports
+- root-cause fingerprinting and issue deduplication
+- P0–P4 prioritization and severity guardrails
+- cross-layer correlation
+- Unified Decisioning for canonical schema-v5 release assessment
+- advisory risk-based test selection and execution planning
+- advisory failure reproduction and verification planning
+- advisory change-impact, quality-drift and investigation planning
+- live dashboard, HTML and Markdown reporting
 
 The goal is simple:
 
 **Quality First. Automate Everything. Ship with Confidence.**
+
+Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose what to inspect or verify, but it does not execute tests, authorize remediation or change release decisions autonomously.
 
 ---
 
@@ -53,58 +55,35 @@ The goal is simple:
 
 | Capability | Status |
 |---|---|
-| Playwright test integration | ✅ |
-| Custom QA reporter | ✅ |
-| Live web dashboard | ✅ |
-| Automatic dashboard refresh | ✅ |
-| Health score | ✅ |
-| Release readiness | ✅ |
-| Product/content/automation classification | ✅ |
-| Severity analysis | ✅ |
-| Category statistics | ✅ |
-| Browser health | ✅ |
-| Browser-family normalization | ✅ |
-| Device/profile intelligence | ✅ |
-| Browser Matrix | ✅ |
-| Profile Matrix | ✅ |
-| Performance statistics | ✅ |
-| Prioritized test issue queue | ✅ |
-| Cross-browser test issue deduplication | ✅ |
-| Affected-project tracking | ✅ |
-| Affected-browser tracking | ✅ |
-| Affected-profile tracking | ✅ |
-| Affected-site tracking | ✅ |
-| Actionable issue consolidation | ✅ |
+| Playwright test integration and custom QA reporter | ✅ |
+| Live dashboard with automatic refresh | ✅ |
+| HTML and Markdown reports | ✅ |
 | Historical run data | ✅ |
-| Executive HTML report | ✅ |
-| Markdown report | ✅ |
-| Playwright HTML report link | ✅ |
-| Multi-site Deep Discovery | ✅ |
-| Nation discovery support | ✅ |
-| AI Skills discovery support | ✅ |
-| Automatic route discovery and crawling | ✅ |
-| Runtime signal detection | ✅ |
-| Network failure analysis | ✅ |
-| Security/CSP signal analysis | ✅ |
+| Multi-site Deep Discovery and route crawling | ✅ |
+| Runtime, network and security/CSP signal analysis | ✅ |
 | Discovery noise filtering | ✅ |
-| Root-cause fingerprinting | ✅ |
-| Root-cause deduplication | ✅ |
-| Occurrence tracking | ✅ |
-| Affected-route tracking | ✅ |
-| P0–P4 discovery prioritization | ✅ |
-| Scope-aware priority scoring | ✅ |
-| Critical-route weighting | ✅ |
-| Severity priority guardrails | ✅ |
-| Unified issue queue foundation | ✅ |
-| Unified issue data export | ✅ |
-| Consolidated release issue counting | ✅ |
-| Blocking vs non-blocking issue assessment | ✅ |
-| Diagnostic intelligence foundation | ✅ |
-| Markdown actionable-issue reporting | ✅ |
-| HTML actionable-issue reporting | ✅ |
-| AI-assisted root-cause intelligence | 🚧 In progress |
-| Unified dashboard intelligence | 🚧 In progress |
-| Discovery-aware release readiness | 🚧 Planned |
+| Root-cause fingerprinting and deduplication | ✅ |
+| Cross-browser and cross-profile issue consolidation | ✅ |
+| P0–P4 prioritization and severity guardrails | ✅ |
+| Requirements & Functionality Intelligence | ✅ M5.2 |
+| Critical Flows Intelligence | ✅ M5.3 |
+| UX/UI Intelligence | ✅ M5.4 |
+| Security & Performance Intelligence | ✅ M5.5 |
+| Compatibility Intelligence | ✅ M5.6 |
+| API & Backend Intelligence | ✅ M5.7 |
+| Cross-layer Correlation | ✅ M5.8 |
+| Unified Scoring & Decisioning | ✅ M5.9 |
+| Canonical schema-v5 release authority | ✅ |
+| Advisory Autonomous QA foundation | ✅ M6.1 |
+| Risk-based logical-test selection | ✅ M6.2 |
+| Advisory execution planning | ✅ M6.3 |
+| Advisory failure reproduction | ✅ M6.4 |
+| Advisory verification planning | ✅ M6.5 |
+| Advisory change-impact analysis | ✅ M6.6 |
+| Advisory pairwise quality-drift comparison | ✅ M6.7 |
+| Advisory investigation planning | ✅ M6.8 |
+| Autonomous test execution | 🔒 Disabled by design |
+| Autonomous remediation and release updates | 🔒 Disabled by design |
 | PDF executive reports | 🚧 Planned |
 | GitHub Actions integration | 🚧 Planned |
 | Multi-project dashboard | 🚧 Planned |
@@ -113,53 +92,22 @@ The goal is simple:
 
 ## Architecture
 
-```text
-                         QA SENTINEL TYRA
-                                │
-                 ┌──────────────┴──────────────┐
-                 │                             │
-                 ▼                             ▼
-          Playwright Tests               Deep Discovery
-                 │                             │
-                 ▼                             ├── Route crawling
-       QA Sentinel Reporter                    ├── Runtime signals
-                 │                             ├── Network signals
-                 ├── Statistics Analyzer      ├── Security signals
-                 ├── Severity Analyzer        └── Noise filtering
-                 ├── Category Analyzer              │
-                 ├── Health Analyzer                ▼
-                 ├── Performance Analyzer    Finding Intelligence
-                 ├── Attachment Analyzer            │
-                 └── Issue Classifier               ├── Fingerprinting
-                         │                           ├── Deduplication
-                         │                           ├── Occurrences
-                         │                           ├── Affected routes
-                         │                           ├── Scope weighting
-                         │                           ├── Critical routes
-                         │                           └── Severity guardrails
-                         │                                  │
-                         └──────────────┬───────────────────┘
-                                        ▼
-                               Quality Intelligence
-                                        │
-                        ┌───────────────┼────────────────┐
-                        │               │                │
-                        ▼               ▼                ▼
-                 Test Issues     Discovery Issues   Run Intelligence
-                        │               │                │
-                        └───────────────┼────────────────┘
-                                        ▼
-                               Unified Issue Queue
-                                        │
-                       ┌────────────────┼────────────────┐
-                       ▼                ▼                ▼
-                Live Dashboard    HTML / Markdown    Release
-                                     Reports         Intelligence
+```mermaid
+flowchart TB
+    A[Playwright test results] --> C[Quality evidence]
+    B[Discovery, API and backend signals] --> C
+    C --> D[Quality-dimension analyzers]
+    D --> E[Cross-layer correlation]
+    E --> F[Unified Decision v5]
+    F --> G[Dashboard and reports]
+    F --> H[Advisory Autonomous QA]
 ```
 
-The architecture intentionally keeps raw Playwright test outcomes and Deep Discovery findings separate until they reach the quality-intelligence layer.
+Raw Playwright outcomes and Deep Discovery findings retain their source identity while they are normalized into a unified evidence model. Requirements, critical flows, UX/UI, security/performance, compatibility, API/backend and cross-layer analyzers then contribute to **Unified Decisioning**.
 
-This allows QA Sentinel Tyra to distinguish traditional test failures from discovered product, runtime, network and security signals before presenting them through a unified issue model.
+Unified Decisioning is the canonical release authority for dashboard schema v5. The legacy release assessment is retained only as comparison telemetry.
+
+The Milestone 6 Autonomous QA layer consumes existing evidence and Unified Decision semantics. It may create candidates, plans, recipes, comparisons and hypotheses, but it has no execution, remediation or release-decision authority.
 
 ---
 
@@ -386,16 +334,18 @@ Critical-route weighting is deliberately bounded and combined with severity guar
 
 ## Unified Issue Queue
 
-QA Sentinel Tyra is being extended from separate test and discovery intelligence into a unified quality model.
-
-The current foundation combines:
+QA Sentinel Tyra consolidates source-aware findings into a unified quality model:
 
 ```text
-Playwright prioritized issues
-            +
-Deep Discovery prioritized findings
+Playwright test issues
+Deep Discovery findings
+API and backend issues
             ↓
     Unified Issue Queue
+            ↓
+Cross-layer correlation
+            ↓
+   Unified Decision v5
 ```
 
 The unified queue is written to:
@@ -404,16 +354,9 @@ The unified queue is written to:
 dashboard/data/unified-issues.json
 ```
 
-Traditional Playwright issues and discovery findings retain their source identity so later intelligence layers can reason about them appropriately.
+Each finding retains provenance such as source identity, test links, requirement links, critical-flow links and affected scope. This lets later analyzers correlate evidence without treating every source as the same kind of failure.
 
-The next development phase will connect this unified model to:
-
-- the live dashboard
-- release-readiness intelligence
-- executive reporting
-- source-aware filtering
-- priority filtering
-- category filtering
+The queue now feeds the completed Milestone 5 quality-intelligence framework and the advisory Milestone 6 workflow. It is no longer only a foundation for a future dashboard or release model.
 
 ---
 
@@ -468,27 +411,37 @@ This preserves the full impact scope while keeping one root cause as one actiona
 
 ## Reports
 
-Every completed run can produce multiple views of the same quality data.
+Every completed run can produce multiple views of the same canonical quality data.
 
 ### Live dashboard
 
 The live dashboard exposes:
 
-- release readiness
-- quality score
-- pass/fail metrics
+- Unified Decision release readiness and evidence state
+- quality, health and pass/fail metrics
 - product, content and automation findings
-- browser health
-- performance statistics
-- failure distribution
-- priority queue
-- category health
-- historical trends
-- automated QA assessment
+- quality-dimension assessments
+- browser, profile and performance intelligence
+- prioritized and unified issue views
+- historical run data
+- advisory Autonomous QA assessment
+
+### Dashboard data
+
+The reporter writes the current run and supporting queues to:
+
+```text
+dashboard/data/latest-run.json
+dashboard/data/history.json
+dashboard/data/issues.json
+dashboard/data/unified-issues.json
+```
+
+`history.json` stores prior runs. Milestone 6.7 uses the latest previous canonical schema-v5 run as a pairwise comparison baseline. If no valid baseline exists, the result is `no-baseline`; the analyzer does not claim a multi-run trend.
 
 ### Discovery reports
 
-Deep Discovery produces structured site-specific reports:
+Deep Discovery produces structured site-specific reports under:
 
 ```text
 reports/discovery/
@@ -568,31 +521,66 @@ qa-sentinel-tyra/
 
 ## Release-readiness intelligence
 
-QA Sentinel Tyra evaluates more than the raw number of failing tests.
+QA Sentinel Tyra evaluates more than the raw number of failing tests. Quality-dimension assessments and cross-layer evidence feed the canonical Unified Decision model, which produces the schema-v5 release assessment.
 
-The reporter combines test outcomes with classified and consolidated actionable findings to produce a release assessment containing:
-
-- status
-- risk
-- confidence
-- blocking issues
-- non-blocking issues
-- verdict
-- recommended action
-
-Example:
+The canonical output is identified by:
 
 ```text
-Status: READY WITH WARNINGS
-Risk: MEDIUM
-Confidence: 90%
-Blocking issues: 0
-Verdict: The build is generally stable, but unresolved issues should be reviewed before release.
+schemaVersion: 5
+releaseDecisionSource: 'unified-v5'
 ```
 
-Cross-browser duplicates are consolidated before release issue counts are calculated, preventing the same root cause from being counted repeatedly simply because it reproduces in multiple environments.
+The legacy release assessment remains available as comparison telemetry, but it is not the canonical release authority. Cross-browser duplicates are consolidated before actionable issue counts are evaluated, preventing the same root cause from being counted repeatedly because it reproduces in several environments.
 
-The next release-readiness phase will extend this model so Deep Discovery findings participate more deeply in release decisions through the unified issue architecture.
+Milestone 6 can recommend investigation or verification work, but it cannot automatically change the release decision.
+
+---
+
+## Milestone 5 — Quality Intelligence Framework
+
+Milestone 5 was completed on **2026-08-13**.
+
+| Delivery | Result |
+|---|---|
+| 5.1 Quality Intelligence Foundation | Shared evidence and assessment foundation |
+| 5.2 Requirements & Functionality | Requirement and acceptance-criteria intelligence |
+| 5.3 Critical Flows | Critical-flow and scenario intelligence |
+| 5.4 UX/UI | User-experience and interface quality intelligence |
+| 5.5 Security & Performance | Security and performance assessment |
+| 5.6 Compatibility | Browser, profile and compatibility assessment |
+| 5.7 API & Backend | API and backend issue intelligence |
+| 5.8 Cross-layer Correlation | Correlated evidence across quality layers |
+| 5.9 Unified Scoring & Decisioning | Canonical schema-v5 release authority |
+
+Unified Decisioning reuses the established priority and evidence semantics across layers. Legacy release telemetry remains available for comparison.
+
+---
+
+## Milestone 6 — Advisory Autonomous QA Framework
+
+Milestone 6 was completed on **2026-08-17**.
+
+| Delivery | Advisory result |
+|---|---|
+| 6.1 Foundation | Autonomous QA assessment and advisory candidate model |
+| 6.2 Risk-based Test Selection | Logical-test candidates linked to existing risk and provenance |
+| 6.3 Execution Planning | Ordered advisory phases and test steps |
+| 6.4 Failure Reproduction | Evidence-linked reproduction recipes for current failures |
+| 6.5 Verification Planning | Plans remain `awaiting-new-evidence` until new results exist |
+| 6.6 Change Impact Analysis | Potential impact is identified but never claimed as confirmed |
+| 6.7 Quality Drift Comparison | Current run compared with the latest prior canonical schema-v5 run |
+| 6.8 Investigation Planning | Cases and root-cause hypotheses for changed or potential-regression signals |
+
+### Milestone 6 safety contract
+
+- `executionEnabled` remains `false`.
+- Candidate actions and plans remain advisory-only and `executable: false`.
+- No Playwright tests or shell commands are launched by the analyzers.
+- No remediation is authorized or applied.
+- No automatic release-decision update is allowed.
+- Verification requires new evidence; a plan is not proof of a pass or resolution.
+- Change impact, quality drift and root cause remain explicitly unconfirmed.
+- Existing Unified Decision, P0–P4 priority and evidence semantics are reused; Milestone 6 introduces no competing weighted score.
 
 ---
 
@@ -645,106 +633,41 @@ This creates a foundation for future regression detection and performance budget
 
 ## Roadmap
 
-### Milestone 1 — Foundation ✅
+The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 
-- Playwright integration
-- custom reporter
-- live dashboard
-- health scoring
-- release readiness
-- issue classification
-- severity analysis
-- performance intelligence
-- HTML and Markdown reports
-- historical run data
-- prioritized test issue queue
-- Git repository
+### Milestone 5 — Quality Intelligence Framework ✅
 
-### Milestone 2 — Discovery Intelligence ✅
-
-- multi-site Deep Discovery
-- Nation and AI Skills discovery support
-- automatic route crawling
-- runtime, network and security/CSP signal analysis
-- discovery noise filtering
-- root-cause fingerprinting and duplicate consolidation
-- occurrence and affected-route tracking
-- P0–P4 discovery prioritization
-- scope-aware priority scoring
-- critical-route weighting
-- severity priority guardrails
-
-### Milestone 3 — Actionable Quality Intelligence ✅
-
-- cross-browser test issue fingerprinting
-- test issue deduplication and consolidation
-- occurrence tracking across repeated failures
-- affected-project, browser, profile and site tracking
-- normalized browser-family intelligence
-- Desktop / Mobile / Tablet profile intelligence
-- Browser Matrix
-- Profile Matrix
-- consolidated actionable issue reporting
-- blocking vs non-blocking issue assessment
-- release counts based on actionable issues instead of raw duplicate failures
-- Markdown and HTML actionable-issue intelligence
-- unified issue queue foundation and data export
-- diagnostic intelligence foundation
-
-### Milestone 4 — Unified Quality Command Center 🚧
-
-- connect the unified issue model fully to the live dashboard
-- source-aware issue presentation
-- filtering by source, P0–P4 priority, category, browser and profile
-- discovery-aware release readiness
+- requirements and functionality intelligence
 - critical-flow intelligence
-- richer automated root-cause diagnosis
-- unified executive reporting
-- clearer actionable vs informational presentation
-- richer trend and regression views
+- UX/UI, security/performance and compatibility intelligence
+- API and backend intelligence
+- cross-layer correlation
+- Unified Decisioning as the canonical schema-v5 release authority
 
-### Milestone 5 — CI/CD & Release Automation
+### Milestone 6 — Advisory Autonomous QA Framework ✅
 
-- GitHub Actions integration
-- automated quality gates
-- configurable release policies and thresholds
-- pull-request quality summaries
-- baseline and regression comparison
-- historical release trend intelligence
-- performance regression detection
-- CI report artifacts
+- risk-based logical-test selection
+- advisory execution and failure-reproduction planning
+- verification planning that awaits new evidence
+- potential change-impact analysis
+- pairwise quality-drift comparison
+- advisory investigation cases and unconfirmed hypotheses
 
-### Milestone 6 — Product & Distribution
-
-- simplified setup and reusable configuration
-- package / CLI preparation
-- report plugins
-- PDF executive reports
-- configuration templates
-- multi-project dashboard improvements
-- richer documentation, examples and onboarding
-
-### Milestone 7 — TYRA Labs
-
-- shared visual identity
-- professional GitHub presentation
-- architecture diagrams
-- screenshots and product demonstrations
-- portfolio site
-- documentation hub
-- additional developer tools
+The next numbered milestone has not yet been defined. Future work should be added to `ROADMAP.md` before implementation so scope and safety boundaries remain explicit.
 
 ---
 
 ## Development workflow
 
-After making changes:
+After making changes, validate the exact scope before committing:
 
 ```bash
 npm run typecheck
-npm run test:nation
-git status
-git add .
+git diff --check
+git status --short
+git add <reviewed-files>
+git diff --cached --check
+git diff --cached --stat
 git commit -m "Describe the change"
 git push origin main
 ```
@@ -754,6 +677,8 @@ For Deep Discovery development:
 ```bash
 npx playwright test tests/discovery/sentinel-discovery.spec.ts --project=nation-chromium --project=ai-skills-chromium
 ```
+
+Milestone 6 analyzers must remain advisory. Running the normal project test commands is always an explicit developer action, never an Autonomous QA side effect.
 
 ---
 
@@ -800,13 +725,20 @@ That is the direction of QA Sentinel Tyra.
   Built as part of the TYRA Labs ecosystem.
 </p>
 
-## Project status — Milestone 5 complete
+## Project status — Milestones 5 and 6 complete
 
 **Milestone 5 – Quality Intelligence Framework: ✅ COMPLETE**
 
-QA Sentinel Tyra now includes Requirements & Functionality, Critical Flows, UX/UI, Security & Performance, Compatibility, API & Backend, Cross-layer Correlation, and Unified Scoring & Decisioning.
+Completed: 2026-08-13
 
-**Release authority:** Unified Decisioning v5
-**Dashboard schema:** v5
-**Legacy release assessment:** preserved as comparison telemetry
-**Milestone 5:** ✅ COMPLETE
+**Milestone 6 – Advisory Autonomous QA Framework: ✅ COMPLETE**
+
+Completed: 2026-08-17
+
+- **Release authority:** Unified Decisioning v5
+- **Dashboard schema:** v5
+- **Legacy release assessment:** preserved as comparison telemetry
+- **Autonomous QA:** advisory-only
+- **Autonomous execution:** disabled
+- **Remediation authorization:** disabled
+- **Automatic release-decision updates:** disabled
