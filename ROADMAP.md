@@ -17,3 +17,20 @@
 Unified Decisioning is now the canonical schema v5 release authority. Legacy release assessment remains available as comparison telemetry.
 
 **Milestone 5:** ✅ COMPLETE
+
+## Milestone 6 – Advisory Autonomous QA Framework ✅ COMPLETE
+
+**Completed: 2026-08-17**
+
+- [x] 6.1 Advisory Autonomous QA Foundation
+- [x] 6.2 Risk-based Test Selection
+- [x] 6.3 Advisory Execution Planning
+- [x] 6.4 Advisory Failure Reproduction
+- [x] 6.5 Advisory Verification Planning
+- [x] 6.6 Advisory Change Impact Analysis
+- [x] 6.7 Advisory Quality Drift Comparison
+- [x] 6.8 Advisory Investigation Planning
+
+Unified Decisioning remains the canonical schema v5 release authority. All Milestone 6 capabilities are advisory-only: autonomous execution, remediation authorization and automatic release-decision updates remain disabled.
+
+**Milestone 6:** ✅ COMPLETE

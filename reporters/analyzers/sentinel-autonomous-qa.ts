@@ -6,6 +6,8 @@ import type {
   AutonomousQaChangeImpactCandidate,
   AutonomousQaChangeImpactScope,
   AutonomousQaEvidenceProvenance,
+  AutonomousQaInvestigationCase,
+  AutonomousQaInvestigationHypothesis,
   AutonomousQaQualityDriftDirection,
   AutonomousQaQualityDriftSignal,
   AutonomousQaExecutionPhase,
@@ -3211,5 +3213,575 @@ export function analyzeAutonomousQaQualityDrift(
       (
         'Milestone 6.7 compared the current canonical Unified Decision assessment with exactly one prior canonical schema-v5 run. Signals remain advisory and unconfirmed; no multi-run trend, new weighted score, autonomous execution or release-decision update is introduced.'
       ),
+  };
+}
+
+function investigationSignals(
+  signals:
+    AutonomousQaQualityDriftSignal[]
+): AutonomousQaQualityDriftSignal[] {
+  return signals.filter(
+    signal =>
+      signal.direction ===
+        'potential-regression' ||
+      signal.direction ===
+        'changed'
+  );
+}
+
+function linkedInvestigationUnits(
+  signal:
+    AutonomousQaQualityDriftSignal,
+  current:
+    UnifiedDecisionAssessment
+): UnifiedDecisionUnit[] {
+  switch (signal.kind) {
+    case 'blocking-units':
+    case 'risk-eligible-units':
+      return current.decisionUnits.filter(
+        unit =>
+          signal.addedIds.includes(
+            unit.id
+          )
+      );
+
+    case 'verification-gaps':
+      return current.decisionUnits.filter(
+        unit =>
+          unit.qualityDimensions.some(
+            dimension =>
+              signal.addedIds.includes(
+                dimension
+              )
+          )
+      );
+
+    case 'issue-fingerprints':
+      return current.decisionUnits.filter(
+        unit =>
+          unit.issueFingerprints.some(
+            fingerprint =>
+              signal.addedIds.includes(
+                fingerprint
+              )
+          )
+      );
+
+    case 'decision-state':
+      return current.decisionUnits.filter(
+        unit =>
+          unit.blocking ||
+          unit.riskEligible
+      );
+
+    default:
+      return [];
+  }
+}
+
+function investigationHypotheses(
+  units:
+    UnifiedDecisionUnit[]
+): AutonomousQaInvestigationHypothesis[] {
+  const rootCauses =
+    orderedUnique(
+      units.flatMap(
+        unit =>
+          unit.rootCause
+            ? [unit.rootCause]
+            : []
+      )
+    );
+
+  if (rootCauses.length === 0) {
+    return [
+      {
+        text:
+          'The comparison may reflect a product change, test-scope change, environment change or incomplete evidence; the cause is not established.',
+
+        sourceUnitIds:
+          units.map(
+            unit => unit.id
+          ),
+
+        confirmed:
+          false,
+      },
+    ];
+  }
+
+  return rootCauses.map(
+    rootCause => {
+      const sourceUnits =
+        units.filter(
+          unit =>
+            unit.rootCause ===
+              rootCause
+        );
+
+      return {
+        text:
+          `Unified Decision evidence proposes this unconfirmed hypothesis: ${rootCause}`,
+
+        rootCauseLayer:
+          sourceUnits.find(
+            unit =>
+              Boolean(
+                unit.rootCauseLayer
+              )
+          )?.rootCauseLayer,
+
+        sourceUnitIds:
+          sourceUnits.map(
+            unit => unit.id
+          ),
+
+        confirmed:
+          false,
+      };
+    }
+  );
+}
+
+function investigationRecommendations(
+  units:
+    UnifiedDecisionUnit[]
+): string[] {
+  return orderedUnique(
+    units.flatMap(
+      unit =>
+        unit.recommendation
+          ? [unit.recommendation]
+          : []
+    )
+  );
+}
+
+function investigationQuestions(
+  signal:
+    AutonomousQaQualityDriftSignal
+): string[] {
+  return [
+    `What verified code, configuration, dependency or environment change explains the ${signal.kind} comparison?`,
+    'Do the added identifiers represent a product regression, changed coverage, automation behaviour or incomplete evidence?',
+    'Which current error, trace, log, screenshot or linked issue evidence supports or rejects each hypothesis?',
+    'Are linked requirement and Critical Flow conclusions still supported by current evidence?',
+    'Does Unified Decision need human reassessment after the evidence is reviewed?',
+  ];
+}
+
+function investigationStepsFor(
+  signal:
+    AutonomousQaQualityDriftSignal,
+  units:
+    UnifiedDecisionUnit[]
+): string[] {
+  const steps = [
+    `Review baseline run ${signal.baselineRunId} and the current ${signal.kind} evidence side by side.`,
+    'Inspect the actual code, configuration, dependency and environment changes associated with the current run.',
+    'Review the linked M6.4 reproduction evidence and M6.5 verification requirements without executing them automatically.',
+    'Collect evidence that confirms or rejects every listed hypothesis.',
+  ];
+
+  if (units.length > 0) {
+    steps.push(
+      `Review linked Unified Decision units: ${units.map(unit => unit.id).join(', ')}.`
+    );
+  }
+
+  steps.push(
+    'Submit the evidence for human Unified Decision review; do not authorize remediation or release changes automatically.'
+  );
+
+  return steps;
+}
+
+function investigationExitCriteria(
+  signal:
+    AutonomousQaQualityDriftSignal
+): string[] {
+  return [
+    `The ${signal.kind} comparison is explained by reviewed evidence rather than assumption.`,
+    'Every hypothesis is explicitly confirmed or rejected by a human reviewer.',
+    'Affected requirements, Critical Flows, quality dimensions and environments have documented review outcomes.',
+    'Any proposed remediation is separately authorized outside Autonomous QA.',
+    'Unified Decision is reassessed only after new evidence is available.',
+  ];
+}
+
+function buildInvestigationCases(
+  signals:
+    AutonomousQaQualityDriftSignal[],
+  current:
+    UnifiedDecisionAssessment
+): AutonomousQaInvestigationCase[] {
+  return signals.map(
+    (
+      signal,
+      index
+    ): AutonomousQaInvestigationCase => {
+      const units =
+        linkedInvestigationUnits(
+          signal,
+          current
+        );
+
+      return {
+        id:
+          `investigation-${signal.id}`,
+
+        order:
+          index + 1,
+
+        qualityDriftSignalId:
+          signal.id,
+
+        state:
+          'candidate',
+
+        title:
+          `Investigate ${signal.kind} ${signal.direction}`,
+
+        signalKind:
+          signal.kind,
+
+        signalDirection:
+          signal.direction,
+
+        baselineRunId:
+          signal.baselineRunId,
+
+        baselineFinishedAt:
+          signal.baselineFinishedAt,
+
+        baselineValue:
+          signal.baselineValue,
+
+        currentValue:
+          signal.currentValue,
+
+        addedIds:
+          signal.addedIds,
+
+        removedIds:
+          signal.removedIds,
+
+        linkedDecisionUnitIds:
+          units.map(
+            unit => unit.id
+          ),
+
+        linkedIssueFingerprints:
+          orderedUnique(
+            units.flatMap(
+              unit =>
+                unit.issueFingerprints
+            )
+          ),
+
+        hypotheses:
+          investigationHypotheses(
+            units
+          ),
+
+        recommendations:
+          investigationRecommendations(
+            units
+          ),
+
+        investigationQuestions:
+          investigationQuestions(
+            signal
+          ),
+
+        investigationSteps:
+          investigationStepsFor(
+            signal,
+            units
+          ),
+
+        exitCriteria:
+          investigationExitCriteria(
+            signal
+          ),
+
+        confidence:
+          signal.confidence,
+
+        rootCauseConfirmed:
+          false,
+
+        remediationAuthorized:
+          false,
+
+        requiresHumanReview:
+          true,
+
+        provenance:
+          signal.provenance,
+
+        releaseDecisionUpdateAllowed:
+          false,
+
+        executable:
+          false,
+      };
+    }
+  );
+}
+
+function investigationActions(
+  cases:
+    AutonomousQaInvestigationCase[]
+): AutonomousQaActionCandidate[] {
+  return cases.map(
+    investigationCase => ({
+      id:
+        `action-${investigationCase.id}`,
+
+      kind:
+        'investigation',
+
+      state:
+        'candidate',
+
+      title:
+        investigationCase.title,
+
+      rationale:
+        (
+          'A pairwise quality-drift signal requires structured human investigation. ' +
+          'Root-cause text remains an unconfirmed hypothesis and remediation is not authorized.'
+        ),
+
+      authority:
+        'advisory-only',
+
+      executable:
+        false,
+
+      confidence:
+        investigationCase.confidence,
+
+      provenance:
+        investigationCase.provenance,
+
+      qualityDriftSignalId:
+        investigationCase.qualityDriftSignalId,
+
+      investigationCaseId:
+        investigationCase.id,
+    })
+  );
+}
+
+export function analyzeAutonomousQaInvestigationPlanning(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[],
+  history:
+    DashboardRun[]
+): AutonomousQaAssessment {
+  const driftAssessment =
+    analyzeAutonomousQaQualityDrift(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues,
+      history
+    );
+
+  const qualityDrift =
+    driftAssessment.qualityDrift;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !qualityDrift ||
+    qualityDrift.status ===
+      'not-verified'
+  ) {
+    return {
+      ...driftAssessment,
+
+      investigation: {
+        status:
+          'not-verified',
+
+        baselineRunId:
+          null,
+
+        baselineFinishedAt:
+          null,
+
+        caseCount:
+          0,
+
+        openCaseCount:
+          0,
+
+        linkedDecisionUnitCount:
+          0,
+
+        hypothesisCount:
+          0,
+
+        confirmedRootCauseCount:
+          0,
+
+        remediationAuthorizedCount:
+          0,
+
+        cases:
+          [],
+      },
+
+      reason:
+        'Investigation planning is not verified because current Unified Decision or quality-drift evidence is unavailable. No cause or remediation is inferred, autonomous execution remains disabled and release authority is unchanged.',
+    };
+  }
+
+  if (
+    qualityDrift.status ===
+      'no-baseline'
+  ) {
+    return {
+      ...driftAssessment,
+
+      capabilityStatus:
+        'investigation-planning-advisory',
+
+      executionEnabled:
+        false,
+
+      investigation: {
+        status:
+          'no-baseline',
+
+        baselineRunId:
+          null,
+
+        baselineFinishedAt:
+          null,
+
+        caseCount:
+          0,
+
+        openCaseCount:
+          0,
+
+        linkedDecisionUnitCount:
+          0,
+
+        hypothesisCount:
+          0,
+
+        confirmedRootCauseCount:
+          0,
+
+        remediationAuthorizedCount:
+          0,
+
+        cases:
+          [],
+      },
+
+      reason:
+        'Milestone 6.8 investigation planning has no prior canonical quality-drift baseline. No investigation case, root cause or remediation is inferred, and autonomous execution and release updates remain disabled.',
+    };
+  }
+
+  const eligibleSignals =
+    investigationSignals(
+      qualityDrift.signals
+    );
+
+  const cases =
+    buildInvestigationCases(
+      eligibleSignals,
+      unifiedDecisionAssessment
+    );
+
+  const actions =
+    investigationActions(
+      cases
+    );
+
+  const linkedDecisionUnitIds =
+    orderedUnique(
+      cases.flatMap(
+        investigationCase =>
+          investigationCase
+            .linkedDecisionUnitIds
+      )
+    );
+
+  const hypothesisCount =
+    cases.reduce(
+      (total, investigationCase) =>
+        total +
+        investigationCase
+          .hypotheses.length,
+      0
+    );
+
+  return {
+    ...driftAssessment,
+
+    capabilityStatus:
+      'investigation-planning-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...driftAssessment.candidateActions,
+      ...actions,
+    ],
+
+    investigation: {
+      status:
+        cases.length > 0
+          ? 'available'
+          : 'no-signals',
+
+      baselineRunId:
+        qualityDrift.baselineRunId,
+
+      baselineFinishedAt:
+        qualityDrift.baselineFinishedAt,
+
+      caseCount:
+        cases.length,
+
+      openCaseCount:
+        cases.length,
+
+      linkedDecisionUnitCount:
+        linkedDecisionUnitIds.length,
+
+      hypothesisCount,
+
+      confirmedRootCauseCount:
+        0,
+
+      remediationAuthorizedCount:
+        0,
+
+      cases,
+    },
+
+    reason:
+      cases.length > 0
+        ? (
+            'Milestone 6.8 created advisory investigation cases only for potential-regression or changed M6.7 signals. Existing Unified Decision root-cause text is preserved solely as unconfirmed hypotheses; no remediation, command, autonomous execution or release update is authorized.'
+          )
+        : (
+            'Milestone 6.8 investigation planning found no potential-regression or changed quality-drift signals requiring a case. No cause, remediation or release change is inferred and autonomous execution remains disabled.'
+          ),
   };
 }

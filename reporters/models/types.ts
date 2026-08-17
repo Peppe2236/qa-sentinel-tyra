@@ -558,6 +558,7 @@ export type AutonomousQaCapabilityStatus =
   | 'verification-planning-advisory'
   | 'change-impact-advisory'
   | 'quality-drift-advisory'
+  | 'investigation-planning-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -1045,6 +1046,101 @@ export interface AutonomousQaQualityDriftAssessment {
     AutonomousQaQualityDriftSignal[];
 }
 
+export type AutonomousQaInvestigationStatus =
+  | 'available'
+  | 'no-signals'
+  | 'no-baseline'
+  | 'not-verified';
+
+export type AutonomousQaInvestigationCaseState =
+  | 'candidate';
+
+export interface AutonomousQaInvestigationHypothesis {
+  text: string;
+
+  rootCauseLayer?:
+    CrossLayerRootCauseLayer;
+
+  sourceUnitIds: string[];
+
+  confirmed: false;
+}
+
+export interface AutonomousQaInvestigationCase {
+  id: string;
+  order: number;
+
+  qualityDriftSignalId: string;
+
+  state:
+    AutonomousQaInvestigationCaseState;
+
+  title: string;
+
+  signalKind:
+    AutonomousQaQualityDriftSignalKind;
+
+  signalDirection:
+    AutonomousQaQualityDriftDirection;
+
+  baselineRunId: string;
+  baselineFinishedAt: string;
+
+  baselineValue: string;
+  currentValue: string;
+
+  addedIds: string[];
+  removedIds: string[];
+
+  linkedDecisionUnitIds: string[];
+  linkedIssueFingerprints: string[];
+
+  hypotheses:
+    AutonomousQaInvestigationHypothesis[];
+
+  recommendations: string[];
+  investigationQuestions: string[];
+  investigationSteps: string[];
+  exitCriteria: string[];
+
+  confidence:
+    number | null;
+
+  rootCauseConfirmed: false;
+  remediationAuthorized: false;
+  requiresHumanReview: true;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  releaseDecisionUpdateAllowed:
+    false;
+
+  executable: false;
+}
+
+export interface AutonomousQaInvestigationAssessment {
+  status:
+    AutonomousQaInvestigationStatus;
+
+  baselineRunId:
+    string | null;
+
+  baselineFinishedAt:
+    string | null;
+
+  caseCount: number;
+  openCaseCount: number;
+  linkedDecisionUnitCount: number;
+  hypothesisCount: number;
+
+  confirmedRootCauseCount: number;
+  remediationAuthorizedCount: number;
+
+  cases:
+    AutonomousQaInvestigationCase[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -1113,6 +1209,9 @@ export interface AutonomousQaActionCandidate {
 
   qualityDriftSignalId?:
     string;
+
+  investigationCaseId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -1157,6 +1256,9 @@ export interface AutonomousQaAssessment {
 
   qualityDrift?:
     AutonomousQaQualityDriftAssessment;
+
+  investigation?:
+    AutonomousQaInvestigationAssessment;
 
   reason:
     string;
