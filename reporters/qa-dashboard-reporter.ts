@@ -57,6 +57,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 
 import {
+  loadApiBackendEvidence,
   loadDiscoveryIssues,
 } from './utils/discovery-issues';
 
@@ -1318,6 +1319,11 @@ const discoveryIssues =
     ? loadDiscoveryIssues()
     : [];
 
+const apiBackendEvidence =
+  hasDiscoveryRun
+    ? loadApiBackendEvidence()
+    : [];
+
 const prioritizedIssues =
   sortIssues(this.results);
 const actionableTestIssues =
@@ -1343,7 +1349,8 @@ const apiBackendPromotion =
     [
       ...actionableTestIssues,
       ...discoveryIssues,
-    ]
+    ],
+    apiBackendEvidence
   );
 
 

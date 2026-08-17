@@ -21,6 +21,10 @@ import {
   type SentinelHttpError,
 } from '../../reporters/analyzers/sentinel-discovery';
 
+import type {
+  ApiBackendEvidence,
+} from '../../reporters/models/types';
+
 
 /* =========================================================
    CONFIGURATION
@@ -99,6 +103,98 @@ function routeFromUrl(
 }
 
 
+function safeEvidenceUrl(
+  value: string
+): string | null {
+  try {
+    const url =
+      new URL(value);
+
+    url.username = '';
+    url.password = '';
+    url.search = '';
+    url.hash = '';
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+
+function positiveEvidenceFromResponse(
+  response: Response,
+  site: SentinelSite
+): ApiBackendEvidence | null {
+  const statusCode =
+    response.status();
+
+  if (
+    statusCode < 200 ||
+    statusCode >= 400
+  ) {
+    return null;
+  }
+
+  const request =
+    response.request();
+
+  const resourceType =
+    request.resourceType();
+
+  if (
+    resourceType !== 'document' &&
+    resourceType !== 'fetch' &&
+    resourceType !== 'xhr'
+  ) {
+    return null;
+  }
+
+  if (
+    !isSameOrigin(
+      response.url(),
+      site.baseURL
+    )
+  ) {
+    return null;
+  }
+
+  const url =
+    safeEvidenceUrl(
+      response.url()
+    );
+
+  if (!url) {
+    return null;
+  }
+
+  const kind:
+    ApiBackendEvidence['kind'] =
+      resourceType === 'document'
+        ? 'backend-service'
+        : 'api-endpoint';
+
+  return {
+    kind,
+    site:
+      site.id,
+    url,
+    service:
+      kind === 'backend-service'
+        ? new URL(url).origin
+        : undefined,
+    method:
+      request.method(),
+    statusCode,
+    resourceType,
+    originSource:
+      'discovery',
+    observedAt:
+      new Date().toISOString(),
+  };
+}
+
+
 /* =========================================================
    PAGE COLLECTION
    ========================================================= */
@@ -117,6 +213,9 @@ async function collectPageObservation(
 
   const httpErrors:
     SentinelHttpError[] = [];
+
+  const apiBackendEvidence:
+    ApiBackendEvidence[] = [];
 
 
   /* -------------------------------------------------------
@@ -172,6 +271,18 @@ async function collectPageObservation(
   const responseHandler = (
     response: Response
   ) => {
+    const positiveEvidence =
+      positiveEvidenceFromResponse(
+        response,
+        site
+      );
+
+    if (positiveEvidence) {
+      apiBackendEvidence.push(
+        positiveEvidence
+      );
+    }
+
     const status =
       response.status();
 
@@ -422,6 +533,8 @@ async function collectPageObservation(
 
     httpErrors,
 
+    apiBackendEvidence,
+
     discoveredAt:
       new Date().toISOString(),
   };
@@ -630,6 +743,36 @@ test.describe(
             observations
           );
 
+        const apiBackendEvidence =
+          [
+            ...new Map(
+              observations
+                .flatMap(
+                  observation =>
+                    observation
+                      .apiBackendEvidence ??
+                    []
+                )
+                .map(
+                  evidence => [
+                    [
+                      evidence.kind,
+                      evidence.site,
+                      evidence.method,
+                      evidence.url,
+                      evidence.statusCode,
+                    ].join('|'),
+                    evidence,
+                  ] as const
+                )
+            ).values(),
+          ];
+
+        const outputReport = {
+          ...report,
+          apiBackendEvidence,
+        };
+
           const discoveryDirectory =
   path.join(
     process.cwd(),
@@ -653,7 +796,7 @@ const discoveryFile =
 fs.writeFileSync(
   discoveryFile,
   JSON.stringify(
-    report,
+    outputReport,
     null,
     2
   ),

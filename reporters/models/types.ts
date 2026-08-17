@@ -1462,11 +1462,37 @@ export type ApiBackendStatus =
   | 'not-verified';
 
 
+export type ApiBackendEvidenceKind =
+  | 'api-endpoint'
+  | 'backend-service';
+
+
+export interface ApiBackendEvidence {
+  kind:
+    ApiBackendEvidenceKind;
+
+  site: string;
+  url: string;
+
+  service?: string;
+
+  method: string;
+  statusCode: number;
+  resourceType: string;
+
+  originSource:
+    IntelligenceSource;
+
+  observedAt: string;
+}
+
+
 export interface ApiIntelligenceAssessment {
   status: ApiBackendStatus;
 
   issueCount: number;
   blockingIssues: number;
+  positiveEvidenceCount: number;
 
   endpointCount: number;
   unresolvedEndpointCount: number;
@@ -1491,6 +1517,7 @@ export interface BackendIntelligenceAssessment {
 
   issueCount: number;
   blockingIssues: number;
+  positiveEvidenceCount: number;
 
   serviceCount: number;
   unresolvedServiceCount: number;
@@ -1522,6 +1549,9 @@ export interface ApiBackendAssessment {
 
   promotedApiIssues: number;
   promotedBackendIssues: number;
+
+  positiveEvidence:
+    ApiBackendEvidence[];
 
   sourceCoverage:
     IntelligenceSource[];

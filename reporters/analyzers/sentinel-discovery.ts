@@ -17,6 +17,10 @@ import {
   buildDiagnosis,
 } from './sentinel-diagnostics';
 
+import type {
+  ApiBackendEvidence,
+} from '../models/types';
+
 export type DiscoverySeverity =
   | 'critical'
   | 'high'
@@ -66,6 +70,9 @@ export interface SentinelDiscoveryObservation {
   failedRequests?: SentinelFailedRequest[];
 
   httpErrors?: SentinelHttpError[];
+
+  apiBackendEvidence?:
+    ApiBackendEvidence[];
 
   discoveredAt?: string;
 }

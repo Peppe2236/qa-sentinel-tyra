@@ -1,5 +1,6 @@
 import type {
   ApiBackendAssessment,
+  ApiBackendEvidence,
   ApiBackendStatus,
   ApiIntelligenceAssessment,
   ApiIntelligenceIssue,
@@ -900,17 +901,23 @@ function statusFromIssues(
 
       severity:
         Severity;
-    }>
+    }>,
+  positiveEvidenceCount:
+    number
 ): ApiBackendStatus {
 
   if (
     issues.length === 0
   ) {
     /*
-     * Zero findings is NOT proof
-     * that API/backend health was verified.
+     * Zero findings is healthy only when
+     * successful first-party evidence exists.
+     * Zero findings plus zero evidence remains
+     * explicitly NOT VERIFIED.
      */
-    return 'not-verified';
+    return positiveEvidenceCount > 0
+      ? 'healthy'
+      : 'not-verified';
   }
 
 
@@ -942,7 +949,9 @@ function statusFromIssues(
 
 function buildApiAssessment(
   issues:
-    ApiIntelligenceIssue[]
+    ApiIntelligenceIssue[],
+  evidence:
+    ApiBackendEvidence[]
 ): ApiIntelligenceAssessment {
 
   const codes =
@@ -965,8 +974,8 @@ function buildApiAssessment(
    * to string before uniqueStrings().
    */
   const endpoints =
-    uniqueStrings(
-      issues
+    uniqueStrings([
+      ...issues
         .filter(
           issue =>
             issue.endpointResolved
@@ -981,16 +990,26 @@ function buildApiAssessment(
           ): value is string =>
             typeof value === 'string' &&
             value.length > 0
-        )
-    );
+        ),
+      ...evidence.map(
+        item =>
+          item.url
+      ),
+    ]);
 
 
   return {
     status:
-      statusFromIssues(issues),
+      statusFromIssues(
+        issues,
+        evidence.length
+      ),
 
     issueCount:
       issues.length,
+
+    positiveEvidenceCount:
+      evidence.length,
 
     blockingIssues:
       issues.filter(
@@ -1041,13 +1060,14 @@ function buildApiAssessment(
       endpoints,
 
     sourceCoverage:
-      issues.length
+      issues.length ||
+      evidence.length
         ? ['api']
         : [],
 
     originSources:
-      uniqueSources(
-        issues
+      uniqueSources([
+        ...issues
           .map(
             issue =>
               issue.originSource
@@ -1057,15 +1077,21 @@ function buildApiAssessment(
               source
             ): source is IntelligenceSource =>
               Boolean(source)
-          )
-      ),
+          ),
+        ...evidence.map(
+          item =>
+            item.originSource
+        ),
+      ]),
   };
 }
 
 
 function buildBackendAssessment(
   issues:
-    BackendIntelligenceIssue[]
+    BackendIntelligenceIssue[],
+  evidence:
+    ApiBackendEvidence[]
 ): BackendIntelligenceAssessment {
 
   /*
@@ -1074,8 +1100,8 @@ function buildBackendAssessment(
    * to string before uniqueStrings().
    */
   const services =
-    uniqueStrings(
-      issues
+    uniqueStrings([
+      ...issues
         .filter(
           issue =>
             issue.serviceResolved
@@ -1090,16 +1116,34 @@ function buildBackendAssessment(
           ): value is string =>
             typeof value === 'string' &&
             value.length > 0
+        ),
+      ...evidence
+        .map(
+          item =>
+            item.service
         )
-    );
+        .filter(
+          (
+            value
+          ): value is string =>
+            typeof value === 'string' &&
+            value.length > 0
+        ),
+    ]);
 
 
   return {
     status:
-      statusFromIssues(issues),
+      statusFromIssues(
+        issues,
+        evidence.length
+      ),
 
     issueCount:
       issues.length,
+
+    positiveEvidenceCount:
+      evidence.length,
 
     blockingIssues:
       issues.filter(
@@ -1152,13 +1196,14 @@ function buildBackendAssessment(
       services,
 
     sourceCoverage:
-      issues.length
+      issues.length ||
+      evidence.length
         ? ['backend']
         : [],
 
     originSources:
-      uniqueSources(
-        issues
+      uniqueSources([
+        ...issues
           .map(
             issue =>
               issue.originSource
@@ -1168,8 +1213,12 @@ function buildBackendAssessment(
               source
             ): source is IntelligenceSource =>
               Boolean(source)
-          )
-      ),
+          ),
+        ...evidence.map(
+          item =>
+            item.originSource
+        ),
+      ]),
   };
 }
 
@@ -1220,7 +1269,9 @@ function combinedStatus(
 
 export function promoteApiBackendIntelligence(
   signals:
-    PromotableIssue[]
+    PromotableIssue[],
+  positiveEvidence:
+    ApiBackendEvidence[] = []
 ): ApiBackendPromotionResult {
 
   const apiIssues:
@@ -1254,13 +1305,33 @@ export function promoteApiBackendIntelligence(
   }
 
 
+  const apiEvidence =
+    positiveEvidence.filter(
+      evidence =>
+        evidence.kind ===
+          'api-endpoint'
+    );
+
+
+  const backendEvidence =
+    positiveEvidence.filter(
+      evidence =>
+        evidence.kind ===
+          'backend-service'
+    );
+
+
   const api =
-    buildApiAssessment(apiIssues);
+    buildApiAssessment(
+      apiIssues,
+      apiEvidence
+    );
 
 
   const backend =
     buildBackendAssessment(
-      backendIssues
+      backendIssues,
+      backendEvidence
     );
 
 
@@ -1269,12 +1340,18 @@ export function promoteApiBackendIntelligence(
       [];
 
 
-  if (apiIssues.length) {
+  if (
+    apiIssues.length ||
+    apiEvidence.length
+  ) {
     sourceCoverage.push('api');
   }
 
 
-  if (backendIssues.length) {
+  if (
+    backendIssues.length ||
+    backendEvidence.length
+  ) {
     sourceCoverage.push('backend');
   }
 
@@ -1305,6 +1382,11 @@ export function promoteApiBackendIntelligence(
 
       promotedBackendIssues:
         backendIssues.length,
+
+      positiveEvidence: [
+        ...apiEvidence,
+        ...backendEvidence,
+      ],
 
       sourceCoverage,
       originSources,

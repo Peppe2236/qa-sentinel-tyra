@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type {
+  ApiBackendEvidence,
   QualityDimension,
 } from '../models/types';
 
@@ -62,6 +63,9 @@ export interface DashboardDiscoveryIssue {
 interface DiscoveryReport {
   prioritizedFindings?:
     DashboardDiscoveryIssue[];
+
+  apiBackendEvidence?:
+    ApiBackendEvidence[];
 }
 
 
@@ -112,6 +116,48 @@ function readDiscoveryFile(
 }
 
 
+function readApiBackendEvidence(
+  filePath: string
+): ApiBackendEvidence[] {
+  if (
+    !fs.existsSync(
+      filePath
+    )
+  ) {
+    return [];
+  }
+
+  try {
+    const report =
+      JSON.parse(
+        fs.readFileSync(
+          filePath,
+          'utf8'
+        )
+      ) as DiscoveryReport;
+
+    return (
+      report.apiBackendEvidence ??
+      []
+    ).filter(
+      evidence =>
+        (
+          evidence.kind ===
+            'api-endpoint' ||
+          evidence.kind ===
+            'backend-service'
+        ) &&
+        evidence.statusCode >= 200 &&
+        evidence.statusCode < 400 &&
+        Boolean(evidence.url) &&
+        Boolean(evidence.site)
+    );
+  } catch {
+    return [];
+  }
+}
+
+
 export function loadDiscoveryIssues():
   DashboardDiscoveryIssue[] {
   const directory =
@@ -145,4 +191,47 @@ export function loadDiscoveryIssues():
       b.priorityScore -
       a.priorityScore
   );
+}
+
+
+export function loadApiBackendEvidence():
+  ApiBackendEvidence[] {
+  const directory =
+    path.resolve(
+      process.cwd(),
+      'reports',
+      'discovery'
+    );
+
+  const evidence = [
+    ...readApiBackendEvidence(
+      path.join(
+        directory,
+        'nation.json'
+      )
+    ),
+    ...readApiBackendEvidence(
+      path.join(
+        directory,
+        'ai-skills.json'
+      )
+    ),
+  ];
+
+  return [
+    ...new Map(
+      evidence.map(
+        item => [
+          [
+            item.kind,
+            item.site,
+            item.method,
+            item.url,
+            item.statusCode,
+          ].join('|'),
+          item,
+        ] as const
+      )
+    ).values(),
+  ];
 }
