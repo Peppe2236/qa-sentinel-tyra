@@ -1,5 +1,5 @@
 import {
-  analyzeAutonomousQaFailureReproduction,
+  analyzeAutonomousQaVerificationPlanning,
 } from './analyzers/sentinel-autonomous-qa';
 
 import {
@@ -1631,7 +1631,7 @@ const releaseAssessment =
 
 
 const autonomousQaAssessment =
-  analyzeAutonomousQaFailureReproduction(
+  analyzeAutonomousQaVerificationPlanning(
     unifiedDecisionAssessment,
     'unified-v5',
     this.results,

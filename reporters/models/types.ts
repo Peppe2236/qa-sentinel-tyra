@@ -555,6 +555,7 @@ export type AutonomousQaCapabilityStatus =
   | 'test-selection-advisory'
   | 'execution-planning-advisory'
   | 'failure-reproduction-advisory'
+  | 'verification-planning-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -786,6 +787,82 @@ export interface AutonomousQaFailureReproductionAssessment {
     AutonomousQaFailureReproductionRecipe[];
 }
 
+export type AutonomousQaVerificationPlanStatus =
+  | 'available'
+  | 'no-failures'
+  | 'not-verified';
+
+export type AutonomousQaVerificationState =
+  | 'awaiting-new-evidence';
+
+export interface AutonomousQaVerificationExpectation {
+  testId: string;
+
+  project: string;
+  site: string;
+  browserFamily: string;
+  profile: string;
+
+  previousStatus: string;
+  expectedStatus: string;
+
+  evidenceRequirements:
+    string[];
+}
+
+export interface AutonomousQaVerificationPlan {
+  id: string;
+  order: number;
+
+  failureReproductionRecipeId:
+    string;
+
+  executionPlanStepId: string;
+  testSelectionCandidateId: string;
+
+  phase:
+    AutonomousQaExecutionPhase;
+
+  title: string;
+  file: string;
+  site: string;
+
+  projects: string[];
+  testIds: string[];
+
+  verificationState:
+    AutonomousQaVerificationState;
+
+  requiresNewEvidence: true;
+  verified: false;
+
+  criteria: string[];
+
+  expectations:
+    AutonomousQaVerificationExpectation[];
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  releaseDecisionUpdateAllowed:
+    false;
+
+  executable: false;
+}
+
+export interface AutonomousQaVerificationAssessment {
+  status:
+    AutonomousQaVerificationPlanStatus;
+
+  planCount: number;
+  targetTestCount: number;
+  awaitingEvidenceCount: number;
+  verifiedPlanCount: number;
+
+  plans:
+    AutonomousQaVerificationPlan[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -845,6 +922,9 @@ export interface AutonomousQaActionCandidate {
 
   failureReproductionRecipeId?:
     string;
+
+  verificationPlanId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -880,6 +960,9 @@ export interface AutonomousQaAssessment {
 
   failureReproduction?:
     AutonomousQaFailureReproductionAssessment;
+
+  verification?:
+    AutonomousQaVerificationAssessment;
 
   reason:
     string;

@@ -9,6 +9,8 @@ import type {
   AutonomousQaFailureEvidence,
   AutonomousQaFailureReproductionRecipe,
   AutonomousQaTestSelectionCandidate,
+  AutonomousQaVerificationExpectation,
+  AutonomousQaVerificationPlan,
   AutonomousQaTestSelectionReason,
   DashboardTestResult,
   IntelligencePriority,
@@ -1803,6 +1805,331 @@ export function analyzeAutonomousQaFailureReproduction(
           )
         : (
             'Milestone 6.4 failure-reproduction capability is available, but the advisory execution plan contains no current-run non-passing test variants. No command is generated or executed and autonomous execution remains disabled.'
+          ),
+  };
+}
+
+function verificationExpectations(
+  recipe:
+    AutonomousQaFailureReproductionRecipe
+): AutonomousQaVerificationExpectation[] {
+  return recipe.evidence.map(
+    evidence => ({
+      testId:
+        evidence.testId,
+
+      project:
+        evidence.project,
+
+      site:
+        evidence.site,
+
+      browserFamily:
+        evidence.browserFamily,
+
+      profile:
+        evidence.profile,
+
+      previousStatus:
+        evidence.status,
+
+      expectedStatus:
+        evidence.expectedStatus,
+
+      evidenceRequirements: [
+        `Collect a new result for ${evidence.project} / ${evidence.browserFamily} / ${evidence.profile}.`,
+        `Confirm that the observed status matches ${evidence.expectedStatus}.`,
+        'Confirm that the recorded failure signature is absent or explicitly explain why it remains.',
+        'Retain new error and attachment evidence if the result is still non-passing.',
+      ],
+    })
+  );
+}
+
+function verificationCriteria(
+  recipe:
+    AutonomousQaFailureReproductionRecipe
+): string[] {
+  const criteria = [
+    `Review the correction against failure-reproduction recipe ${recipe.id}.`,
+    'Verify every recorded project, browser and profile variant against its expectedStatus.',
+    'Treat the previous failure evidence as historical context only; collect new evidence for the corrected build.',
+    'If any target remains non-passing, preserve the new error and attachments and return it for diagnosis.',
+  ];
+
+  if (
+    recipe.provenance.requirementIds.length > 0
+  ) {
+    criteria.push(
+      `Review linked requirement evidence: ${recipe.provenance.requirementIds.join(', ')}.`
+    );
+  }
+
+  if (
+    recipe.provenance.criticalFlowIds.length > 0
+  ) {
+    criteria.push(
+      `Review linked Critical Flow evidence: ${recipe.provenance.criticalFlowIds.join(', ')}.`
+    );
+  }
+
+  if (
+    recipe.provenance.flowScenarioIds.length > 0
+  ) {
+    criteria.push(
+      `Review linked flow-scenario evidence: ${recipe.provenance.flowScenarioIds.join(', ')}.`
+    );
+  }
+
+  criteria.push(
+    'Submit the new evidence to Unified Decision review; this plan cannot update release readiness automatically.'
+  );
+
+  return criteria;
+}
+
+function buildVerificationPlans(
+  recipes:
+    AutonomousQaFailureReproductionRecipe[]
+): AutonomousQaVerificationPlan[] {
+  return recipes.map(
+    recipe => ({
+      id:
+        `verification-${recipe.id}`,
+
+      order:
+        recipe.order,
+
+      failureReproductionRecipeId:
+        recipe.id,
+
+      executionPlanStepId:
+        recipe.executionPlanStepId,
+
+      testSelectionCandidateId:
+        recipe.testSelectionCandidateId,
+
+      phase:
+        recipe.phase,
+
+      title:
+        recipe.title,
+
+      file:
+        recipe.file,
+
+      site:
+        recipe.site,
+
+      projects:
+        recipe.projects,
+
+      testIds:
+        recipe.testIds,
+
+      verificationState:
+        'awaiting-new-evidence',
+
+      requiresNewEvidence:
+        true,
+
+      verified:
+        false,
+
+      criteria:
+        verificationCriteria(
+          recipe
+        ),
+
+      expectations:
+        verificationExpectations(
+          recipe
+        ),
+
+      provenance:
+        recipe.provenance,
+
+      releaseDecisionUpdateAllowed:
+        false,
+
+      executable:
+        false,
+    })
+  );
+}
+
+function verificationPlanningActions(
+  plans:
+    AutonomousQaVerificationPlan[]
+): AutonomousQaActionCandidate[] {
+  return plans.map(
+    plan => ({
+      id:
+        `action-${plan.id}`,
+
+      kind:
+        'verification',
+
+      state:
+        'candidate',
+
+      title:
+        `Verify ${plan.title}`,
+
+      rationale:
+        (
+          'A current-run failure has an advisory reproduction recipe and requires new post-correction evidence. ' +
+          'The plan defines verification criteria only; autonomous execution and release-decision updates remain disabled.'
+        ),
+
+      authority:
+        'advisory-only',
+
+      executable:
+        false,
+
+      confidence:
+        null,
+
+      provenance:
+        plan.provenance,
+
+      testSelectionCandidateId:
+        plan.testSelectionCandidateId,
+
+      executionPlanStepId:
+        plan.executionPlanStepId,
+
+      failureReproductionRecipeId:
+        plan.failureReproductionRecipeId,
+
+      verificationPlanId:
+        plan.id,
+    })
+  );
+}
+
+export function analyzeAutonomousQaVerificationPlanning(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[]
+): AutonomousQaAssessment {
+  const reproductionAssessment =
+    analyzeAutonomousQaFailureReproduction(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues
+    );
+
+  const failureReproduction =
+    reproductionAssessment.failureReproduction;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !failureReproduction ||
+    failureReproduction.status ===
+      'not-verified'
+  ) {
+    return {
+      ...reproductionAssessment,
+
+      verification: {
+        status:
+          'not-verified',
+
+        planCount:
+          0,
+
+        targetTestCount:
+          0,
+
+        awaitingEvidenceCount:
+          0,
+
+        verifiedPlanCount:
+          0,
+
+        plans:
+          [],
+      },
+
+      reason:
+        'Verification planning is not available because failure-reproduction or Unified Decision evidence is unavailable. No verification result is inferred, autonomous execution remains disabled and release authority is unchanged.',
+    };
+  }
+
+  const plans =
+    buildVerificationPlans(
+      failureReproduction.recipes
+    );
+
+  const verificationActions =
+    verificationPlanningActions(
+      plans
+    );
+
+  const targetTestCount =
+    plans.reduce(
+      (total, plan) =>
+        total +
+        plan.testIds.length,
+      0
+    );
+
+  const awaitingEvidenceCount =
+    plans.reduce(
+      (total, plan) =>
+        total +
+        plan.expectations.length,
+      0
+    );
+
+  return {
+    ...reproductionAssessment,
+
+    capabilityStatus:
+      'verification-planning-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...reproductionAssessment.candidateActions,
+      ...verificationActions,
+    ],
+
+    verification: {
+      status:
+        plans.length > 0
+          ? 'available'
+          : 'no-failures',
+
+      planCount:
+        plans.length,
+
+      targetTestCount,
+
+      awaitingEvidenceCount,
+
+      verifiedPlanCount:
+        0,
+
+      plans,
+    },
+
+    reason:
+      plans.length > 0
+        ? (
+            'Milestone 6.5 created advisory verification plans from Milestone 6.4 failure-reproduction recipes. Every plan remains awaiting new evidence; no failure is marked resolved, no command is generated or executed, and Unified Decision release authority is unchanged.'
+          )
+        : (
+            'Milestone 6.5 verification planning is available, but there are no current-run failure-reproduction recipes to verify. No verification result is inferred, no command is generated or executed, and Unified Decision release authority is unchanged.'
           ),
   };
 }
