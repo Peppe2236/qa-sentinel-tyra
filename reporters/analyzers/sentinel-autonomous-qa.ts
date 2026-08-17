@@ -3,6 +3,8 @@ import crypto from 'node:crypto';
 import type {
   AutonomousQaActionCandidate,
   AutonomousQaAssessment,
+  AutonomousQaChangeImpactCandidate,
+  AutonomousQaChangeImpactScope,
   AutonomousQaEvidenceProvenance,
   AutonomousQaExecutionPhase,
   AutonomousQaExecutionPlanStep,
@@ -2130,6 +2132,451 @@ export function analyzeAutonomousQaVerificationPlanning(
           )
         : (
             'Milestone 6.5 verification planning is available, but there are no current-run failure-reproduction recipes to verify. No verification result is inferred, no command is generated or executed, and Unified Decision release authority is unchanged.'
+          ),
+  };
+}
+
+function changeImpactScope(
+  plan:
+    AutonomousQaVerificationPlan
+): AutonomousQaChangeImpactScope {
+  return {
+    sites:
+      orderedUnique([
+        plan.site,
+        ...plan.expectations.map(
+          expectation =>
+            expectation.site
+        ),
+      ]),
+
+    projects:
+      orderedUnique([
+        ...plan.projects,
+        ...plan.expectations.map(
+          expectation =>
+            expectation.project
+        ),
+      ]),
+
+    intelligenceSources:
+      plan.provenance
+        .intelligenceSources,
+
+    qualityDimensions:
+      plan.provenance
+        .qualityDimensions,
+
+    unifiedDecisionUnitIds:
+      plan.provenance
+        .unifiedDecisionUnitIds,
+
+    issueFingerprints:
+      plan.provenance
+        .issueFingerprints,
+
+    requirementIds:
+      plan.provenance
+        .requirementIds,
+
+    criticalFlowIds:
+      plan.provenance
+        .criticalFlowIds,
+
+    flowScenarioIds:
+      plan.provenance
+        .flowScenarioIds,
+  };
+}
+
+function changeImpactRationale(
+  plan:
+    AutonomousQaVerificationPlan,
+  candidate:
+    AutonomousQaTestSelectionCandidate | undefined
+): string[] {
+  const rationale = [
+    'Potential impact is bounded by the existing verification plan and its recorded evidence links; no source-code or configuration change evidence was provided.',
+    `Existing Unified ordering context is ${candidate?.priority ?? 'not-verified'} / ${candidate?.disposition ?? 'not-verified'}; risk eligibility remains ${candidate?.riskEligible ?? false}.`,
+  ];
+
+  if (
+    plan.provenance.qualityDimensions.length > 0
+  ) {
+    rationale.push(
+      `Linked quality dimensions: ${plan.provenance.qualityDimensions.join(', ')}.`
+    );
+  }
+
+  if (
+    plan.provenance.requirementIds.length > 0
+  ) {
+    rationale.push(
+      `Linked requirements may require renewed evidence: ${plan.provenance.requirementIds.join(', ')}.`
+    );
+  }
+
+  if (
+    plan.provenance.criticalFlowIds.length > 0 ||
+    plan.provenance.flowScenarioIds.length > 0
+  ) {
+    rationale.push(
+      'Linked Critical Flow or flow-scenario evidence may require review after the correction.'
+    );
+  }
+
+  return rationale;
+}
+
+function changeImpactReviewChecklist(
+  plan:
+    AutonomousQaVerificationPlan
+): string[] {
+  const checklist = [
+    'Identify and review the actual code, configuration or dependency change before confirming impact.',
+    `Review every recorded target project: ${plan.projects.join(', ')}.`,
+    'Collect the new evidence required by the linked M6.5 verification plan.',
+    'Check whether previously linked issue fingerprints remain applicable after the correction.',
+  ];
+
+  if (
+    plan.provenance.requirementIds.length > 0
+  ) {
+    checklist.push(
+      'Reassess the linked requirement evidence and its acceptance-criteria coverage.'
+    );
+  }
+
+  if (
+    plan.provenance.criticalFlowIds.length > 0 ||
+    plan.provenance.flowScenarioIds.length > 0
+  ) {
+    checklist.push(
+      'Reassess linked Critical Flow and flow-scenario evidence.'
+    );
+  }
+
+  checklist.push(
+    'Submit reviewed evidence to Unified Decision; this candidate cannot change release readiness automatically.'
+  );
+
+  return checklist;
+}
+
+function buildChangeImpactCandidates(
+  plans:
+    AutonomousQaVerificationPlan[],
+  selectionCandidates:
+    AutonomousQaTestSelectionCandidate[]
+): AutonomousQaChangeImpactCandidate[] {
+  const selectionById =
+    new Map<
+      string,
+      AutonomousQaTestSelectionCandidate
+    >();
+
+  for (
+    const candidate
+    of selectionCandidates
+  ) {
+    selectionById.set(
+      candidate.id,
+      candidate
+    );
+  }
+
+  return plans.map(
+    plan => {
+      const selectionCandidate =
+        selectionById.get(
+          plan.testSelectionCandidateId
+        );
+
+      return {
+        id:
+          `change-impact-${plan.id}`,
+
+        order:
+          plan.order,
+
+        verificationPlanId:
+          plan.id,
+
+        failureReproductionRecipeId:
+          plan.failureReproductionRecipeId,
+
+        executionPlanStepId:
+          plan.executionPlanStepId,
+
+        testSelectionCandidateId:
+          plan.testSelectionCandidateId,
+
+        phase:
+          plan.phase,
+
+        title:
+          plan.title,
+
+        file:
+          plan.file,
+
+        testIds:
+          plan.testIds,
+
+        priority:
+          selectionCandidate?.priority ??
+          null,
+
+        disposition:
+          selectionCandidate?.disposition ??
+          null,
+
+        evidenceState:
+          selectionCandidate?.evidenceState ??
+          null,
+
+        riskEligible:
+          selectionCandidate?.riskEligible ??
+          false,
+
+        confidence:
+          selectionCandidate?.confidence ??
+          null,
+
+        state:
+          'potential-impact',
+
+        scope:
+          changeImpactScope(
+            plan
+          ),
+
+        rationale:
+          changeImpactRationale(
+            plan,
+            selectionCandidate
+          ),
+
+        reviewChecklist:
+          changeImpactReviewChecklist(
+            plan
+          ),
+
+        changeEvidenceAvailable:
+          false,
+
+        impactConfirmed:
+          false,
+
+        requiresHumanReview:
+          true,
+
+        provenance:
+          plan.provenance,
+
+        releaseDecisionUpdateAllowed:
+          false,
+
+        executable:
+          false,
+      };
+    }
+  );
+}
+
+function changeImpactActions(
+  candidates:
+    AutonomousQaChangeImpactCandidate[]
+): AutonomousQaActionCandidate[] {
+  return candidates.map(
+    candidate => ({
+      id:
+        `action-${candidate.id}`,
+
+      kind:
+        'change-impact',
+
+      state:
+        'candidate',
+
+      title:
+        `Review potential impact for ${candidate.title}`,
+
+      rationale:
+        (
+          'Existing Autonomous QA provenance identifies a bounded potential review scope. ' +
+          'No change evidence was provided, so impact remains unconfirmed and requires human review.'
+        ),
+
+      authority:
+        'advisory-only',
+
+      executable:
+        false,
+
+      confidence:
+        candidate.confidence,
+
+      provenance:
+        candidate.provenance,
+
+      testSelectionCandidateId:
+        candidate.testSelectionCandidateId,
+
+      executionPlanStepId:
+        candidate.executionPlanStepId,
+
+      failureReproductionRecipeId:
+        candidate.failureReproductionRecipeId,
+
+      verificationPlanId:
+        candidate.verificationPlanId,
+
+      changeImpactCandidateId:
+        candidate.id,
+    })
+  );
+}
+
+export function analyzeAutonomousQaChangeImpact(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[]
+): AutonomousQaAssessment {
+  const verificationAssessment =
+    analyzeAutonomousQaVerificationPlanning(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues
+    );
+
+  const verification =
+    verificationAssessment.verification;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !verification ||
+    verification.status ===
+      'not-verified'
+  ) {
+    return {
+      ...verificationAssessment,
+
+      changeImpact: {
+        status:
+          'not-verified',
+
+        candidateCount:
+          0,
+
+        targetTestCount:
+          0,
+
+        affectedSiteCount:
+          0,
+
+        affectedProjectCount:
+          0,
+
+        confirmedImpactCount:
+          0,
+
+        candidates:
+          [],
+      },
+
+      reason:
+        'Potential change-impact analysis is not available because verification-planning or Unified Decision evidence is unavailable. No impact is inferred, autonomous execution remains disabled and release authority is unchanged.',
+    };
+  }
+
+  const candidates =
+    buildChangeImpactCandidates(
+      verification.plans,
+      verificationAssessment
+        .testSelection?.candidates ??
+        []
+    );
+
+  const impactActions =
+    changeImpactActions(
+      candidates
+    );
+
+  const targetTestCount =
+    candidates.reduce(
+      (total, candidate) =>
+        total +
+        candidate.testIds.length,
+      0
+    );
+
+  const affectedSites =
+    orderedUnique(
+      candidates.flatMap(
+        candidate =>
+          candidate.scope.sites
+      )
+    );
+
+  const affectedProjects =
+    orderedUnique(
+      candidates.flatMap(
+        candidate =>
+          candidate.scope.projects
+      )
+    );
+
+  return {
+    ...verificationAssessment,
+
+    capabilityStatus:
+      'change-impact-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...verificationAssessment.candidateActions,
+      ...impactActions,
+    ],
+
+    changeImpact: {
+      status:
+        candidates.length > 0
+          ? 'available'
+          : 'no-targets',
+
+      candidateCount:
+        candidates.length,
+
+      targetTestCount,
+
+      affectedSiteCount:
+        affectedSites.length,
+
+      affectedProjectCount:
+        affectedProjects.length,
+
+      confirmedImpactCount:
+        0,
+
+      candidates,
+    },
+
+    reason:
+      candidates.length > 0
+        ? (
+            'Milestone 6.6 created advisory potential change-impact candidates from M6.5 verification plans and existing Unified Decision provenance. No change evidence was provided, every impact remains unconfirmed, no new weighted score is introduced, and autonomous execution and release-decision updates remain disabled.'
+          )
+        : (
+            'Milestone 6.6 change-impact analysis is available, but there are no M6.5 verification targets to scope. No impact is inferred, no command is generated or executed, and Unified Decision release authority is unchanged.'
           ),
   };
 }

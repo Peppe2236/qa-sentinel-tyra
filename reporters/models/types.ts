@@ -556,6 +556,7 @@ export type AutonomousQaCapabilityStatus =
   | 'execution-planning-advisory'
   | 'failure-reproduction-advisory'
   | 'verification-planning-advisory'
+  | 'change-impact-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -863,6 +864,107 @@ export interface AutonomousQaVerificationAssessment {
     AutonomousQaVerificationPlan[];
 }
 
+export type AutonomousQaChangeImpactStatus =
+  | 'available'
+  | 'no-targets'
+  | 'not-verified';
+
+export type AutonomousQaChangeImpactState =
+  | 'potential-impact';
+
+export interface AutonomousQaChangeImpactScope {
+  sites: string[];
+  projects: string[];
+
+  intelligenceSources:
+    IntelligenceSource[];
+
+  qualityDimensions:
+    QualityDimension[];
+
+  unifiedDecisionUnitIds:
+    string[];
+
+  issueFingerprints:
+    string[];
+
+  requirementIds:
+    string[];
+
+  criticalFlowIds:
+    string[];
+
+  flowScenarioIds:
+    string[];
+}
+
+export interface AutonomousQaChangeImpactCandidate {
+  id: string;
+  order: number;
+
+  verificationPlanId: string;
+  failureReproductionRecipeId: string;
+  executionPlanStepId: string;
+  testSelectionCandidateId: string;
+
+  phase:
+    AutonomousQaExecutionPhase;
+
+  title: string;
+  file: string;
+
+  testIds: string[];
+
+  priority:
+    IntelligencePriority | null;
+
+  disposition:
+    UnifiedDecisionDisposition | null;
+
+  evidenceState:
+    UnifiedDecisionEvidenceState | null;
+
+  riskEligible: boolean;
+
+  confidence:
+    number | null;
+
+  state:
+    AutonomousQaChangeImpactState;
+
+  scope:
+    AutonomousQaChangeImpactScope;
+
+  rationale: string[];
+  reviewChecklist: string[];
+
+  changeEvidenceAvailable: false;
+  impactConfirmed: false;
+  requiresHumanReview: true;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  releaseDecisionUpdateAllowed:
+    false;
+
+  executable: false;
+}
+
+export interface AutonomousQaChangeImpactAssessment {
+  status:
+    AutonomousQaChangeImpactStatus;
+
+  candidateCount: number;
+  targetTestCount: number;
+  affectedSiteCount: number;
+  affectedProjectCount: number;
+  confirmedImpactCount: number;
+
+  candidates:
+    AutonomousQaChangeImpactCandidate[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -925,6 +1027,9 @@ export interface AutonomousQaActionCandidate {
 
   verificationPlanId?:
     string;
+
+  changeImpactCandidateId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -963,6 +1068,9 @@ export interface AutonomousQaAssessment {
 
   verification?:
     AutonomousQaVerificationAssessment;
+
+  changeImpact?:
+    AutonomousQaChangeImpactAssessment;
 
   reason:
     string;
