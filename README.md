@@ -18,6 +18,7 @@
   <img src="https://img.shields.io/badge/Deep%20Discovery-Active-success" alt="Deep Discovery" />
   <img src="https://img.shields.io/badge/Unified%20Decision-v5-00A6A6" alt="Unified Decision v5" />
   <img src="https://img.shields.io/badge/Milestone%206-Advisory%20QA-success" alt="Milestone 6 complete" />
+  <img src="https://img.shields.io/badge/Milestone%207-Planned-5865F2" alt="Milestone 7 planned" />
 </p>
 
 ---
@@ -31,7 +32,7 @@ Instead of stopping at **passed** or **failed**, QA Sentinel Tyra adds:
 - requirements and functionality intelligence
 - critical-flow coverage and impact analysis
 - UX/UI, security, performance and compatibility intelligence
-- API and backend intelligence
+- API and backend intelligence with positive first-party verification evidence
 - Deep Discovery and automatic route exploration
 - runtime, network and security signal analysis
 - root-cause fingerprinting and issue deduplication
@@ -82,14 +83,40 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Advisory change-impact analysis | ✅ M6.6 |
 | Advisory pairwise quality-drift comparison | ✅ M6.7 |
 | Advisory investigation planning | ✅ M6.8 |
+| Sentinel AI live dashboard binding | ✅ Post-M6 |
+| Positive first-party API/backend verification evidence | ✅ Post-M6 |
+| Full configured compatibility-matrix verification | ✅ Post-M6 |
 | Autonomous test execution | 🔒 Intentionally disabled — advisory-only |
 | Autonomous remediation and release updates | 🔒 Intentionally disabled — advisory-only |
 | AI-assisted root-cause intelligence | 🚧 In progress |
 | Unified dashboard intelligence | 🚧 In progress |
-| Discovery-aware release readiness | 🚧 Planned |
+| Discovery-aware release readiness | 🚧 In progress |
+| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🧭 Planned — not started |
 | PDF executive reports | 🚧 Planned |
 | GitHub Actions integration | 🚧 Planned |
 | Multi-project dashboard | 🚧 Planned |
+
+---
+
+## Latest verified QA baseline
+
+The latest full configured Playwright matrix was manually executed on **2026-08-17** after the post-M6 dashboard and API/backend evidence work.
+
+| Metric | Verified result |
+|---|---|
+| Total tests | 175 |
+| Passed / failed | 152 / 23 |
+| Overall health | 96% |
+| Release readiness | Ready with warnings |
+| Release risk / confidence | Medium / 88% |
+| API intelligence | Healthy — 22 positively verified endpoints |
+| Backend intelligence | Healthy — 2 positively verified services |
+| Positive API/backend evidence | 47 sanitized first-party records |
+| API/backend release gaps | 0 |
+| Compatibility release gaps | 0 |
+| Remaining verification gaps | UX/UI, security and performance |
+
+This is a dated validation snapshot, not a permanent guarantee of current application health. Compatibility remained `degraded` because real failures were retained even though configured matrix coverage was complete.
 
 ---
 
@@ -111,6 +138,8 @@ Raw Playwright outcomes and Deep Discovery findings retain their source identity
 Unified Decisioning is the canonical release authority for dashboard schema v5. The legacy release assessment is retained only as comparison telemetry.
 
 The Milestone 6 Autonomous QA layer consumes existing evidence and Unified Decision semantics. It may create candidates, plans, recipes, comparisons and hypotheses, but it has no execution, remediation or release-decision authority.
+
+Successful same-origin `document`, `fetch` and `xhr` responses can now contribute sanitized positive API/backend verification evidence. Response bodies, credentials, query strings and URL fragments are not retained. Zero findings without positive evidence remains `not-verified`.
 
 ---
 
@@ -141,10 +170,16 @@ npx playwright install
 npm run typecheck
 ```
 
-### 5. Run the Nation test suite
+### 5. Run the Nation Chromium test suite
 
 ```bash
-npm run test:nation
+npx playwright test tests/nation --project=nation-chromium
+```
+
+Run the full configured browser and profile matrix with:
+
+```bash
+npx playwright test
 ```
 
 ### 6. Start the QA dashboard
@@ -172,6 +207,7 @@ The current discovery engine supports:
 - route normalization
 - runtime console signal collection
 - network failure detection
+- sanitized positive first-party `document`, `fetch` and `xhr` evidence
 - security and Content Security Policy signals
 - expected browser-event filtering
 - telemetry noise filtering
@@ -197,6 +233,28 @@ Example:
 reports/discovery/nation.json
 reports/discovery/ai-skills.json
 ```
+
+---
+
+## Positive API and backend verification evidence
+
+Deep Discovery now retains safe metadata for successful first-party application responses:
+
+```text
+document → backend-service evidence
+fetch/xhr → api-endpoint evidence
+```
+
+Only same-origin responses with successful HTTP status are eligible. Stored URLs are sanitized by removing credentials, query strings and fragments, and no response body is retained.
+
+Assessment semantics remain conservative:
+
+- positive evidence with no matching issue can establish `healthy`
+- positive evidence plus findings produces the appropriate degraded risk state
+- zero findings plus zero evidence remains `not-verified`
+- third-party activity cannot establish first-party health
+
+The verified 2026-08-17 full-matrix run produced 22 API endpoint records and two backend services with zero API/backend release gaps.
 
 ---
 
@@ -421,6 +479,8 @@ Every completed run can produce multiple views of the same canonical quality dat
 The live dashboard exposes:
 
 - Unified Decision release readiness and evidence state
+- live Sentinel AI summary, root-cause, impact, recommendation and next action
+- positive API/backend and compatibility evidence state
 - quality, health and pass/fail metrics
 - product, content and automation findings
 - quality-dimension assessments
@@ -450,7 +510,7 @@ Deep Discovery produces structured site-specific reports under:
 reports/discovery/
 ```
 
-These reports contain discovered routes, findings, consolidated root causes and prioritized findings.
+These reports contain discovered routes, findings, consolidated root causes, prioritized findings and sanitized positive first-party API/backend evidence.
 
 ### Executive HTML report
 
@@ -536,6 +596,8 @@ releaseDecisionSource: 'unified-v5'
 The legacy release assessment remains available as comparison telemetry, but it is not the canonical release authority. Cross-browser duplicates are consolidated before actionable issue counts are evaluated, preventing the same root cause from being counted repeatedly because it reproduces in several environments.
 
 Milestone 6 can recommend investigation or verification work, but it cannot automatically change the release decision.
+
+Post-M6 positive API/backend evidence now participates in the canonical release assessment. Missing evidence remains a verification gap, while successful current-run first-party evidence can remove that gap without hiding promoted API or backend issues.
 
 ---
 
@@ -656,7 +718,9 @@ The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 - pairwise quality-drift comparison
 - advisory investigation cases and unconfirmed hypotheses
 
-The next numbered milestone has not yet been defined. Future work should be added to `ROADMAP.md` before implementation so scope and safety boundaries remain explicit.
+### Milestone 7 — Unified Dashboard Intelligence & Operationalization 🧭 PLANNED
+
+Milestone 7 is defined in `ROADMAP.md` but has **not started**. Its planned scope completes operational test orchestration, presents the full advisory Autonomous QA assessment, deepens discovery-aware release readiness and works down the remaining UX/UI, security and performance verification gaps. Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
 
 ---
 
@@ -728,7 +792,7 @@ That is the direction of QA Sentinel Tyra.
   Built as part of the TYRA Labs ecosystem.
 </p>
 
-## Project status — Milestones 5 and 6 complete
+## Project status — Milestones 5 and 6 complete; Milestone 7 planned
 
 **Milestone 5 – Quality Intelligence Framework: ✅ COMPLETE**
 
@@ -737,6 +801,14 @@ Completed: 2026-08-13
 **Milestone 6 – Advisory Autonomous QA Framework: ✅ COMPLETE**
 
 Completed: 2026-08-17
+
+**Verified post-M6 enhancements:**
+
+- Sentinel AI intelligence is bound to the live dashboard.
+- Positive first-party API/backend evidence participates in release readiness.
+- The full configured compatibility matrix and API/backend evidence path were manually validated.
+
+**Milestone 7 – Unified Dashboard Intelligence & Operationalization: 🧭 PLANNED — NOT STARTED**
 
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
