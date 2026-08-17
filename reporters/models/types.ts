@@ -547,6 +547,177 @@ export interface UnifiedDecisionAssessment {
 }
 
 
+export type AutonomousQaAuthority =
+  | 'advisory-only';
+
+export type AutonomousQaCapabilityStatus =
+  | 'foundation-only'
+  | 'test-selection-advisory'
+  | 'not-verified';
+
+export type AutonomousQaActionKind =
+  | 'test-selection'
+  | 'execution-planning'
+  | 'failure-reproduction'
+  | 'verification'
+  | 'change-impact'
+  | 'quality-drift'
+  | 'investigation';
+
+export type AutonomousQaActionState =
+  | 'candidate';
+
+export type AutonomousQaTestSelectionReason =
+  | 'unified-decision-link'
+  | 'failed-current-run'
+  | 'requirement-link'
+  | 'critical-flow-link'
+  | 'flow-scenario-link';
+
+export interface AutonomousQaTestVariant {
+  testId: string;
+  project: string;
+  browserFamily: string;
+  profile: string;
+  status: string;
+}
+
+export interface AutonomousQaTestSelectionCandidate {
+  id: string;
+  logicalTestKey: string;
+
+  title: string;
+  fullTitle: string;
+  file: string;
+  site: string;
+
+  priority:
+    IntelligencePriority | null;
+
+  disposition:
+    UnifiedDecisionDisposition | null;
+
+  evidenceState:
+    UnifiedDecisionEvidenceState | null;
+
+  riskEligible: boolean;
+
+  confidence:
+    number | null;
+
+  reasons:
+    AutonomousQaTestSelectionReason[];
+
+  variants:
+    AutonomousQaTestVariant[];
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+}
+
+export type AutonomousQaTestSelectionStatus =
+  | 'available'
+  | 'no-candidates'
+  | 'not-verified';
+
+export interface AutonomousQaTestSelectionAssessment {
+  status:
+    AutonomousQaTestSelectionStatus;
+
+  candidateCount: number;
+  selectedTestCount: number;
+
+  candidates:
+    AutonomousQaTestSelectionCandidate[];
+}
+
+export interface AutonomousQaEvidenceProvenance {
+  intelligenceSources:
+    IntelligenceSource[];
+
+  qualityDimensions:
+    QualityDimension[];
+
+  unifiedDecisionUnitIds:
+    string[];
+
+  issueFingerprints:
+    string[];
+
+  requirementIds:
+    string[];
+
+  criticalFlowIds:
+    string[];
+
+  flowScenarioIds:
+    string[];
+}
+
+export interface AutonomousQaActionCandidate {
+  id:
+    string;
+
+  kind:
+    AutonomousQaActionKind;
+
+  state:
+    AutonomousQaActionState;
+
+  title:
+    string;
+
+  rationale:
+    string;
+
+  authority:
+    AutonomousQaAuthority;
+
+  executable:
+    false;
+
+  confidence:
+    number | null;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  testSelectionCandidateId?:
+    string;
+}
+
+export interface AutonomousQaAssessment {
+  authority:
+    AutonomousQaAuthority;
+
+  capabilityStatus:
+    AutonomousQaCapabilityStatus;
+
+  executionEnabled:
+    false;
+
+  releaseDecisionSource:
+    ReleaseDecisionSource | null;
+
+  unifiedDecisionState:
+    UnifiedDecisionState | null;
+
+  linkedDecisionUnitCount:
+    number;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  candidateActions:
+    AutonomousQaActionCandidate[];
+
+  testSelection?:
+    AutonomousQaTestSelectionAssessment;
+
+  reason:
+    string;
+}
+
 export type CrossLayerCorrelationState =
   | 'correlated'
   | 'partial'
@@ -1608,5 +1779,8 @@ tests: DashboardTestResult[];
 
   unifiedDecisionAssessment?:
     UnifiedDecisionAssessment;
+
+  autonomousQaAssessment?:
+    AutonomousQaAssessment;
 
 }

@@ -1,4 +1,8 @@
 import {
+  analyzeAutonomousQaTestSelection,
+} from './analyzers/sentinel-autonomous-qa';
+
+import {
   analyzeUnifiedDecisioning,
 } from './analyzers/sentinel-unified-scoring';
 
@@ -1626,6 +1630,15 @@ const releaseAssessment =
   );
 
 
+const autonomousQaAssessment =
+  analyzeAutonomousQaTestSelection(
+    unifiedDecisionAssessment,
+    'unified-v5',
+    this.results,
+    unifiedIssues
+  );
+
+
 const run: DashboardRun = {
       schemaVersion: 5,
       runId: crypto.randomUUID(),
@@ -1674,6 +1687,7 @@ const run: DashboardRun = {
       crossLayerAssessment,
 
       unifiedDecisionAssessment,
+      autonomousQaAssessment,
       apiIssues,
       backendIssues,
 
