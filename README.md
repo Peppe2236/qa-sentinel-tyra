@@ -82,8 +82,11 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Advisory change-impact analysis | ✅ M6.6 |
 | Advisory pairwise quality-drift comparison | ✅ M6.7 |
 | Advisory investigation planning | ✅ M6.8 |
-| Autonomous test execution | 🔒 Disabled by design |
-| Autonomous remediation and release updates | 🔒 Disabled by design |
+| Autonomous test execution | 🔒 Intentionally disabled — advisory-only |
+| Autonomous remediation and release updates | 🔒 Intentionally disabled — advisory-only |
+| AI-assisted root-cause intelligence | 🚧 In progress |
+| Unified dashboard intelligence | 🚧 In progress |
+| Discovery-aware release readiness | 🚧 Planned |
 | PDF executive reports | 🚧 Planned |
 | GitHub Actions integration | 🚧 Planned |
 | Multi-project dashboard | 🚧 Planned |
@@ -739,6 +742,6 @@ Completed: 2026-08-17
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry
 - **Autonomous QA:** advisory-only
-- **Autonomous execution:** disabled
-- **Remediation authorization:** disabled
-- **Automatic release-decision updates:** disabled
+- **Autonomous execution:** Intentionally disabled — advisory-only
+- **Remediation authorization:** Intentionally disabled — advisory-only
+- **Automatic release-decision updates:** Intentionally disabled — advisory-only

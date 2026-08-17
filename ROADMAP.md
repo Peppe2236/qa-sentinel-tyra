@@ -11,7 +11,7 @@ Earlier foundations — Playwright reporting, Deep Discovery, actionable issue c
 - Unified Decisioning is the canonical release authority for dashboard schema v5.
 - `releaseDecisionSource: 'unified-v5'` identifies the canonical decision path.
 - The legacy release assessment remains available only as comparison telemetry.
-- Autonomous QA is advisory-only: execution, remediation authorization and automatic release-decision updates remain disabled.
+- Autonomous QA is advisory-only: execution, remediation authorization and automatic release-decision updates remain intentionally disabled.
 - Existing Unified Decision, P0–P4 priority and evidence semantics are reused; no competing weighted score is introduced.
 
 ## Milestone 5 – Quality Intelligence Framework ✅ COMPLETE
@@ -60,6 +60,21 @@ Unified Decisioning is the canonical schema-v5 release authority. Legacy release
 - potential impact, drift and root cause remain unconfirmed
 
 **Milestone 6:** ✅ COMPLETE
+
+## Remaining planned work
+
+These capabilities remain part of the long-term direction. They are not silently treated as completed by Milestone 5 or Milestone 6 and have not yet been assigned to a new numbered milestone.
+
+| Capability | Status | Direction |
+|---|---|---|
+| AI-assisted root-cause intelligence | 🚧 In progress | Extend M6.8 beyond advisory, unconfirmed investigation hypotheses |
+| Unified dashboard intelligence | 🚧 In progress | Continue unifying evidence, decisions and advisory QA presentation |
+| Discovery-aware release readiness | 🚧 Planned | Deepen discovery evidence participation in canonical release readiness |
+| PDF executive reports | 🚧 Planned | Add distributable executive PDF output |
+| GitHub Actions integration | 🚧 Planned | Add CI execution, artifacts and quality-gate integration |
+| Multi-project dashboard | 🚧 Planned | Expand dashboard support across several projects |
+
+The first three items preserve the previously documented product direction: the advisory foundations delivered in M5–M6 do not by themselves mark these broader capabilities as complete.
 
 ## Next milestone
 
