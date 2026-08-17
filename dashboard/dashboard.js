@@ -3835,17 +3835,13 @@ function renderUnifiedDecision(run) {
 
             <span>
               ${escapeHtml(
-                unit.priority ??
-                '—'
+                "RAW " + (unit.priority ?? "—")
               )}
             </span>
 
             <span>
               ${escapeHtml(
-                String(
-                  unit.severity ??
-                  'unknown'
-                ).toUpperCase()
+                "RAW " + String(unit.severity ?? "unknown").toUpperCase()
               )}
             </span>
 
@@ -3853,12 +3849,12 @@ function renderUnifiedDecision(run) {
               blocking
                 ? `
                   <span class="unified-decision-blocking">
-                    BLOCK
+                    DECISION BLOCK
                   </span>
                 `
                 : `
                   <span>
-                    WARN
+                    DECISION WARN
                   </span>
                 `
             }
