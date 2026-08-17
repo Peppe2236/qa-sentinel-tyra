@@ -385,6 +385,170 @@ function renderMetrics(run) {
 }
 
 
+function renderSentinelAi(run) {
+  const intelligence =
+    run.sentinelAi ?? null;
+
+  const panel =
+    byId('sentinel-ai-panel');
+
+  const state =
+    panel?.querySelector(
+      '.sentinel-ai-state'
+    );
+
+  if (!intelligence) {
+    setText(
+      'sentinel-ai-confidence',
+      '--%'
+    );
+    setText(
+      'sentinel-ai-risk',
+      '--'
+    );
+    setText(
+      'sentinel-ai-priority',
+      '--'
+    );
+    setText(
+      'sentinel-ai-findings-count',
+      '--'
+    );
+    setText(
+      'sentinel-ai-summary-text',
+      'Sentinel AI intelligence is not available for this run.'
+    );
+    setText(
+      'sentinel-ai-root-cause',
+      'No analysis available.'
+    );
+    setText(
+      'sentinel-ai-user-impact',
+      'No analysis available.'
+    );
+    setText(
+      'sentinel-ai-recommendation',
+      'No recommendation available.'
+    );
+    setText(
+      'sentinel-ai-next-action',
+      'No immediate action available.'
+    );
+    setText(
+      'sentinel-ai-generated',
+      '--'
+    );
+
+    if (panel) {
+      panel.dataset.status =
+        'not-verified';
+    }
+
+    if (state) {
+      state.innerHTML = `
+        <span class="sentinel-ai-state-dot"></span>
+        NOT VERIFIED
+      `;
+    }
+
+    return;
+  }
+
+  const findings =
+    Array.isArray(
+      intelligence.findings
+    )
+      ? intelligence.findings
+      : [];
+
+  const confidence =
+    clamp(
+      intelligence.confidence
+    );
+
+  const releaseRisk =
+    String(
+      intelligence.releaseRisk ??
+      'unknown'
+    ).toUpperCase();
+
+  const overallPriority =
+    String(
+      intelligence.overallPriority ??
+      'none'
+    ).toUpperCase();
+
+  setText(
+    'sentinel-ai-confidence',
+    `${Math.round(confidence)}%`
+  );
+  setText(
+    'sentinel-ai-risk',
+    releaseRisk
+  );
+  setText(
+    'sentinel-ai-priority',
+    overallPriority
+  );
+  setText(
+    'sentinel-ai-findings-count',
+    findings.length
+  );
+  setText(
+    'sentinel-ai-summary-text',
+    intelligence.summary ??
+      'No intelligence summary is available.'
+  );
+  setText(
+    'sentinel-ai-root-cause',
+    intelligence.likelyRootCause ??
+      'No analysis available.'
+  );
+  setText(
+    'sentinel-ai-user-impact',
+    intelligence.userImpact ??
+      'No analysis available.'
+  );
+  setText(
+    'sentinel-ai-recommendation',
+    intelligence.recommendation ??
+      'No recommendation available.'
+  );
+  setText(
+    'sentinel-ai-next-action',
+    intelligence.nextAction ??
+      'No immediate action available.'
+  );
+  setText(
+    'sentinel-ai-generated',
+    formatDate(
+      intelligence.generatedAt
+    )
+  );
+
+  if (panel) {
+    panel.dataset.status =
+      'available';
+    panel.dataset.risk =
+      String(
+        intelligence.releaseRisk ??
+        'unknown'
+      );
+    panel.dataset.priority =
+      String(
+        intelligence.overallPriority ??
+        'none'
+      );
+  }
+
+  if (state) {
+    state.innerHTML = `
+      <span class="sentinel-ai-state-dot"></span>
+      INTELLIGENCE ACTIVE
+    `;
+  }
+}
+
 function renderUxUi(run) {
   const panel =
     byId('ux-ui-panel');
@@ -5775,6 +5939,7 @@ async function render() {
   renderMetadata(run);
   renderReleaseAssessment(run);
   renderMetrics(run);
+  renderSentinelAi(run);
 
   renderSiteStatistics(
   run.siteStatistics ?? {}
