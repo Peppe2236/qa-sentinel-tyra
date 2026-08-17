@@ -6,6 +6,8 @@ import type {
   AutonomousQaChangeImpactCandidate,
   AutonomousQaChangeImpactScope,
   AutonomousQaEvidenceProvenance,
+  AutonomousQaQualityDriftDirection,
+  AutonomousQaQualityDriftSignal,
   AutonomousQaExecutionPhase,
   AutonomousQaExecutionPlanStep,
   AutonomousQaFailureEvidence,
@@ -14,6 +16,7 @@ import type {
   AutonomousQaVerificationExpectation,
   AutonomousQaVerificationPlan,
   AutonomousQaTestSelectionReason,
+  DashboardRun,
   DashboardTestResult,
   IntelligencePriority,
   IntelligenceSource,
@@ -2578,5 +2581,635 @@ export function analyzeAutonomousQaChangeImpact(
         : (
             'Milestone 6.6 change-impact analysis is available, but there are no M6.5 verification targets to scope. No impact is inferred, no command is generated or executed, and Unified Decision release authority is unchanged.'
           ),
+  };
+}
+
+function canonicalQualityDriftHistory(
+  history:
+    DashboardRun[]
+): DashboardRun[] {
+  return history.filter(
+    run =>
+      run.schemaVersion === 5 &&
+      run.releaseDecisionSource ===
+        'unified-v5' &&
+      Boolean(
+        run.unifiedDecisionAssessment
+      )
+  );
+}
+
+function qualityDriftSetDirection(
+  addedIds:
+    string[],
+  removedIds:
+    string[]
+): AutonomousQaQualityDriftDirection {
+  if (
+    addedIds.length > 0 &&
+    removedIds.length === 0
+  ) {
+    return 'potential-regression';
+  }
+
+  if (
+    removedIds.length > 0 &&
+    addedIds.length === 0
+  ) {
+    return 'potential-improvement';
+  }
+
+  if (
+    addedIds.length > 0 ||
+    removedIds.length > 0
+  ) {
+    return 'changed';
+  }
+
+  return 'stable';
+}
+
+function qualityDriftStateDirection(
+  baselineState:
+    UnifiedDecisionAssessment['state'],
+  currentState:
+    UnifiedDecisionAssessment['state']
+): AutonomousQaQualityDriftDirection {
+  if (
+    baselineState === currentState
+  ) {
+    return 'stable';
+  }
+
+  if (
+    baselineState === 'not-verified' ||
+    currentState === 'not-verified'
+  ) {
+    return 'changed';
+  }
+
+  const rank = {
+    ready: 0,
+    'ready-with-warnings': 1,
+    'not-ready': 2,
+  } as const;
+
+  return rank[currentState] >
+    rank[baselineState]
+    ? 'potential-regression'
+    : 'potential-improvement';
+}
+
+function qualityDriftDifference(
+  currentValues:
+    string[],
+  baselineValues:
+    string[]
+): {
+  addedIds: string[];
+  removedIds: string[];
+} {
+  const currentSet =
+    new Set(currentValues);
+
+  const baselineSet =
+    new Set(baselineValues);
+
+  return {
+    addedIds:
+      orderedUnique(
+        currentValues.filter(
+          value =>
+            !baselineSet.has(value)
+        )
+      ),
+
+    removedIds:
+      orderedUnique(
+        baselineValues.filter(
+          value =>
+            !currentSet.has(value)
+        )
+      ),
+  };
+}
+
+function qualityDriftSetSignal(
+  kind:
+    Exclude<
+      AutonomousQaQualityDriftSignal['kind'],
+      'decision-state'
+    >,
+  label:
+    string,
+  baselineValues:
+    string[],
+  currentValues:
+    string[],
+  baselineRun:
+    DashboardRun,
+  confidence:
+    number | null,
+  provenance:
+    AutonomousQaEvidenceProvenance
+): AutonomousQaQualityDriftSignal {
+  const {
+    addedIds,
+    removedIds,
+  } = qualityDriftDifference(
+    currentValues,
+    baselineValues
+  );
+
+  return {
+    id:
+      `quality-drift-${kind}`,
+
+    kind,
+
+    direction:
+      qualityDriftSetDirection(
+        addedIds,
+        removedIds
+      ),
+
+    baselineRunId:
+      baselineRun.runId,
+
+    baselineFinishedAt:
+      baselineRun.finishedAt,
+
+    baselineValue:
+      String(
+        baselineValues.length
+      ),
+
+    currentValue:
+      String(
+        currentValues.length
+      ),
+
+    addedIds,
+    removedIds,
+
+    summary:
+      `${label} changed from ${baselineValues.length} to ${currentValues.length}; ${addedIds.length} added and ${removedIds.length} removed.`,
+
+    confidence,
+
+    historicalEvidenceAvailable:
+      true,
+
+    driftConfirmed:
+      false,
+
+    requiresHumanReview:
+      true,
+
+    provenance,
+
+    releaseDecisionUpdateAllowed:
+      false,
+
+    executable:
+      false,
+  };
+}
+
+function buildQualityDriftSignals(
+  current:
+    UnifiedDecisionAssessment,
+  baselineRun:
+    DashboardRun,
+  provenance:
+    AutonomousQaEvidenceProvenance
+): AutonomousQaQualityDriftSignal[] {
+  const baseline =
+    baselineRun.unifiedDecisionAssessment;
+
+  if (!baseline) {
+    return [];
+  }
+
+  const currentBlockingUnits =
+    current.decisionUnits
+      .filter(
+        unit => unit.blocking
+      )
+      .map(
+        unit => unit.id
+      );
+
+  const baselineBlockingUnits =
+    baseline.decisionUnits
+      .filter(
+        unit => unit.blocking
+      )
+      .map(
+        unit => unit.id
+      );
+
+  const currentRiskEligibleUnits =
+    current.decisionUnits
+      .filter(
+        unit => unit.riskEligible
+      )
+      .map(
+        unit => unit.id
+      );
+
+  const baselineRiskEligibleUnits =
+    baseline.decisionUnits
+      .filter(
+        unit => unit.riskEligible
+      )
+      .map(
+        unit => unit.id
+      );
+
+  const currentFingerprints =
+    orderedUnique(
+      current.decisionUnits.flatMap(
+        unit =>
+          unit.issueFingerprints
+      )
+    );
+
+  const baselineFingerprints =
+    orderedUnique(
+      baseline.decisionUnits.flatMap(
+        unit =>
+          unit.issueFingerprints
+      )
+    );
+
+  return [
+    {
+      id:
+        'quality-drift-decision-state',
+
+      kind:
+        'decision-state',
+
+      direction:
+        qualityDriftStateDirection(
+          baseline.state,
+          current.state
+        ),
+
+      baselineRunId:
+        baselineRun.runId,
+
+      baselineFinishedAt:
+        baselineRun.finishedAt,
+
+      baselineValue:
+        baseline.state,
+
+      currentValue:
+        current.state,
+
+      addedIds:
+        [],
+
+      removedIds:
+        [],
+
+      summary:
+        `Unified Decision state changed from ${baseline.state} to ${current.state}.`,
+
+      confidence:
+        current.confidence,
+
+      historicalEvidenceAvailable:
+        true,
+
+      driftConfirmed:
+        false,
+
+      requiresHumanReview:
+        true,
+
+      provenance,
+
+      releaseDecisionUpdateAllowed:
+        false,
+
+      executable:
+        false,
+    },
+
+    qualityDriftSetSignal(
+      'blocking-units',
+      'Blocking Unified Decision units',
+      baselineBlockingUnits,
+      currentBlockingUnits,
+      baselineRun,
+      current.confidence,
+      provenance
+    ),
+
+    qualityDriftSetSignal(
+      'risk-eligible-units',
+      'Risk-eligible Unified Decision units',
+      baselineRiskEligibleUnits,
+      currentRiskEligibleUnits,
+      baselineRun,
+      current.confidence,
+      provenance
+    ),
+
+    qualityDriftSetSignal(
+      'verification-gaps',
+      'Verification-gap dimensions',
+      baseline.verificationGapDimensions,
+      current.verificationGapDimensions,
+      baselineRun,
+      current.confidence,
+      provenance
+    ),
+
+    qualityDriftSetSignal(
+      'issue-fingerprints',
+      'Unified issue fingerprints',
+      baselineFingerprints,
+      currentFingerprints,
+      baselineRun,
+      current.confidence,
+      provenance
+    ),
+  ];
+}
+
+function qualityDriftActions(
+  signals:
+    AutonomousQaQualityDriftSignal[]
+): AutonomousQaActionCandidate[] {
+  return signals
+    .filter(
+      signal =>
+        signal.direction !==
+          'stable'
+    )
+    .map(
+      signal => ({
+        id:
+          `action-${signal.id}`,
+
+        kind:
+          'quality-drift',
+
+        state:
+          'candidate',
+
+        title:
+          `Review ${signal.kind} comparison`,
+
+        rationale:
+          (
+            `Historical comparison produced ${signal.direction} evidence. ` +
+            'The signal is advisory, pairwise and unconfirmed; human review is required.'
+          ),
+
+        authority:
+          'advisory-only',
+
+        executable:
+          false,
+
+        confidence:
+          signal.confidence,
+
+        provenance:
+          signal.provenance,
+
+        qualityDriftSignalId:
+          signal.id,
+      })
+    );
+}
+
+export function analyzeAutonomousQaQualityDrift(
+  unifiedDecisionAssessment:
+    UnifiedDecisionAssessment | undefined,
+  releaseDecisionSource:
+    ReleaseDecisionSource | null,
+  tests:
+    DashboardTestResult[],
+  unifiedIssues:
+    TestLinkableIssue[],
+  history:
+    DashboardRun[]
+): AutonomousQaAssessment {
+  const impactAssessment =
+    analyzeAutonomousQaChangeImpact(
+      unifiedDecisionAssessment,
+      releaseDecisionSource,
+      tests,
+      unifiedIssues
+    );
+
+  const changeImpact =
+    impactAssessment.changeImpact;
+
+  if (
+    !unifiedDecisionAssessment ||
+    !changeImpact ||
+    changeImpact.status ===
+      'not-verified'
+  ) {
+    return {
+      ...impactAssessment,
+
+      qualityDrift: {
+        status:
+          'not-verified',
+
+        baselineRunId:
+          null,
+
+        baselineFinishedAt:
+          null,
+
+        comparedRunCount:
+          0,
+
+        signalCount:
+          0,
+
+        potentialRegressionCount:
+          0,
+
+        potentialImprovementCount:
+          0,
+
+        changedSignalCount:
+          0,
+
+        stableSignalCount:
+          0,
+
+        trendClaimed:
+          false,
+
+        confirmedDriftCount:
+          0,
+
+        signals:
+          [],
+      },
+
+      reason:
+        'Quality-drift comparison is not verified because current Unified Decision or change-impact evidence is unavailable. No drift or trend is inferred, autonomous execution remains disabled and release authority is unchanged.',
+    };
+  }
+
+  const canonicalHistory =
+    canonicalQualityDriftHistory(
+      history
+    );
+
+  const baselineRun =
+    canonicalHistory[
+      canonicalHistory.length - 1
+    ];
+
+  if (!baselineRun) {
+    return {
+      ...impactAssessment,
+
+      capabilityStatus:
+        'quality-drift-advisory',
+
+      executionEnabled:
+        false,
+
+      qualityDrift: {
+        status:
+          'no-baseline',
+
+        baselineRunId:
+          null,
+
+        baselineFinishedAt:
+          null,
+
+        comparedRunCount:
+          0,
+
+        signalCount:
+          0,
+
+        potentialRegressionCount:
+          0,
+
+        potentialImprovementCount:
+          0,
+
+        changedSignalCount:
+          0,
+
+        stableSignalCount:
+          0,
+
+        trendClaimed:
+          false,
+
+        confirmedDriftCount:
+          0,
+
+        signals:
+          [],
+      },
+
+      reason:
+        'Milestone 6.7 quality-drift comparison has no prior canonical schema-v5 Unified Decision baseline. No drift or trend is inferred, no command is generated or executed, and release authority is unchanged.',
+    };
+  }
+
+  const signals =
+    buildQualityDriftSignals(
+      unifiedDecisionAssessment,
+      baselineRun,
+      impactAssessment.provenance
+    );
+
+  const driftActions =
+    qualityDriftActions(
+      signals
+    );
+
+  const countDirection = (
+    direction:
+      AutonomousQaQualityDriftDirection
+  ): number =>
+    signals.filter(
+      signal =>
+        signal.direction === direction
+    ).length;
+
+  return {
+    ...impactAssessment,
+
+    capabilityStatus:
+      'quality-drift-advisory',
+
+    executionEnabled:
+      false,
+
+    candidateActions: [
+      ...impactAssessment.candidateActions,
+      ...driftActions,
+    ],
+
+    qualityDrift: {
+      status:
+        'available',
+
+      baselineRunId:
+        baselineRun.runId,
+
+      baselineFinishedAt:
+        baselineRun.finishedAt,
+
+      comparedRunCount:
+        1,
+
+      signalCount:
+        signals.length,
+
+      potentialRegressionCount:
+        countDirection(
+          'potential-regression'
+        ),
+
+      potentialImprovementCount:
+        countDirection(
+          'potential-improvement'
+        ),
+
+      changedSignalCount:
+        countDirection(
+          'changed'
+        ),
+
+      stableSignalCount:
+        countDirection(
+          'stable'
+        ),
+
+      trendClaimed:
+        false,
+
+      confirmedDriftCount:
+        0,
+
+      signals,
+    },
+
+    reason:
+      (
+        'Milestone 6.7 compared the current canonical Unified Decision assessment with exactly one prior canonical schema-v5 run. Signals remain advisory and unconfirmed; no multi-run trend, new weighted score, autonomous execution or release-decision update is introduced.'
+      ),
   };
 }

@@ -1,5 +1,5 @@
 import {
-  analyzeAutonomousQaChangeImpact,
+  analyzeAutonomousQaQualityDrift,
 } from './analyzers/sentinel-autonomous-qa';
 
 import {
@@ -1630,12 +1630,28 @@ const releaseAssessment =
   );
 
 
+const autonomousQaHistoryFile =
+  path.resolve(
+    process.cwd(),
+    'dashboard',
+    'data',
+    'history.json'
+  );
+
+const autonomousQaHistory =
+  readJson<SentinelOutput[]>(
+    autonomousQaHistoryFile,
+    []
+  );
+
+
 const autonomousQaAssessment =
-  analyzeAutonomousQaChangeImpact(
+  analyzeAutonomousQaQualityDrift(
     unifiedDecisionAssessment,
     'unified-v5',
     this.results,
-    unifiedIssues
+    unifiedIssues,
+    autonomousQaHistory
   );
 
 
@@ -1770,10 +1786,7 @@ const outputRun: SentinelOutput = {
 );
 
     const history =
-      readJson<SentinelOutput[]>(
-        historyFile,
-        []
-      );
+      [...autonomousQaHistory];
 
     history.push(outputRun);
 

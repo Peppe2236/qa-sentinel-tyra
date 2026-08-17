@@ -557,6 +557,7 @@ export type AutonomousQaCapabilityStatus =
   | 'failure-reproduction-advisory'
   | 'verification-planning-advisory'
   | 'change-impact-advisory'
+  | 'quality-drift-advisory'
   | 'not-verified';
 
 export type AutonomousQaActionKind =
@@ -965,6 +966,85 @@ export interface AutonomousQaChangeImpactAssessment {
     AutonomousQaChangeImpactCandidate[];
 }
 
+export type AutonomousQaQualityDriftStatus =
+  | 'available'
+  | 'no-baseline'
+  | 'not-verified';
+
+export type AutonomousQaQualityDriftDirection =
+  | 'potential-regression'
+  | 'potential-improvement'
+  | 'changed'
+  | 'stable';
+
+export type AutonomousQaQualityDriftSignalKind =
+  | 'decision-state'
+  | 'blocking-units'
+  | 'risk-eligible-units'
+  | 'verification-gaps'
+  | 'issue-fingerprints';
+
+export interface AutonomousQaQualityDriftSignal {
+  id: string;
+
+  kind:
+    AutonomousQaQualityDriftSignalKind;
+
+  direction:
+    AutonomousQaQualityDriftDirection;
+
+  baselineRunId: string;
+  baselineFinishedAt: string;
+
+  baselineValue: string;
+  currentValue: string;
+
+  addedIds: string[];
+  removedIds: string[];
+
+  summary: string;
+
+  confidence:
+    number | null;
+
+  historicalEvidenceAvailable: true;
+  driftConfirmed: false;
+  requiresHumanReview: true;
+
+  provenance:
+    AutonomousQaEvidenceProvenance;
+
+  releaseDecisionUpdateAllowed:
+    false;
+
+  executable: false;
+}
+
+export interface AutonomousQaQualityDriftAssessment {
+  status:
+    AutonomousQaQualityDriftStatus;
+
+  baselineRunId:
+    string | null;
+
+  baselineFinishedAt:
+    string | null;
+
+  comparedRunCount: number;
+
+  signalCount: number;
+  potentialRegressionCount: number;
+  potentialImprovementCount: number;
+  changedSignalCount: number;
+  stableSignalCount: number;
+
+  trendClaimed: false;
+  confirmedDriftCount: number;
+
+  signals:
+    AutonomousQaQualityDriftSignal[];
+}
+
 export interface AutonomousQaEvidenceProvenance {
   intelligenceSources:
     IntelligenceSource[];
@@ -1030,6 +1110,9 @@ export interface AutonomousQaActionCandidate {
 
   changeImpactCandidateId?:
     string;
+
+  qualityDriftSignalId?:
+    string;
 }
 
 export interface AutonomousQaAssessment {
@@ -1071,6 +1154,9 @@ export interface AutonomousQaAssessment {
 
   changeImpact?:
     AutonomousQaChangeImpactAssessment;
+
+  qualityDrift?:
+    AutonomousQaQualityDriftAssessment;
 
   reason:
     string;
