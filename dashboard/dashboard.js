@@ -3071,6 +3071,16 @@ function renderSecurityPerformance(run) {
                   )}
                 </p>
 
+
+                <p>
+                  ${escapeHtml(
+                    Array.isArray(area.notes) &&
+                    area.notes.length > 0
+                      ? area.notes.join(' ')
+                      : ''
+                  )}
+                </p>
+
               </article>
             `;
           }
@@ -3123,6 +3133,9 @@ function renderCompatibility(run) {
 
     'not-verified':
       'NOT VERIFIED',
+
+    'not-in-this-run':
+      'NOT IN THIS RUN',
   };
 
 
@@ -3321,12 +3334,14 @@ function renderCompatibility(run) {
 
 
               <p>
-                Sources:
                 ${escapeHtml(
-                  listText(
-                    environment.evidenceSources,
-                    'None'
-                  )
+                  Array.isArray(environment.notes) &&
+                  environment.notes.length > 0
+                    ? environment.notes.join(' ')
+                    : `Sources: ${listText(
+                        environment.evidenceSources,
+                        'None'
+                      )}`
                 )}
               </p>
 

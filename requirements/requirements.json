@@ -574,6 +574,40 @@
       ]
     },
     {
+      "id": "REQ-NATION-PERF-001",
+      "title": "Public Nation pages have measured page-load and first-party API timing",
+      "description": "Homepage and sign-in navigation timing (or Playwright load duration) are compared to config/security-performance.json pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Does not require NATION_TEST_* login and does not invent APM data.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-PERF-001-LOAD",
+          "title": "Homepage and sign-in page-load duration stay within the catalog threshold",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-PERF-001",
+      "title": "AI Skills catalog has measured page-load and first-party API timing",
+      "description": "Catalog navigation timing (or Playwright load duration) is compared to pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Does not require AI_SKILLS_TEST_* login.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-PERF-001-LOAD",
+          "title": "Catalog page-load duration stays within the catalog threshold",
+          "critical": false
+        }
+      ]
+    },
+    {
       "id": "REQ-PLATFORM-DISCOVERY-001",
       "title": "Deep Discovery can crawl each configured site",
       "description": "tests/discovery/sentinel-discovery.spec.ts crawls nation.dev and aiskills.nation.dev and writes reports/discovery/<site>.json.",

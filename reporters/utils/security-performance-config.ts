@@ -72,6 +72,9 @@ export interface SecurityPerformanceConfig {
 
           backendLatencyMs?:
             number;
+
+          timeoutMs?:
+            number;
         };
     };
 }
@@ -245,6 +248,12 @@ export function loadSecurityPerformanceConfig(
     thresholds
       .backendLatencyMs,
     'backendLatencyMs'
+  );
+
+  validatePositiveNumber(
+    thresholds
+      .timeoutMs,
+    'timeoutMs'
   );
 
 

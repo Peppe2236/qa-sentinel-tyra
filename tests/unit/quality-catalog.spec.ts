@@ -412,6 +412,7 @@ test.describe('security and performance config', () => {
     expect(config.security.requiredChecks).toContain('content-security-policy');
     expect(config.performance.thresholds.p95DurationMs).toBe(25_000);
     expect(config.performance.thresholds.pageLoadMs).toBe(8_000);
+    expect(config.performance.thresholds.timeoutMs).toBe(30_000);
   });
 
   test('uses p95 threshold as test-duration evidence', () => {

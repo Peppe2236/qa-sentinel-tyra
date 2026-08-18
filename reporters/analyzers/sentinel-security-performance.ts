@@ -24,6 +24,14 @@ import {
   isAnalyticsOrTelemetryIssue,
 } from '../utils/signal-classification';
 
+import {
+  classifyLatencySamples,
+  classifyTimeoutResilience,
+  PERFORMANCE_AREA_ANNOTATION_TYPES,
+  performanceObservationsFromTests,
+  isPerformanceArea,
+} from '../utils/performance-metrics';
+
 
 type UnifiedSecurityPerformanceIssue = {
   source?:
@@ -492,27 +500,14 @@ export function performanceAreasForIssue(
 
 
   if (
-    category ===
-      'performance' ||
-    text.includes(
-      'slow'
-    ) ||
-    text.includes(
-      'duration'
-    )
-  ) {
-    areas.push(
-      'test-duration'
-    );
-  }
-
-
-  if (
     text.includes(
       'page load'
     ) ||
     text.includes(
       'page-load'
+    ) ||
+    text.includes(
+      'navigation timing'
     )
   ) {
     areas.push(
@@ -526,14 +521,20 @@ export function performanceAreasForIssue(
       category ===
         'api' ||
       issue.source ===
-        'api'
+        'api' ||
+      text.includes(
+        'first-party xhr'
+      ) ||
+      text.includes(
+        'api latency'
+      )
     ) &&
     (
       text.includes(
         'latency'
       ) ||
       text.includes(
-        'slow'
+        'xhr/fetch'
       ) ||
       category ===
         'performance'
@@ -553,10 +554,7 @@ export function performanceAreasForIssue(
         'latency'
       ) ||
       text.includes(
-        'slow'
-      ) ||
-      text.includes(
-        'timeout'
+        'backend'
       )
     )
   ) {
@@ -567,11 +565,11 @@ export function performanceAreasForIssue(
 
 
   if (
-    text.includes(
-      'timeout'
+    /\btest timeout of\b/.test(
+      text
     ) ||
     text.includes(
-      'timed out'
+      'timeout-resilience'
     )
   ) {
     areas.push(
@@ -582,11 +580,24 @@ export function performanceAreasForIssue(
 
   if (
     text.includes(
-      'regression'
+      'performance regression'
     )
   ) {
     areas.push(
       'regression'
+    );
+  }
+
+
+  if (
+    category ===
+      'performance' &&
+    text.includes(
+      'test duration'
+    )
+  ) {
+    areas.push(
+      'test-duration'
     );
   }
 
@@ -700,24 +711,68 @@ function performanceAreaForTest(
     DashboardTestResult
 ): PerformanceArea[] {
 
-  const category =
-    String(
-      test.category ??
-      ''
-    ).toLowerCase();
+  const areas:
+    PerformanceArea[] = [];
 
 
-  if (
-    category ===
-      'performance'
+  for (
+    const annotation
+    of test.annotations ??
+      []
   ) {
-    return [
-      'test-duration',
-    ];
+    const type =
+      String(
+        annotation.type ??
+        ''
+      ).toLowerCase();
+
+
+    if (
+      (
+        PERFORMANCE_AREA_ANNOTATION_TYPES as readonly string[]
+      ).includes(
+        type
+      )
+    ) {
+      const values =
+        String(
+          annotation.description ??
+          ''
+        )
+          .split(
+            /[,;|]/
+          )
+          .map(
+            value =>
+              value
+                .trim()
+                .toLowerCase()
+          )
+          .filter(
+            Boolean
+          );
+
+      for (
+        const value
+        of values
+      ) {
+        if (
+          isPerformanceArea(
+            value
+          )
+        ) {
+          areas.push(
+            value
+          );
+        }
+      }
+    }
   }
 
 
-  return [];
+  return unique(
+    areas
+  );
 }
 
 
@@ -1237,9 +1292,37 @@ function thresholdForArea(
       return thresholds
         .backendLatencyMs;
 
+    case 'timeout-resilience':
+      return thresholds
+        .timeoutMs ??
+        thresholds
+          .p95DurationMs;
+
     default:
       return undefined;
   }
+}
+
+
+const REQUIRED_PERFORMANCE_AREAS:
+  PerformanceArea[] = [
+    'test-duration',
+    'page-load',
+    'api-latency',
+    'timeout-resilience',
+  ];
+
+
+function performanceAreaIsSatisfied(
+  status:
+    SecurityPerformanceStatus
+): boolean {
+  return (
+    status ===
+      'healthy' ||
+    status ===
+      'not-observed'
+  );
 }
 
 
@@ -1277,6 +1360,12 @@ function analyzePerformance(
     SecurityPerformanceConfig
 ): PerformanceAssessment {
 
+  const observations =
+    performanceObservationsFromTests(
+      tests
+    );
+
+
   const performanceTests =
     tests.filter(
       test =>
@@ -1302,6 +1391,78 @@ function analyzePerformance(
         performanceAreasForIssue(
           issue
         ).length > 0
+    );
+
+
+  const pageLoadSamples =
+    observations
+      .filter(
+        observation =>
+          observation.area ===
+            'page-load' &&
+          typeof observation.durationMs ===
+            'number'
+      )
+      .map(
+        observation =>
+          observation.durationMs as number
+      );
+
+
+  const apiSamples =
+    observations
+      .filter(
+        observation =>
+          observation.area ===
+            'api-latency' &&
+          observation.observation !==
+            'not-observed' &&
+          typeof observation.durationMs ===
+            'number'
+      )
+      .map(
+        observation =>
+          observation.durationMs as number
+      );
+
+
+  const apiLooked =
+    observations.some(
+      observation =>
+        observation.area ===
+          'api-latency'
+    );
+
+
+  const pageLoadLooked =
+    observations.some(
+      observation =>
+        observation.area ===
+          'page-load'
+    );
+
+
+  const pageLoad =
+    classifyLatencySamples(
+      pageLoadSamples,
+      config.performance.thresholds.pageLoadMs
+    );
+
+
+  const apiLatency =
+    classifyLatencySamples(
+      apiSamples,
+      config.performance.thresholds.apiLatencyMs
+    );
+
+
+  const timeoutResilience =
+    classifyTimeoutResilience(
+      tests,
+      thresholdForArea(
+        'timeout-resilience',
+        config
+      )
     );
 
 
@@ -1339,13 +1500,6 @@ function analyzePerformance(
             );
 
 
-          const observed =
-            observedValueForArea(
-              area,
-              performance
-            );
-
-
           const thresholdConfigured =
             typeof threshold ===
               'number';
@@ -1357,7 +1511,27 @@ function analyzePerformance(
 
 
           if (
-            areaTests.length > 0
+            areaTests.length > 0 ||
+            (
+              area ===
+                'test-duration' &&
+              tests.length > 0
+            ) ||
+            (
+              area ===
+                'timeout-resilience' &&
+              tests.length > 0
+            ) ||
+            (
+              area ===
+                'page-load' &&
+              pageLoadLooked
+            ) ||
+            (
+              area ===
+                'api-latency' &&
+              apiLooked
+            )
           ) {
             sources.push(
               'test'
@@ -1383,22 +1557,127 @@ function analyzePerformance(
           }
 
 
-          const evidenceCount =
-            areaTests.length +
-            areaIssues.length +
-            (
-              typeof observed ===
-                'number'
-                ? 1
-                : 0
+          let observed =
+            observedValueForArea(
+              area,
+              performance
             );
 
 
           let status:
-            SecurityPerformanceStatus;
+            SecurityPerformanceStatus =
+              'not-verified';
+
+
+          let notes:
+            string[] |
+            undefined;
 
 
           if (
+            area ===
+              'page-load'
+          ) {
+            observed =
+              pageLoad.p95;
+
+            if (
+              !pageLoadLooked
+            ) {
+              status =
+                'not-verified';
+            }
+
+            else if (
+              pageLoad.status ===
+                'not-observed'
+            ) {
+              status =
+                'not-observed';
+
+              notes = [
+                'No page-load duration was recorded. This is not poor.',
+              ];
+            }
+
+            else {
+              status =
+                pageLoad.status;
+            }
+          }
+
+          else if (
+            area ===
+              'api-latency'
+          ) {
+            observed =
+              apiLatency.p95;
+
+            if (
+              !apiLooked
+            ) {
+              status =
+                'not-verified';
+            }
+
+            else if (
+              apiLatency.status ===
+                'not-observed'
+            ) {
+              status =
+                'not-observed';
+
+              notes = [
+                'No first-party XHR/fetch was observed on the measured pages. API latency is not-observed, not poor.',
+              ];
+            }
+
+            else {
+              status =
+                apiLatency.status;
+            }
+          }
+
+          else if (
+            area ===
+              'timeout-resilience'
+          ) {
+            observed =
+              timeoutResilience.observedMs;
+
+            status =
+              timeoutResilience.status;
+
+            notes = [
+              `${timeoutResilience.sampleCount} finished tests, ${timeoutResilience.timedOutCount} timed out, ${timeoutResilience.slowCount} slower than the configured threshold. Playwright expect timeouts on product bugs are not counted here.`,
+            ];
+          }
+
+          else if (
+            area ===
+              'backend-latency'
+          ) {
+            status =
+              'not-observed';
+
+            notes = [
+              'No backend APM or service-timing probe ran in this suite. Absence is not-observed, not poor.',
+            ];
+          }
+
+          else if (
+            area ===
+              'regression'
+          ) {
+            status =
+              'not-verified';
+
+            notes = [
+              'No historical performance baseline is compared in this run.',
+            ];
+          }
+
+          else if (
             areaIssues.length > 0
           ) {
             status =
@@ -1418,10 +1697,61 @@ function analyzePerformance(
                 : 'poor';
           }
 
-          else {
-            status =
-              'not-verified';
+
+          if (
+            areaIssues.length > 0 &&
+            area !==
+              'timeout-resilience'
+          ) {
+            const issueStatus =
+              statusFromSeverity(
+                areaIssues
+              );
+
+            if (
+              issueStatus ===
+                'critical' ||
+              issueStatus ===
+                'poor' ||
+              (
+                issueStatus ===
+                  'degraded' &&
+                status !==
+                  'poor' &&
+                status !==
+                  'critical'
+              )
+            ) {
+              status =
+                issueStatus;
+            }
           }
+
+
+          const evidenceCount =
+            areaTests.length +
+            areaIssues.length +
+            (
+              typeof observed ===
+                'number'
+                ? 1
+                : 0
+            ) +
+            (
+              area ===
+                'api-latency' &&
+              apiLooked
+                ? 1
+                : 0
+            ) +
+            (
+              area ===
+                'backend-latency' ||
+              area ===
+                'timeout-resilience'
+                ? 1
+                : 0
+            );
 
 
           return {
@@ -1444,6 +1774,8 @@ function analyzePerformance(
 
             evidenceSources:
               sources,
+
+            notes,
           };
         }
       );
@@ -1475,12 +1807,32 @@ function analyzePerformance(
       );
 
 
+  const unverifiedRequired =
+    areas.filter(
+      area =>
+        REQUIRED_PERFORMANCE_AREAS.includes(
+          area.area
+        ) &&
+        area.status ===
+          'not-verified'
+    );
+
+
   let status:
     SecurityPerformanceStatus;
 
 
   if (
-    verifiedAreas.length === 0
+    areas.every(
+      area =>
+        !REQUIRED_PERFORMANCE_AREAS.includes(
+          area.area
+        ) ||
+        area.status ===
+          'not-verified'
+    ) &&
+    unverifiedRequired.length ===
+      REQUIRED_PERFORMANCE_AREAS.length
   ) {
     status =
       'not-verified';
@@ -1520,7 +1872,7 @@ function analyzePerformance(
   }
 
   else if (
-    unverifiedAreas.length > 0
+    unverifiedRequired.length > 0
   ) {
     status =
       'not-verified';
@@ -1538,7 +1890,8 @@ function analyzePerformance(
 
 
   if (
-    performanceTests.length > 0
+    performanceTests.length > 0 ||
+    tests.length > 0
   ) {
     sources.push(
       'test'
@@ -1591,7 +1944,8 @@ function analyzePerformance(
         value =>
           typeof value ===
             'number'
-      ).length,
+      ).length +
+      observations.length,
 
     issueCount:
       performanceIssues.length,
@@ -1613,6 +1967,18 @@ function analyzePerformance(
 
       p95Duration:
         performance.p95Duration,
+
+      pageLoadP50:
+        pageLoad.p50,
+
+      pageLoadP95:
+        pageLoad.p95,
+
+      apiLatencyP50:
+        apiLatency.p50,
+
+      apiLatencyP95:
+        apiLatency.p95,
     },
 
     verifiedAreas,
@@ -1795,7 +2161,12 @@ export function applySecurityPerformanceReleaseGate(
   const performanceGaps =
     intelligence.performance.areas.filter(
       area =>
-        area.status !== 'healthy'
+        REQUIRED_PERFORMANCE_AREAS.includes(
+          area.area
+        ) &&
+        !performanceAreaIsSatisfied(
+          area.status
+        )
     ).length;
 
 

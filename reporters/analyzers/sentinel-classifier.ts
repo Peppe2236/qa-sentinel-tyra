@@ -187,6 +187,27 @@ export function classifyIssue(
   }
 
   if (
+    result.category === 'performance' ||
+    title.includes('page load') ||
+    title.includes('api timing') ||
+    includesAny(message, [
+      'page load was',
+      'first-party xhr/fetch',
+      'exceeded threshold',
+      'navigation-timing',
+      'playwright-load',
+    ])
+  ) {
+    return {
+      classification: 'performance-issue',
+      reason:
+        'A measured page-load or first-party API timing exceeded the catalog threshold.',
+      recommendation:
+        'Record the measured duration honestly and investigate the slow page or request. Do not invent APM data.',
+    };
+  }
+
+  if (
     result.category === 'security' ||
     includesAny(`${title} ${message}`, [
       'content-security-policy',

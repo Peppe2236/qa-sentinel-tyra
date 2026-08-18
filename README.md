@@ -193,7 +193,7 @@ That is the Ubuntu command to use. It:
 2. Runs Nation + AI Skills Chromium tests, including generated discovered-page smoke tests.
 3. Writes one dashboard run covering both sites.
 
-`qa:sites` now also measures document security headers (CSP / HSTS / X-Content-Type-Options / clickjacking) and anonymous Set-Cookie flags on both homepages and sign-in, plus axe-core smoke on the Nation homepage and Skills catalog. Missing headers fail honestly. No cookies is recorded as not-observed, not poor. Settings in the dashboard is a read-only catalog view, not an editor.
+`qa:sites` now also measures document security headers (CSP / HSTS / X-Content-Type-Options / clickjacking) and anonymous Set-Cookie flags on both homepages and sign-in, plus axe-core smoke on the Nation homepage and Skills catalog, plus page-load / first-party API timing on the Nation homepage, Nation sign-in, and Skills catalog. Missing headers fail honestly. No cookies or no first-party XHR/fetch is recorded as not-observed, not poor. Settings in the dashboard is a read-only catalog view, not an editor.
 
 Then:
 
@@ -202,6 +202,21 @@ npm run dashboard
 ```
 
 Open `http://127.0.0.1:4173/`.
+
+Daily Ubuntu loop:
+
+```bash
+git pull && npm i && npm run qa:sites && npm run dashboard
+```
+
+Optional wider browsers (Firefox, WebKit, mobile Chrome smoke; does not require `NATION_TEST_*`):
+
+```bash
+npx playwright install firefox webkit
+npm run qa:compat
+```
+
+Browsers that did not execute in a run are **not in this run**, not poor. `qa:sites` stays Chromium-fast.
 
 Nation-only or Skills-only (still scans first):
 

@@ -44,7 +44,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-09 | Cache Playwright browsers | CI is slow without cache | **not done** | Add `actions/cache` on `~/.cache/ms-playwright` |
 | CI-10 | Branch protection | `main` can still be pushed without green required gates | **not done** | GitHub: require `quality` job typecheck/unit |
 | CI-11 | PR comment with summary | Artifacts are easy to miss | **not done** | Parse `test-results/playwright-results.json` |
-| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/mobile) never run in CI | **not done** | `npx playwright test` on a schedule |
+| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/mobile) never run in CI | **partial** | Local optional: `npm run qa:compat`. Not a required daily gate |
 | CI-13 | Fail CI on `test.only` | Already `forbidOnly` when `CI=true` | **done** | `CI=true npm run test:nation:ci` |
 
 ---
@@ -64,7 +64,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | N-09 | Invalid-password error handling | Critical flow scenario `SCN-NATION-SIGNIN-REJECT` is documented only | **done** | Asserts stay on `/signin` with no stack trace |
 | N-10 | Session expiry / recovery | Documented as not implemented | **not done** | Expire cookie, expect redirect to /signin |
 | N-11 | Partner-join / manifesto / made-with-sweden | Discovered public routes; only HTTP smoke if scan output exists | **done** | `npx playwright test tests/nation/public-pages.spec.ts --project=nation-chromium` |
-| N-12 | Cross-browser Nation CI | Firefox/WebKit/mobile projects exist locally only | **not done** | `npx playwright test tests/nation --project=nation-firefox` |
+| N-12 | Cross-browser Nation CI | Firefox/WebKit/mobile projects exist locally only | **partial** | Daily Chromium: `npm run qa:sites`. Optional: `npm run qa:compat` |
 
 ---
 
@@ -121,12 +121,12 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **done** | Nation homepage and Skills catalog assert `https:` |
 | Q-05 | Security-header checks | HSTS, CSP, X-Frame-Options | **done** | Homepages + sign-in document headers; missing headers fail honestly |
 | Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **partial** | Anonymous Set-Cookie flags are measured; no cookies = not-observed, not POOR. Login cookies still need N-04 |
-| Q-07 | Page-load metric collection | Threshold `pageLoadMs` exists; observer only fills test-duration p95 | **not done** | Navigation timing or Playwright `page.goto` duration |
-| Q-08 | API/backend latency observation | Thresholds exist; values stay `not-verified` | **not done** | Record first-party resource timing |
+| Q-07 | Page-load metric collection | Threshold `pageLoadMs` exists; observer only fills test-duration p95 | **done** | `npm run qa:sites` — Nation homepage, Nation sign-in, Skills catalog |
+| Q-08 | API/backend latency observation | Thresholds exist; values stay `not-verified` | **partial** | First-party XHR/fetch on those pages; none = not-observed, not POOR. No backend APM |
 | Q-09 | axe-core accessibility scan | UX/UI areas are mostly `not-verified` | **done** | `@axe-core/playwright` on Nation homepage + Skills catalog; serious/critical fail, moderate and color-contrast log as warnings |
 | Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **not done** | `page.keyboard` tab order |
 | Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **not done** | Optional Playwright screenshots + axe contrast |
-| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **not done** | Separate scheduled job, not every PR |
+| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **not done** | Separate scheduled job, not every PR. CLS skipped as too flaky |
 
 ---
 

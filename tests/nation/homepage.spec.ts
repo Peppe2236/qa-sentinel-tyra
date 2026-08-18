@@ -68,6 +68,7 @@ test.describe('Nation.dev homepage technical checks', () => {
       flow: 'FLOW-NATION-PUBLIC-HOME',
       scenario: 'SCN-NATION-HOME-LOAD',
       category: 'availability',
+      tag: '@compat',
     }),
     async ({ page }) => {
       const home = new NationHomePage(page);
@@ -106,6 +107,7 @@ test.describe('Nation.dev homepage technical checks', () => {
       flow: 'FLOW-NATION-PUBLIC-HOME',
       scenario: 'SCN-NATION-HOME-LOAD',
       category: 'content',
+      tag: '@compat',
     }),
     async ({ page }) => {
       const home = new NationHomePage(page);

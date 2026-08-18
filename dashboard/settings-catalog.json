@@ -28,6 +28,10 @@
     {
       "name": "Security / performance",
       "path": "config/security-performance.json"
+    },
+    {
+      "name": "Compatibility browsers",
+      "path": "config/compatibility.json"
     }
   ]
 }

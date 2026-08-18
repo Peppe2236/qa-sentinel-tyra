@@ -31,6 +31,10 @@ import {
 } from './utils/security-performance-config';
 
 import {
+  expectedCompatibilityCoverage,
+} from './utils/compatibility-config';
+
+import {
   analyzeUxUi,
   applyUxUiReleaseGate,
 } from './analyzers/sentinel-ux-ui';
@@ -1487,72 +1491,11 @@ const securityPerformanceAssessment =
     securityPerformanceConfig
   );
 
-const configuredCompatibilityProjects =
-  this.config?.projects ??
-  [];
-
-
-const expectedCompatibilityProjects =
-  Array.from(
-    new Set(
-      configuredCompatibilityProjects
-        .map(
-          project =>
-            project.name
-        )
-        .filter(Boolean)
-    )
-  );
-
-
-const expectedCompatibilityBrowsers =
-  Array.from(
-    new Set(
-      configuredCompatibilityProjects
-        .map(
-          project =>
-            resolveBrowserFamily(
-              project.name,
-              project.use?.browserName
-            )
-        )
-        .filter(
-          browser =>
-            browser !== 'Unknown'
-        )
-    )
-  );
-
-
-const expectedCompatibilityProfiles =
-  Array.from(
-    new Set(
-      configuredCompatibilityProjects
-        .map(
-          project =>
-            resolveProfile(
-              project.name
-            )
-        )
-        .filter(Boolean)
-    )
-  );
-
-
 const compatibilityAssessment =
   analyzeCompatibility(
     this.results,
     unifiedIssues,
-    {
-      browsers:
-        expectedCompatibilityBrowsers,
-
-      profiles:
-        expectedCompatibilityProfiles,
-
-      projects:
-        expectedCompatibilityProjects,
-    }
+    expectedCompatibilityCoverage()
   );
 
 const sitesInScope =

@@ -17,7 +17,8 @@
       "p95DurationMs": 25000,
       "pageLoadMs": 8000,
       "apiLatencyMs": 3000,
-      "backendLatencyMs": 3000
+      "backendLatencyMs": 3000,
+      "timeoutMs": 30000
     }
   }
 }

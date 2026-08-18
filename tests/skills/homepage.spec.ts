@@ -25,6 +25,7 @@ test.describe('AI Skills page', () => {
       flow: 'FLOW-SKILLS-CATALOG',
       scenario: 'SCN-SKILLS-CATALOG-LOAD',
       category: 'availability',
+      tag: '@compat',
     }),
     async ({ page }) => {
       await expect(page).toHaveURL(/aiskills\.nation\.dev\/skills/);
@@ -56,6 +57,7 @@ test.describe('AI Skills page', () => {
       flow: 'FLOW-SKILLS-CATALOG',
       scenario: 'SCN-SKILLS-CATALOG-LOAD',
       category: 'content',
+      tag: '@compat',
     }),
     async ({ page }) => {
       const catalog = new SkillsCatalogPage(page);

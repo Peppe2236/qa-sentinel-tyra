@@ -11,7 +11,8 @@
         "REQ-NATION-HOME-001",
         "REQ-NATION-HOME-002",
         "REQ-NATION-SEC-001",
-        "REQ-NATION-A11Y-001"
+        "REQ-NATION-A11Y-001",
+        "REQ-NATION-PERF-001"
       ],
       "scenarios": [
         {
@@ -58,6 +59,15 @@
           "requirementIds": [
             "REQ-NATION-A11Y-001"
           ]
+        },
+        {
+          "id": "SCN-NATION-HOME-PERF",
+          "title": "Homepage page-load and first-party API timing are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-PERF-001"
+          ]
         }
       ]
     },
@@ -70,7 +80,8 @@
       "requirementIds": [
         "REQ-NATION-AUTH-001",
         "REQ-NATION-AUTH-004",
-        "REQ-NATION-SEC-001"
+        "REQ-NATION-SEC-001",
+        "REQ-NATION-PERF-001"
       ],
       "scenarios": [
         {
@@ -126,6 +137,15 @@
           "critical": false,
           "requirementIds": [
             "REQ-NATION-SEC-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-PERF",
+          "title": "Sign-in page-load and first-party API timing are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-PERF-001"
           ]
         }
       ]
@@ -221,7 +241,8 @@
       "requirementIds": [
         "REQ-SKILLS-HOME-001",
         "REQ-SKILLS-SEC-001",
-        "REQ-SKILLS-A11Y-001"
+        "REQ-SKILLS-A11Y-001",
+        "REQ-SKILLS-PERF-001"
       ],
       "scenarios": [
         {
@@ -258,6 +279,15 @@
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-A11Y-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-CATALOG-PERF",
+          "title": "Catalog page-load and first-party API timing are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-PERF-001"
           ]
         }
       ]

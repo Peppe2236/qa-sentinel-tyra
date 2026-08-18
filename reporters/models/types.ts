@@ -1580,7 +1580,8 @@ export type CompatibilityStatus =
   | 'degraded'
   | 'poor'
   | 'critical'
-  | 'not-verified';
+  | 'not-verified'
+  | 'not-in-this-run';
 
 
 export type CompatibilityEnvironmentKind =
@@ -1638,6 +1639,9 @@ export interface CompatibilityEnvironmentAssessment {
 
   evidenceSources:
     IntelligenceSource[];
+
+  notes?:
+    string[];
 }
 
 
@@ -1826,6 +1830,18 @@ export interface PerformanceObservedMetrics {
 
   p95Duration?:
     number;
+
+  pageLoadP50?:
+    number;
+
+  pageLoadP95?:
+    number;
+
+  apiLatencyP50?:
+    number;
+
+  apiLatencyP95?:
+    number;
 }
 
 
@@ -1853,6 +1869,9 @@ export interface PerformanceAreaAssessment {
 
   evidenceSources:
     IntelligenceSource[];
+
+  notes?:
+    string[];
 }
 
 

@@ -862,11 +862,20 @@ function buildEnvironmentAssessments(
         CompatibilityStatus;
 
 
+      let notes:
+        string[] |
+        undefined;
+
+
       if (
         environmentTests.length === 0
       ) {
         status =
-          'not-verified';
+          'not-in-this-run';
+
+        notes = [
+          'Not in this run. This is not a failed check.',
+        ];
       }
 
       else if (
@@ -955,6 +964,8 @@ function buildEnvironmentAssessments(
 
         evidenceSources:
           sources,
+
+        notes,
       };
     }
   );
@@ -1118,11 +1129,65 @@ export function analyzeCompatibility(
     CompatibilityStatus;
 
 
+  const measuredBrowserStatuses =
+    browserAssessments.filter(
+      assessment =>
+        assessment.status !==
+          'not-in-this-run'
+    );
+
+
   if (
     compatibilityEvidence.length === 0
   ) {
-    status =
-      'not-verified';
+    if (
+      measuredBrowserStatuses.some(
+        assessment =>
+          assessment.status ===
+            'critical'
+      )
+    ) {
+      status =
+        'critical';
+    }
+
+    else if (
+      measuredBrowserStatuses.some(
+        assessment =>
+          assessment.status ===
+            'poor'
+      )
+    ) {
+      status =
+        'poor';
+    }
+
+    else if (
+      measuredBrowserStatuses.some(
+        assessment =>
+          assessment.status ===
+            'degraded'
+      )
+    ) {
+      status =
+        'degraded';
+    }
+
+    else if (
+      measuredBrowserStatuses.some(
+        assessment =>
+          assessment.status ===
+            'healthy'
+      )
+    ) {
+      status =
+        'healthy';
+    }
+
+    else {
+      status =
+        'not-verified';
+    }
   }
 
   else if (
@@ -1144,9 +1209,6 @@ export function analyzeCompatibility(
   }
 
   else if (
-    missingBrowsers.length > 0 ||
-    missingProfiles.length > 0 ||
-    missingProjects.length > 0 ||
     compatibilityEvidence.some(
       correlation =>
         correlation.status ===
@@ -1291,9 +1353,16 @@ export function applyCompatibilityReleaseGate(
 
 
   const compatibilityGaps =
-    compatibility.missingBrowsers.length +
-    compatibility.missingProfiles.length +
-    compatibility.missingProjects.length;
+    compatibility.browserAssessments.filter(
+      assessment =>
+        assessment.status ===
+          'not-verified'
+    ).length +
+    compatibility.profileAssessments.filter(
+      assessment =>
+        assessment.status ===
+          'not-verified'
+    ).length;
 
 
   if (

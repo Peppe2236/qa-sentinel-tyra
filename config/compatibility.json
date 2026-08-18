@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "browsers": [
+    "Chromium",
+    "Firefox",
+    "WebKit"
+  ],
+  "profiles": [
+    "Desktop",
+    "Mobile Chrome"
+  ]
+}
