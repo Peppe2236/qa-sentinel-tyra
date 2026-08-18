@@ -1,0 +1,403 @@
+/* ==========================================================
+   M7.2 UNIFIED AUTONOMOUS QA ADVISORY
+   ========================================================== */
+
+.autonomous-qa-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+}
+
+.autonomous-qa-panel::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  content: '';
+  background: linear-gradient(90deg, #52b8ff, #9b7cff, #56e2c2);
+}
+
+.autonomous-qa-heading {
+  align-items: flex-start;
+}
+
+.autonomous-qa-subtitle {
+  max-width: 760px;
+  margin: .45rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.autonomous-qa-authority {
+  padding: .5rem .9rem;
+  border: 1px solid rgba(155, 124, 255, .45);
+  border-radius: 999px;
+  color: #d6caff;
+  background: rgba(155, 124, 255, .12);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+.autonomous-qa-safety {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid rgba(86, 226, 194, .3);
+  border-radius: 16px;
+  background: rgba(86, 226, 194, .075);
+}
+
+.autonomous-qa-safety-alert {
+  border-color: rgba(255, 95, 121, .65);
+  background: rgba(255, 95, 121, .1);
+}
+
+.autonomous-qa-safety-icon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(86, 226, 194, .12);
+  font-size: 1.15rem;
+}
+
+.autonomous-qa-safety p,
+.autonomous-qa-reason p,
+.autonomous-qa-item p {
+  margin: .35rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.autonomous-qa-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: .85rem;
+}
+
+.autonomous-qa-primary,
+.autonomous-qa-stat {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.autonomous-qa-primary {
+  grid-column: span 2;
+  background: linear-gradient(135deg, rgba(82, 184, 255, .11), rgba(155, 124, 255, .07));
+}
+
+.autonomous-qa-primary > span,
+.autonomous-qa-stat > span,
+.autonomous-qa-reason > span,
+.autonomous-qa-block-heading span,
+.autonomous-qa-stage-heading span,
+.autonomous-qa-subsection > span,
+.autonomous-qa-item-provenance > span {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.autonomous-qa-primary strong,
+.autonomous-qa-stat strong {
+  display: block;
+  margin: .45rem 0 .3rem;
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+}
+
+.autonomous-qa-primary strong {
+  font-size: 1.35rem;
+}
+
+.autonomous-qa-primary small,
+.autonomous-qa-stat small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.autonomous-qa-execution-safe {
+  border-color: rgba(86, 226, 194, .25);
+}
+
+.autonomous-qa-execution-safe strong {
+  color: #7ef5c9;
+}
+
+.autonomous-qa-execution-alert {
+  border-color: rgba(255, 95, 121, .55);
+  background: rgba(255, 95, 121, .08);
+}
+
+.autonomous-qa-execution-alert strong {
+  color: #ff8da0;
+}
+
+.autonomous-qa-reason,
+.autonomous-qa-provenance-block,
+.autonomous-qa-block,
+.autonomous-qa-stage {
+  padding: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 16px;
+  background: rgba(5, 15, 30, .22);
+}
+
+.autonomous-qa-block-heading,
+.autonomous-qa-stage-heading,
+.autonomous-qa-item-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.autonomous-qa-block-heading h3,
+.autonomous-qa-stage-heading h3,
+.autonomous-qa-item-heading h4 {
+  margin: .25rem 0 0;
+}
+
+.autonomous-qa-block-heading small {
+  color: var(--muted);
+  text-align: right;
+}
+
+.autonomous-qa-provenance,
+.autonomous-qa-provenance-group,
+.autonomous-qa-tags,
+.autonomous-qa-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.autonomous-qa-provenance {
+  margin-top: .9rem;
+}
+
+.autonomous-qa-provenance-group {
+  width: 100%;
+  align-items: center;
+}
+
+.autonomous-qa-provenance-group > strong {
+  min-width: 100px;
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.autonomous-qa-tag,
+.autonomous-qa-flags span,
+.autonomous-qa-item-heading > strong,
+.autonomous-qa-stage-heading > strong {
+  padding: .3rem .55rem;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .035);
+  font-size: .68rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.autonomous-qa-stage-heading > strong,
+.autonomous-qa-item-heading > strong {
+  color: #c9d8ed;
+  white-space: nowrap;
+}
+
+.autonomous-qa-stage-heading > strong[data-status="available"] {
+  color: #7ef5c9;
+  border-color: rgba(86, 226, 194, .3);
+}
+
+.autonomous-qa-stage-heading > strong[data-status="not-verified"],
+.autonomous-qa-item-heading > strong[data-status="not-verified"] {
+  color: #aab6c8;
+}
+
+.autonomous-qa-stage-heading > strong[data-status="no-baseline"],
+.autonomous-qa-stage-heading > strong[data-status="awaiting-new-evidence"],
+.autonomous-qa-item-heading > strong[data-status="potential-regression"] {
+  color: #f3c760;
+  border-color: rgba(243, 199, 96, .35);
+}
+
+.autonomous-qa-stage-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.autonomous-qa-stage {
+  min-width: 0;
+}
+
+.autonomous-qa-stage-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .65rem;
+  margin-top: .9rem;
+}
+
+.autonomous-qa-stage-metrics > div {
+  padding: .75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.autonomous-qa-stage-metrics span {
+  display: block;
+  color: var(--muted);
+  font-size: .67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.autonomous-qa-stage-metrics strong {
+  display: block;
+  margin-top: .35rem;
+  font-size: 1.05rem;
+}
+
+.autonomous-qa-baseline {
+  margin-top: .8rem;
+  color: var(--muted);
+  font-size: .75rem;
+  overflow-wrap: anywhere;
+}
+
+.autonomous-qa-items {
+  display: grid;
+  gap: .75rem;
+  max-height: 36rem;
+  margin-top: .9rem;
+  overflow: auto;
+  scrollbar-color: rgba(155, 124, 255, .5) transparent;
+}
+
+.autonomous-qa-item {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, .075);
+  border-radius: 14px;
+  background: rgba(12, 27, 47, .62);
+}
+
+.autonomous-qa-item-heading h4 {
+  line-height: 1.45;
+}
+
+.autonomous-qa-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1rem;
+  margin-top: .85rem;
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.autonomous-qa-card-meta strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.autonomous-qa-subsection {
+  margin-top: .85rem;
+}
+
+.autonomous-qa-subsection .autonomous-qa-tags,
+.autonomous-qa-subsection .autonomous-qa-list,
+.autonomous-qa-subsection .autonomous-qa-empty-copy {
+  margin-top: .5rem;
+}
+
+.autonomous-qa-list {
+  display: grid;
+  gap: .35rem;
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.autonomous-qa-flags {
+  margin-top: .85rem;
+}
+
+.autonomous-qa-flags .is-safe {
+  color: #7ef5c9;
+  border-color: rgba(86, 226, 194, .28);
+}
+
+.autonomous-qa-flags .is-review {
+  color: #f3c760;
+  border-color: rgba(243, 199, 96, .28);
+}
+
+.autonomous-qa-item-provenance {
+  margin-top: 1rem;
+  padding-top: .85rem;
+  border-top: 1px solid rgba(255, 255, 255, .06);
+}
+
+.autonomous-qa-item-provenance .autonomous-qa-provenance-group,
+.autonomous-qa-item-provenance > .autonomous-qa-none {
+  margin-top: .55rem;
+}
+
+.autonomous-qa-empty {
+  padding: 1rem;
+  border: 1px dashed rgba(255, 255, 255, .1);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.autonomous-qa-none,
+.autonomous-qa-empty-copy {
+  color: var(--muted);
+  font-size: .75rem;
+}
+
+@media (max-width: 900px) {
+  .autonomous-qa-heading,
+  .autonomous-qa-block-heading,
+  .autonomous-qa-stage-heading,
+  .autonomous-qa-item-heading {
+    flex-direction: column;
+  }
+
+  .autonomous-qa-primary {
+    grid-column: span 1;
+  }
+
+  .autonomous-qa-block-heading small {
+    text-align: left;
+  }
+
+  .autonomous-qa-stage-heading > strong,
+  .autonomous-qa-item-heading > strong {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 620px) {
+  .autonomous-qa-safety {
+    align-items: flex-start;
+  }
+
+  .autonomous-qa-overview,
+  .autonomous-qa-stage-metrics {
+    grid-template-columns: 1fr;
+  }
+}

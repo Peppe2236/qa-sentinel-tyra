@@ -549,6 +549,734 @@ function renderSentinelAi(run) {
   }
 }
 
+
+function autonomousArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function autonomousStatus(value) {
+  return String(
+    value ?? 'not-verified'
+  )
+    .replaceAll('-', ' ')
+    .toUpperCase();
+}
+
+function autonomousClass(value) {
+  return String(
+    value ?? 'not-verified'
+  )
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-');
+}
+
+function autonomousConfidence(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return '—';
+  }
+
+  const numeric = Number(value);
+
+  return Number.isFinite(numeric)
+    ? `${Math.round(numeric)}%`
+    : '—';
+}
+
+function autonomousBoolean(value) {
+  return value === true
+    ? 'YES'
+    : 'NO';
+}
+
+function setAutonomousStatus(id, value) {
+  const element = byId(id);
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    autonomousStatus(value);
+  element.dataset.status =
+    autonomousClass(value);
+}
+
+function autonomousTags(
+  values,
+  fallback = 'None recorded'
+) {
+  const items = autonomousArray(values);
+
+  if (items.length === 0) {
+    return `
+      <span class="autonomous-qa-none">
+        ${escapeHtml(fallback)}
+      </span>
+    `;
+  }
+
+  return items
+    .map(value => `
+      <span class="autonomous-qa-tag">
+        ${escapeHtml(value)}
+      </span>
+    `)
+    .join('');
+}
+
+function autonomousList(
+  values,
+  fallback = 'None recorded'
+) {
+  const items = autonomousArray(values);
+
+  if (items.length === 0) {
+    return `
+      <p class="autonomous-qa-empty-copy">
+        ${escapeHtml(fallback)}
+      </p>
+    `;
+  }
+
+  return `
+    <ul class="autonomous-qa-list">
+      ${items
+        .map(value => `
+          <li>${escapeHtml(value)}</li>
+        `)
+        .join('')}
+    </ul>
+  `;
+}
+
+function autonomousProvenanceHtml(provenance) {
+  const value = provenance ?? {};
+  const groups = [
+    ['Sources', value.intelligenceSources],
+    ['Dimensions', value.qualityDimensions],
+    ['Decision units', value.unifiedDecisionUnitIds],
+    ['Issues', value.issueFingerprints],
+    ['Requirements', value.requirementIds],
+    ['Critical flows', value.criticalFlowIds],
+    ['Flow scenarios', value.flowScenarioIds],
+  ];
+
+  const visible = groups.filter(
+    ([, items]) =>
+      autonomousArray(items).length > 0
+  );
+
+  if (visible.length === 0) {
+    return `
+      <span class="autonomous-qa-none">
+        No linked evidence recorded for this item.
+      </span>
+    `;
+  }
+
+  return visible
+    .map(([label, items]) => `
+      <div class="autonomous-qa-provenance-group">
+        <strong>${escapeHtml(label)}</strong>
+        <div class="autonomous-qa-tags">
+          ${autonomousTags(items)}
+        </div>
+      </div>
+    `)
+    .join('');
+}
+
+function autonomousFlags(flags = []) {
+  return `
+    <div class="autonomous-qa-flags">
+      ${flags
+        .map(([label, value, safeValue]) => {
+          const isSafe =
+            value === safeValue;
+
+          return `
+            <span class="${isSafe ? 'is-safe' : 'is-review'}">
+              ${escapeHtml(label)}:
+              ${escapeHtml(autonomousBoolean(value))}
+            </span>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+function autonomousMeta(items = []) {
+  return `
+    <div class="autonomous-qa-card-meta">
+      ${items
+        .filter(([, value]) =>
+          value !== undefined &&
+          value !== null &&
+          value !== ''
+        )
+        .map(([label, value]) => `
+          <span>
+            ${escapeHtml(label)}:
+            <strong>${escapeHtml(value)}</strong>
+          </span>
+        `)
+        .join('')}
+    </div>
+  `;
+}
+
+function autonomousCard({
+  title,
+  eyebrow,
+  status,
+  meta = [],
+  body = '',
+  flags = [],
+  provenance,
+}) {
+  return `
+    <article class="autonomous-qa-item">
+      <div class="autonomous-qa-item-heading">
+        <div>
+          <span>${escapeHtml(eyebrow ?? 'ADVISORY CANDIDATE')}</span>
+          <h4>${escapeHtml(title ?? 'Untitled advisory item')}</h4>
+        </div>
+
+        ${status
+          ? `<strong data-status="${autonomousClass(status)}">${escapeHtml(autonomousStatus(status))}</strong>`
+          : ''}
+      </div>
+
+      ${autonomousMeta(meta)}
+      ${body}
+      ${flags.length > 0
+        ? autonomousFlags(flags)
+        : ''}
+
+      <div class="autonomous-qa-item-provenance">
+        <span>Evidence provenance</span>
+        ${autonomousProvenanceHtml(provenance)}
+      </div>
+    </article>
+  `;
+}
+
+function renderAutonomousCollection(
+  id,
+  items,
+  renderer,
+  emptyText
+) {
+  const container = byId(id);
+
+  if (!container) {
+    return;
+  }
+
+  const values = autonomousArray(items);
+
+  container.innerHTML = values.length > 0
+    ? values.map(renderer).join('')
+    : `
+      <div class="autonomous-qa-empty">
+        ${escapeHtml(emptyText)}
+      </div>
+    `;
+}
+
+function renderAutonomousActions(actions) {
+  renderAutonomousCollection(
+    'autonomous-qa-actions',
+    actions,
+    action => autonomousCard({
+      title: action.title,
+      eyebrow: action.kind,
+      status: action.state,
+      meta: [
+        ['Authority', action.authority],
+        ['Confidence', autonomousConfidence(action.confidence)],
+      ],
+      body: `
+        <p>${escapeHtml(action.rationale ?? 'No rationale recorded.')}</p>
+      `,
+      flags: [
+        ['Executable', action.executable, false],
+      ],
+      provenance: action.provenance,
+    }),
+    'No advisory action candidates were produced for this run.'
+  );
+}
+
+function renderAutonomousTestSelection(assessment = {}) {
+  setAutonomousStatus(
+    'autonomous-qa-test-selection-status',
+    assessment.status
+  );
+  setText(
+    'autonomous-qa-test-selection-candidates',
+    assessment.candidateCount ?? 0
+  );
+  setText(
+    'autonomous-qa-selected-tests',
+    assessment.selectedTestCount ?? 0
+  );
+
+  renderAutonomousCollection(
+    'autonomous-qa-test-selection-items',
+    assessment.candidates,
+    candidate => autonomousCard({
+      title: candidate.title,
+      eyebrow: `Test selection · ${candidate.site ?? 'unknown site'}`,
+      status: candidate.evidenceState,
+      meta: [
+        ['Priority', candidate.priority ?? 'none'],
+        ['Disposition', candidate.disposition ?? 'none'],
+        ['Confidence', autonomousConfidence(candidate.confidence)],
+        ['File', candidate.file ?? 'unknown'],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Selection reasons</span>
+          <div class="autonomous-qa-tags">
+            ${autonomousTags(candidate.reasons)}
+          </div>
+        </div>
+
+        <div class="autonomous-qa-subsection">
+          <span>Environment variants</span>
+          ${autonomousList(
+            autonomousArray(candidate.variants).map(variant =>
+              `${variant.project} · ${variant.browserFamily} · ${variant.profile} · ${variant.status}`
+            )
+          )}
+        </div>
+      `,
+      flags: [
+        ['Risk eligible', candidate.riskEligible, false],
+      ],
+      provenance: candidate.provenance,
+    }),
+    'No risk-based test-selection candidates are available.'
+  );
+}
+
+function renderAutonomousExecutionPlan(assessment = {}) {
+  setAutonomousStatus(
+    'autonomous-qa-execution-plan-status',
+    assessment.status
+  );
+  setText('autonomous-qa-plan-steps', assessment.stepCount ?? 0);
+  setText('autonomous-qa-planned-tests', assessment.plannedTestCount ?? 0);
+  setText('autonomous-qa-plan-phases', autonomousArray(assessment.phases).length);
+
+  renderAutonomousCollection(
+    'autonomous-qa-execution-plan-items',
+    assessment.steps,
+    step => autonomousCard({
+      title: step.title,
+      eyebrow: `Step ${step.order ?? '—'} · ${step.phase ?? 'unassigned'}`,
+      status: step.evidenceState,
+      meta: [
+        ['Priority', step.priority ?? 'none'],
+        ['Disposition', step.disposition ?? 'none'],
+        ['Site', step.site ?? 'unknown'],
+        ['File', step.file ?? 'unknown'],
+      ],
+      body: `
+        <p>${escapeHtml(step.rationale ?? 'No planning rationale recorded.')}</p>
+        <div class="autonomous-qa-subsection">
+          <span>Projects</span>
+          <div class="autonomous-qa-tags">${autonomousTags(step.projects)}</div>
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Test ids</span>
+          <div class="autonomous-qa-tags">${autonomousTags(step.testIds)}</div>
+        </div>
+      `,
+      flags: [
+        ['Risk eligible', step.riskEligible, false],
+        ['Executable', step.executable, false],
+      ],
+      provenance: step.provenance,
+    }),
+    'No advisory execution-plan steps are available.'
+  );
+}
+
+function renderAutonomousFailureReproduction(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-failure-status', assessment.status);
+  setText('autonomous-qa-recipe-count', assessment.recipeCount ?? 0);
+  setText('autonomous-qa-failed-test-count', assessment.failedTestCount ?? 0);
+  setText('autonomous-qa-attachment-count', assessment.attachmentCount ?? 0);
+
+  renderAutonomousCollection(
+    'autonomous-qa-failure-items',
+    assessment.recipes,
+    recipe => autonomousCard({
+      title: recipe.title,
+      eyebrow: `Recipe ${recipe.order ?? '—'} · ${recipe.phase ?? 'unassigned'}`,
+      status: 'candidate',
+      meta: [
+        ['Site', recipe.site ?? 'unknown'],
+        ['Evidence', recipe.evidenceCount ?? 0],
+        ['Attachments', recipe.attachmentCount ?? 0],
+        ['Confidence', autonomousConfidence(recipe.confidence)],
+        ['File', recipe.file ?? 'unknown'],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Reproduction instructions</span>
+          ${autonomousList(recipe.instructions, 'No instructions recorded.')}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Projects</span>
+          <div class="autonomous-qa-tags">${autonomousTags(recipe.projects)}</div>
+        </div>
+      `,
+      flags: [
+        ['Executable', recipe.executable, false],
+      ],
+      provenance: recipe.provenance,
+    }),
+    'No failed-test reproduction recipes are required for this run.'
+  );
+}
+
+function renderAutonomousVerification(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-verification-status', assessment.status);
+  setText('autonomous-qa-verification-plans', assessment.planCount ?? 0);
+  setText('autonomous-qa-verification-targets', assessment.targetTestCount ?? 0);
+  setText('autonomous-qa-awaiting-evidence', assessment.awaitingEvidenceCount ?? 0);
+  setText('autonomous-qa-verified-plans', assessment.verifiedPlanCount ?? 0);
+
+  renderAutonomousCollection(
+    'autonomous-qa-verification-items',
+    assessment.plans,
+    plan => autonomousCard({
+      title: plan.title,
+      eyebrow: `Verification ${plan.order ?? '—'} · ${plan.phase ?? 'unassigned'}`,
+      status: plan.verificationState,
+      meta: [
+        ['Site', plan.site ?? 'unknown'],
+        ['Targets', autonomousArray(plan.testIds).length],
+        ['File', plan.file ?? 'unknown'],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Verification criteria</span>
+          ${autonomousList(plan.criteria, 'No criteria recorded.')}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Evidence expectations</span>
+          ${autonomousList(
+            autonomousArray(plan.expectations).map(expectation =>
+              `${expectation.project} · ${expectation.browserFamily} · ${expectation.profile}: ${expectation.previousStatus} → ${expectation.expectedStatus}`
+            ),
+            'No expectations recorded.'
+          )}
+        </div>
+      `,
+      flags: [
+        ['Requires new evidence', plan.requiresNewEvidence, false],
+        ['Verified', plan.verified, true],
+        ['Release update allowed', plan.releaseDecisionUpdateAllowed, false],
+        ['Executable', plan.executable, false],
+      ],
+      provenance: plan.provenance,
+    }),
+    'No verification plans are required for this run.'
+  );
+}
+
+function renderAutonomousChangeImpact(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-change-impact-status', assessment.status);
+  setText('autonomous-qa-impact-candidates', assessment.candidateCount ?? 0);
+  setText('autonomous-qa-impact-targets', assessment.targetTestCount ?? 0);
+  setText('autonomous-qa-impact-sites', assessment.affectedSiteCount ?? 0);
+  setText('autonomous-qa-impact-projects', assessment.affectedProjectCount ?? 0);
+  setText('autonomous-qa-confirmed-impact', assessment.confirmedImpactCount ?? 0);
+
+  renderAutonomousCollection(
+    'autonomous-qa-change-impact-items',
+    assessment.candidates,
+    candidate => autonomousCard({
+      title: candidate.title,
+      eyebrow: `Impact ${candidate.order ?? '—'} · ${candidate.phase ?? 'unassigned'}`,
+      status: candidate.state,
+      meta: [
+        ['Priority', candidate.priority ?? 'none'],
+        ['Disposition', candidate.disposition ?? 'none'],
+        ['Evidence state', candidate.evidenceState ?? 'none'],
+        ['Confidence', autonomousConfidence(candidate.confidence)],
+        ['File', candidate.file ?? 'unknown'],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Potential scope</span>
+          <div class="autonomous-qa-tags">
+            ${autonomousTags([
+              ...autonomousArray(candidate.scope?.sites),
+              ...autonomousArray(candidate.scope?.projects),
+              ...autonomousArray(candidate.scope?.qualityDimensions),
+            ])}
+          </div>
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Rationale</span>
+          ${autonomousList(candidate.rationale, 'No rationale recorded.')}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Human review checklist</span>
+          ${autonomousList(candidate.reviewChecklist, 'No checklist recorded.')}
+        </div>
+      `,
+      flags: [
+        ['Change evidence available', candidate.changeEvidenceAvailable, true],
+        ['Impact confirmed', candidate.impactConfirmed, true],
+        ['Requires human review', candidate.requiresHumanReview, false],
+        ['Release update allowed', candidate.releaseDecisionUpdateAllowed, false],
+        ['Executable', candidate.executable, false],
+      ],
+      provenance: candidate.provenance,
+    }),
+    'No potential change-impact targets are available.'
+  );
+}
+
+function autonomousBaseline(assessment) {
+  if (!assessment?.baselineRunId) {
+    return 'No canonical baseline available';
+  }
+
+  return `${assessment.baselineRunId} · ${formatDate(assessment.baselineFinishedAt)}`;
+}
+
+function renderAutonomousQualityDrift(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-drift-status', assessment.status);
+  setText('autonomous-qa-drift-baseline', autonomousBaseline(assessment));
+  setText('autonomous-qa-drift-signals', assessment.signalCount ?? 0);
+  setText('autonomous-qa-drift-regressions', assessment.potentialRegressionCount ?? 0);
+  setText('autonomous-qa-drift-improvements', assessment.potentialImprovementCount ?? 0);
+  setText('autonomous-qa-drift-changed', assessment.changedSignalCount ?? 0);
+  setText('autonomous-qa-drift-stable', assessment.stableSignalCount ?? 0);
+  setText('autonomous-qa-confirmed-drift', assessment.confirmedDriftCount ?? 0);
+
+  renderAutonomousCollection(
+    'autonomous-qa-drift-items',
+    assessment.signals,
+    signal => autonomousCard({
+      title: signal.summary,
+      eyebrow: signal.kind,
+      status: signal.direction,
+      meta: [
+        ['Baseline', signal.baselineValue ?? 'unknown'],
+        ['Current', signal.currentValue ?? 'unknown'],
+        ['Confidence', autonomousConfidence(signal.confidence)],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Added evidence ids</span>
+          <div class="autonomous-qa-tags">${autonomousTags(signal.addedIds)}</div>
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Removed evidence ids</span>
+          <div class="autonomous-qa-tags">${autonomousTags(signal.removedIds)}</div>
+        </div>
+      `,
+      flags: [
+        ['Historical evidence', signal.historicalEvidenceAvailable, true],
+        ['Drift confirmed', signal.driftConfirmed, false],
+        ['Requires human review', signal.requiresHumanReview, false],
+        ['Release update allowed', signal.releaseDecisionUpdateAllowed, false],
+        ['Executable', signal.executable, false],
+      ],
+      provenance: signal.provenance,
+    }),
+    assessment.status === 'no-baseline'
+      ? 'No pairwise baseline is available; no trend is claimed.'
+      : 'No pairwise quality-drift signals are available.'
+  );
+}
+
+function renderAutonomousInvestigation(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-investigation-status', assessment.status);
+  setText('autonomous-qa-investigation-baseline', autonomousBaseline(assessment));
+  setText('autonomous-qa-case-count', assessment.caseCount ?? 0);
+  setText('autonomous-qa-open-cases', assessment.openCaseCount ?? 0);
+  setText('autonomous-qa-investigation-units', assessment.linkedDecisionUnitCount ?? 0);
+  setText('autonomous-qa-hypothesis-count', assessment.hypothesisCount ?? 0);
+  setText('autonomous-qa-confirmed-causes', assessment.confirmedRootCauseCount ?? 0);
+  setText('autonomous-qa-remediation-count', assessment.remediationAuthorizedCount ?? 0);
+
+  renderAutonomousCollection(
+    'autonomous-qa-investigation-items',
+    assessment.cases,
+    investigation => autonomousCard({
+      title: investigation.title,
+      eyebrow: `Case ${investigation.order ?? '—'} · ${investigation.signalKind ?? 'unknown signal'}`,
+      status: investigation.state,
+      meta: [
+        ['Direction', investigation.signalDirection ?? 'unknown'],
+        ['Baseline', investigation.baselineValue ?? 'unknown'],
+        ['Current', investigation.currentValue ?? 'unknown'],
+        ['Confidence', autonomousConfidence(investigation.confidence)],
+      ],
+      body: `
+        <div class="autonomous-qa-subsection">
+          <span>Unconfirmed hypotheses</span>
+          ${autonomousList(
+            autonomousArray(investigation.hypotheses).map(hypothesis =>
+              `${hypothesis.text}${hypothesis.rootCauseLayer ? ` · layer: ${hypothesis.rootCauseLayer}` : ''} · confirmed: ${autonomousBoolean(hypothesis.confirmed)}`
+            ),
+            'No hypotheses recorded.'
+          )}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Recommendations</span>
+          ${autonomousList(investigation.recommendations)}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Investigation questions</span>
+          ${autonomousList(investigation.investigationQuestions)}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Investigation steps</span>
+          ${autonomousList(investigation.investigationSteps)}
+        </div>
+        <div class="autonomous-qa-subsection">
+          <span>Exit criteria</span>
+          ${autonomousList(investigation.exitCriteria)}
+        </div>
+      `,
+      flags: [
+        ['Root cause confirmed', investigation.rootCauseConfirmed, true],
+        ['Remediation authorized', investigation.remediationAuthorized, false],
+        ['Requires human review', investigation.requiresHumanReview, false],
+        ['Release update allowed', investigation.releaseDecisionUpdateAllowed, false],
+        ['Executable', investigation.executable, false],
+      ],
+      provenance: investigation.provenance,
+    }),
+    assessment.status === 'no-baseline'
+      ? 'No canonical baseline is available for investigation planning.'
+      : 'No drift signals require an investigation case for this run.'
+  );
+}
+
+function renderAutonomousQa(run) {
+  const panel = byId('autonomous-qa-panel');
+
+  if (!panel) {
+    return;
+  }
+
+  const assessment =
+    run?.autonomousQaAssessment ?? null;
+
+  if (!assessment) {
+    panel.dataset.status = 'not-verified';
+    setText('autonomous-qa-capability', 'NOT VERIFIED');
+    setText('autonomous-qa-unified-state', '—');
+    setText('autonomous-qa-linked-units', 0);
+    setText('autonomous-qa-action-count', 0);
+    setText('autonomous-qa-release-source', '—');
+    setText('autonomous-qa-execution', 'DISABLED');
+    setText(
+      'autonomous-qa-reason',
+      'Autonomous QA assessment is not available for this run.'
+    );
+
+    const provenance = byId('autonomous-qa-provenance');
+    if (provenance) {
+      provenance.innerHTML = autonomousProvenanceHtml({});
+    }
+
+    renderAutonomousActions([]);
+    renderAutonomousTestSelection({ status: 'not-verified' });
+    renderAutonomousExecutionPlan({ status: 'not-verified' });
+    renderAutonomousFailureReproduction({ status: 'not-verified' });
+    renderAutonomousVerification({ status: 'not-verified' });
+    renderAutonomousChangeImpact({ status: 'not-verified' });
+    renderAutonomousQualityDrift({ status: 'not-verified' });
+    renderAutonomousInvestigation({ status: 'not-verified' });
+    return;
+  }
+
+  const executionEnabled =
+    assessment.executionEnabled === true;
+  const authority =
+    String(assessment.authority ?? 'advisory-only');
+
+  panel.dataset.status =
+    autonomousClass(assessment.capabilityStatus);
+  panel.dataset.executionEnabled =
+    String(executionEnabled);
+
+  setText('autonomous-qa-authority', autonomousStatus(authority));
+  setText('autonomous-qa-capability', autonomousStatus(assessment.capabilityStatus));
+  setText('autonomous-qa-unified-state', autonomousStatus(assessment.unifiedDecisionState));
+  setText('autonomous-qa-linked-units', assessment.linkedDecisionUnitCount ?? 0);
+  setText('autonomous-qa-action-count', autonomousArray(assessment.candidateActions).length);
+  setText('autonomous-qa-release-source', assessment.releaseDecisionSource ?? '—');
+  setText(
+    'autonomous-qa-execution',
+    executionEnabled
+      ? 'UNEXPECTEDLY ENABLED'
+      : 'INTENTIONALLY DISABLED'
+  );
+  setText(
+    'autonomous-qa-reason',
+    assessment.reason ?? 'No assessment reason was recorded.'
+  );
+
+  const executionCard = byId('autonomous-qa-execution-card');
+  const safety = byId('autonomous-qa-safety');
+
+  executionCard?.classList.toggle(
+    'autonomous-qa-execution-safe',
+    !executionEnabled
+  );
+  executionCard?.classList.toggle(
+    'autonomous-qa-execution-alert',
+    executionEnabled
+  );
+  safety?.classList.toggle(
+    'autonomous-qa-safety-alert',
+    executionEnabled
+  );
+
+  setText(
+    'autonomous-qa-safety-text',
+    executionEnabled
+      ? 'Safety contract violation: autonomous execution was reported as enabled. This dashboard still performs no execution and requires immediate human review.'
+      : 'Autonomous execution, remediation and release updates are intentionally disabled. Every item below is advisory and requires explicit human action.'
+  );
+
+  const provenance = byId('autonomous-qa-provenance');
+  if (provenance) {
+    provenance.innerHTML =
+      autonomousProvenanceHtml(assessment.provenance);
+  }
+
+  renderAutonomousActions(assessment.candidateActions);
+  renderAutonomousTestSelection(assessment.testSelection);
+  renderAutonomousExecutionPlan(assessment.executionPlan);
+  renderAutonomousFailureReproduction(assessment.failureReproduction);
+  renderAutonomousVerification(assessment.verification);
+  renderAutonomousChangeImpact(assessment.changeImpact);
+  renderAutonomousQualityDrift(assessment.qualityDrift);
+  renderAutonomousInvestigation(assessment.investigation);
+}
+
+
 function renderUxUi(run) {
   const panel =
     byId('ux-ui-panel');
@@ -5940,6 +6668,7 @@ async function render() {
   renderReleaseAssessment(run);
   renderMetrics(run);
   renderSentinelAi(run);
+  renderAutonomousQa(run);
 
   renderSiteStatistics(
   run.siteStatistics ?? {}

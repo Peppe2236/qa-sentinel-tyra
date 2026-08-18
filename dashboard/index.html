@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="./dashboard.css"/>
 <link rel="stylesheet" href="./command-center.css"/>
 <link rel="stylesheet" href="sentinel-ai.css" />
+<link rel="stylesheet" href="./autonomous-qa.css" />
 <link rel="stylesheet" href="./site-health.css" />
   <link rel="stylesheet" href="./ux-ui.css" />
   <link rel="stylesheet" href="./security-performance.css" />
@@ -1084,6 +1085,297 @@
 <!-- =========================================================
      END SENTINEL AI
      ========================================================= -->
+
+<!-- =========================================================
+     M7.2 UNIFIED ADVISORY DASHBOARD
+     ========================================================= -->
+
+<section
+  id="autonomous-qa-panel"
+  class="card autonomous-qa-panel"
+  data-status="not-verified"
+>
+  <div class="section-heading autonomous-qa-heading">
+    <div>
+      <p class="eyebrow">
+        MILESTONE 6 ADVISORY INTELLIGENCE
+      </p>
+
+      <h2>
+        Autonomous QA Advisory
+      </h2>
+
+      <p class="autonomous-qa-subtitle">
+        Evidence-grounded recommendations, plans and
+        investigation candidates under explicit human control.
+      </p>
+    </div>
+
+    <span
+      id="autonomous-qa-authority"
+      class="autonomous-qa-authority"
+    >
+      ADVISORY ONLY
+    </span>
+  </div>
+
+  <div
+    id="autonomous-qa-safety"
+    class="autonomous-qa-safety"
+  >
+    <div class="autonomous-qa-safety-icon">
+      🔒
+    </div>
+
+    <div>
+      <strong>
+        Human-controlled QA boundary
+      </strong>
+
+      <p id="autonomous-qa-safety-text">
+        Autonomous execution, remediation and release updates
+        are intentionally disabled.
+      </p>
+    </div>
+  </div>
+
+  <div class="autonomous-qa-overview">
+    <article class="autonomous-qa-primary">
+      <span>Capability</span>
+      <strong id="autonomous-qa-capability">NOT VERIFIED</strong>
+      <small>Highest available advisory capability</small>
+    </article>
+
+    <article class="autonomous-qa-stat">
+      <span>Unified decision</span>
+      <strong id="autonomous-qa-unified-state">—</strong>
+      <small>Canonical decision state</small>
+    </article>
+
+    <article class="autonomous-qa-stat">
+      <span>Linked units</span>
+      <strong id="autonomous-qa-linked-units">0</strong>
+      <small>Unified decision evidence links</small>
+    </article>
+
+    <article class="autonomous-qa-stat">
+      <span>Candidate actions</span>
+      <strong id="autonomous-qa-action-count">0</strong>
+      <small>Recommendations requiring human review</small>
+    </article>
+
+    <article class="autonomous-qa-stat">
+      <span>Release source</span>
+      <strong id="autonomous-qa-release-source">—</strong>
+      <small>Decision authority consumed</small>
+    </article>
+
+    <article
+      id="autonomous-qa-execution-card"
+      class="autonomous-qa-stat autonomous-qa-execution-safe"
+    >
+      <span>Autonomous execution</span>
+      <strong id="autonomous-qa-execution">DISABLED</strong>
+      <small>Intentionally advisory-only</small>
+    </article>
+  </div>
+
+  <div class="autonomous-qa-reason">
+    <span>Current assessment</span>
+    <p id="autonomous-qa-reason">
+      Autonomous QA assessment is not available for this run.
+    </p>
+  </div>
+
+  <div class="autonomous-qa-provenance-block">
+    <div class="autonomous-qa-block-heading">
+      <div>
+        <span>ASSESSMENT PROVENANCE</span>
+        <h3>Evidence links</h3>
+      </div>
+
+      <small>
+        Source identity remains visible
+      </small>
+    </div>
+
+    <div
+      id="autonomous-qa-provenance"
+      class="autonomous-qa-provenance"
+    >
+      No linked evidence recorded.
+    </div>
+  </div>
+
+  <div class="autonomous-qa-block">
+    <div class="autonomous-qa-block-heading">
+      <div>
+        <span>ADVISORY ACTIONS</span>
+        <h3>Human-review candidates</h3>
+      </div>
+
+      <small>
+        Suggestions only — never executed here
+      </small>
+    </div>
+
+    <div
+      id="autonomous-qa-actions"
+      class="autonomous-qa-items"
+    ></div>
+  </div>
+
+  <div class="autonomous-qa-stage-grid">
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.2</span>
+          <h3>Risk-based Test Selection</h3>
+        </div>
+        <strong id="autonomous-qa-test-selection-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Candidates</span><strong id="autonomous-qa-test-selection-candidates">0</strong></div>
+        <div><span>Selected tests</span><strong id="autonomous-qa-selected-tests">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-test-selection-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.3</span>
+          <h3>Execution Planning</h3>
+        </div>
+        <strong id="autonomous-qa-execution-plan-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Steps</span><strong id="autonomous-qa-plan-steps">0</strong></div>
+        <div><span>Planned tests</span><strong id="autonomous-qa-planned-tests">0</strong></div>
+        <div><span>Phases</span><strong id="autonomous-qa-plan-phases">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-execution-plan-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.4</span>
+          <h3>Failure Reproduction</h3>
+        </div>
+        <strong id="autonomous-qa-failure-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Recipes</span><strong id="autonomous-qa-recipe-count">0</strong></div>
+        <div><span>Failed tests</span><strong id="autonomous-qa-failed-test-count">0</strong></div>
+        <div><span>Attachments</span><strong id="autonomous-qa-attachment-count">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-failure-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.5</span>
+          <h3>Verification Planning</h3>
+        </div>
+        <strong id="autonomous-qa-verification-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Plans</span><strong id="autonomous-qa-verification-plans">0</strong></div>
+        <div><span>Target tests</span><strong id="autonomous-qa-verification-targets">0</strong></div>
+        <div><span>Awaiting evidence</span><strong id="autonomous-qa-awaiting-evidence">0</strong></div>
+        <div><span>Verified</span><strong id="autonomous-qa-verified-plans">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-verification-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.6</span>
+          <h3>Change Impact</h3>
+        </div>
+        <strong id="autonomous-qa-change-impact-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics autonomous-qa-stage-metrics-wide">
+        <div><span>Candidates</span><strong id="autonomous-qa-impact-candidates">0</strong></div>
+        <div><span>Target tests</span><strong id="autonomous-qa-impact-targets">0</strong></div>
+        <div><span>Sites</span><strong id="autonomous-qa-impact-sites">0</strong></div>
+        <div><span>Projects</span><strong id="autonomous-qa-impact-projects">0</strong></div>
+        <div><span>Confirmed</span><strong id="autonomous-qa-confirmed-impact">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-change-impact-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.7</span>
+          <h3>Pairwise Quality Drift</h3>
+        </div>
+        <strong id="autonomous-qa-drift-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-baseline">
+        Baseline:
+        <strong id="autonomous-qa-drift-baseline">—</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics autonomous-qa-stage-metrics-wide">
+        <div><span>Signals</span><strong id="autonomous-qa-drift-signals">0</strong></div>
+        <div><span>Potential regressions</span><strong id="autonomous-qa-drift-regressions">0</strong></div>
+        <div><span>Potential improvements</span><strong id="autonomous-qa-drift-improvements">0</strong></div>
+        <div><span>Changed</span><strong id="autonomous-qa-drift-changed">0</strong></div>
+        <div><span>Stable</span><strong id="autonomous-qa-drift-stable">0</strong></div>
+        <div><span>Confirmed drift</span><strong id="autonomous-qa-confirmed-drift">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-drift-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>6.8</span>
+          <h3>Investigation Planning</h3>
+        </div>
+        <strong id="autonomous-qa-investigation-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-baseline">
+        Baseline:
+        <strong id="autonomous-qa-investigation-baseline">—</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics autonomous-qa-stage-metrics-wide">
+        <div><span>Cases</span><strong id="autonomous-qa-case-count">0</strong></div>
+        <div><span>Open</span><strong id="autonomous-qa-open-cases">0</strong></div>
+        <div><span>Linked units</span><strong id="autonomous-qa-investigation-units">0</strong></div>
+        <div><span>Hypotheses</span><strong id="autonomous-qa-hypothesis-count">0</strong></div>
+        <div><span>Confirmed causes</span><strong id="autonomous-qa-confirmed-causes">0</strong></div>
+        <div><span>Remediation authorized</span><strong id="autonomous-qa-remediation-count">0</strong></div>
+      </div>
+
+      <div id="autonomous-qa-investigation-items" class="autonomous-qa-items"></div>
+    </section>
+  </div>
+</section>
+
+<!-- =========================================================
+     END M7.2 UNIFIED ADVISORY DASHBOARD
+     ========================================================= -->
+
 
     
       <!-- ==========================================
