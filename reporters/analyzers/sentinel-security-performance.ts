@@ -13,8 +13,11 @@ import type {
   RiskLevel,
 } from '../models/types';
 
-import type {
-  SecurityPerformanceConfig,
+import {
+  isSecurityArea,
+  requiredSecurityAreas,
+  SECURITY_AREAS,
+  type SecurityPerformanceConfig,
 } from '../utils/security-performance-config';
 
 import {
@@ -73,17 +76,11 @@ type PerformanceInput = {
 };
 
 
-export const SECURITY_AREAS:
-  SecurityArea[] = [
-    'authentication',
-    'authorization',
-    'content-security-policy',
-    'security-headers',
-    'session-cookies',
-    'data-exposure',
-    'transport',
-    'dependency-security',
-  ];
+export {
+  isSecurityArea,
+  requiredSecurityAreas,
+  SECURITY_AREAS,
+};
 
 
 export const PERFORMANCE_AREAS:
@@ -559,7 +556,7 @@ export function performanceAreasForIssue(
 }
 
 
-function securityAreaForTest(
+export function securityAreasForTest(
   test:
     DashboardTestResult
 ): SecurityArea[] {
@@ -570,28 +567,90 @@ function securityAreaForTest(
       ''
     ).toLowerCase();
 
+  const areas:
+    SecurityArea[] = [];
+
 
   if (
-    category ===
-      'authentication'
+    isSecurityArea(
+      category
+    )
   ) {
-    return [
-      'authentication',
-    ];
+    areas.push(
+      category
+    );
   }
 
-
-  if (
+  else if (
     category ===
       'security'
   ) {
-    return [
-      'data-exposure',
-    ];
+    areas.push(
+      'data-exposure'
+    );
   }
 
 
-  return [];
+  for (
+    const annotation
+    of test.annotations ??
+      []
+  ) {
+    const type =
+      String(
+        annotation.type ??
+        ''
+      ).toLowerCase();
+
+    if (
+      type !==
+        'security-area' &&
+      type !==
+        'security-check' &&
+      type !==
+        'required-check'
+    ) {
+      continue;
+    }
+
+    const values =
+      String(
+        annotation.description ??
+        ''
+      )
+        .split(
+          /[,;|]/
+        )
+        .map(
+          value =>
+            value
+              .trim()
+              .toLowerCase()
+        )
+        .filter(
+          Boolean
+        );
+
+    for (
+      const value
+      of values
+    ) {
+      if (
+        isSecurityArea(
+          value
+        )
+      ) {
+        areas.push(
+          value
+        );
+      }
+    }
+  }
+
+
+  return unique(
+    areas
+  );
 }
 
 
@@ -639,13 +698,39 @@ function sourceCoverageForIssues(
 }
 
 
+function catalogSecurityAreas(
+  config:
+    SecurityPerformanceConfig
+): SecurityArea[] {
+  const required =
+    requiredSecurityAreas(
+      config
+    );
+
+  return required.length > 0
+    ? required
+    : [
+        ...SECURITY_AREAS,
+      ];
+}
+
+
 function analyzeSecurity(
   tests:
     DashboardTestResult[],
 
   issues:
-    UnifiedSecurityPerformanceIssue[]
+    UnifiedSecurityPerformanceIssue[],
+
+  config:
+    SecurityPerformanceConfig
 ): SecurityAssessment {
+
+  const catalogAreas =
+    catalogSecurityAreas(
+      config
+    );
+
 
   const securityTests =
     tests.filter(
@@ -657,7 +742,7 @@ function analyzeSecurity(
         ).includes(
           'security-performance'
         ) &&
-        securityAreaForTest(
+        securityAreasForTest(
           test
         ).length > 0
     );
@@ -675,15 +760,64 @@ function analyzeSecurity(
     );
 
 
+  const evidencedAreas =
+    unique(
+      [
+        ...securityTests.flatMap(
+          test =>
+            securityAreasForTest(
+              test
+            )
+        ),
+
+        ...securityIssues.flatMap(
+          issue =>
+            securityAreasForIssue(
+              issue
+            )
+        ),
+      ]
+    );
+
+
+  const extraAreas =
+    evidencedAreas.filter(
+      area =>
+        !catalogAreas.includes(
+          area
+        )
+    );
+
+
+  const scopedAreas =
+    unique(
+      [
+        ...catalogAreas,
+        ...SECURITY_AREAS.filter(
+          area =>
+            extraAreas.includes(
+              area
+            )
+        ),
+      ]
+    );
+
+
   const areas:
     SecurityAreaAssessment[] =
-      SECURITY_AREAS.map(
+      scopedAreas.map(
         area => {
+
+          const required =
+            catalogAreas.includes(
+              area
+            );
+
 
           const areaTests =
             securityTests.filter(
               test =>
-                securityAreaForTest(
+                securityAreasForTest(
                   test
                 ).includes(
                   area
@@ -747,6 +881,8 @@ function analyzeSecurity(
 
               status:
                 'not-verified',
+
+              required,
 
               evidenceCount:
                 0,
@@ -812,6 +948,8 @@ function analyzeSecurity(
             status:
               areaStatus,
 
+            required,
+
             evidenceCount,
 
             issueCount:
@@ -869,6 +1007,7 @@ function analyzeSecurity(
     areas
       .filter(
         area =>
+          area.required &&
           area.status ===
             'not-verified'
       )
@@ -976,6 +1115,9 @@ function analyzeSecurity(
 
     issueCount:
       securityIssues.length,
+
+    requiredChecks:
+      catalogAreas,
 
     verifiedAreas,
 
@@ -1426,7 +1568,8 @@ export function analyzeSecurityPerformance(
   const security =
     analyzeSecurity(
       tests,
-      unifiedIssues
+      unifiedIssues,
+      config
     );
 
 
@@ -1565,7 +1708,10 @@ export function applySecurityPerformanceReleaseGate(
   const securityGaps =
     intelligence.security.areas.filter(
       area =>
-        area.status !== 'healthy'
+        area.required !==
+          false &&
+        area.status !==
+          'healthy'
     ).length;
 
 

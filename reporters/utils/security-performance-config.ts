@@ -1,6 +1,45 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import type {
+  SecurityArea,
+} from '../models/types';
+
+
+export const SECURITY_AREAS:
+  SecurityArea[] = [
+    'authentication',
+    'authorization',
+    'content-security-policy',
+    'security-headers',
+    'session-cookies',
+    'data-exposure',
+    'transport',
+    'dependency-security',
+  ];
+
+
+export function isSecurityArea(
+  value: string
+): value is SecurityArea {
+  return SECURITY_AREAS.includes(
+    value as SecurityArea
+  );
+}
+
+
+export function requiredSecurityAreas(
+  config: SecurityPerformanceConfig
+): SecurityArea[] {
+  return [
+    ...new Set(
+      config.security.requiredChecks.filter(
+        isSecurityArea
+      )
+    ),
+  ];
+}
+
 
 export interface SecurityPerformanceConfig {
   schemaVersion:
@@ -9,7 +48,7 @@ export interface SecurityPerformanceConfig {
   security:
     {
       requiredChecks:
-        string[];
+        SecurityArea[];
     };
 
   performance:
@@ -130,6 +169,25 @@ export function loadSecurityPerformanceConfig(
     throw new Error(
       'security.requiredChecks must be an array.'
     );
+  }
+
+
+  for (
+    const check
+    of parsed.security
+      .requiredChecks
+  ) {
+    if (
+      typeof check !==
+        'string' ||
+      !isSecurityArea(
+        check
+      )
+    ) {
+      throw new Error(
+        `Unknown security.requiredChecks value: ${String(check)}`
+      );
+    }
   }
 
 

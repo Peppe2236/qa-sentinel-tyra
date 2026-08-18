@@ -2666,8 +2666,69 @@ function renderSecurityPerformance(run) {
         : [];
 
 
+    const requiredChecks =
+      Array.isArray(
+        security.requiredChecks
+      ) &&
+      security.requiredChecks.length > 0
+        ? security.requiredChecks
+        : SECURITY_ORDER;
+
+
+    const extraIds =
+      areas
+        .map(
+          item =>
+            item?.area
+        )
+        .filter(
+          areaId =>
+            Boolean(areaId) &&
+            !requiredChecks.includes(
+              areaId
+            )
+        );
+
+
+    const areaIds =
+      [
+        ...new Set(
+          [
+            ...requiredChecks,
+            ...extraIds,
+          ]
+        ),
+      ]
+        .slice()
+        .sort(
+          (left, right) => {
+            const leftIndex =
+              SECURITY_ORDER.indexOf(
+                left
+              );
+            const rightIndex =
+              SECURITY_ORDER.indexOf(
+                right
+              );
+
+            return (
+              (
+                leftIndex < 0
+                  ? 999
+                  : leftIndex
+              ) -
+              (
+                rightIndex < 0
+                  ? 999
+                  : rightIndex
+              )
+            );
+          }
+        );
+
+
     securityContainer.innerHTML =
-      SECURITY_ORDER
+      areaIds
         .map(
           areaId => {
 
@@ -2677,6 +2738,10 @@ function renderSecurityPerformance(run) {
                   item?.area ===
                   areaId
               );
+
+            const areaLabel =
+              SECURITY_LABELS[areaId] ||
+              areaId;
 
 
             if (
@@ -2693,9 +2758,7 @@ function renderSecurityPerformance(run) {
 
                     <strong>
                       ${escapeHtml(
-                        SECURITY_LABELS[
-                          areaId
-                        ]
+                        areaLabel
                       )}
                     </strong>
 
@@ -2750,9 +2813,7 @@ function renderSecurityPerformance(run) {
 
                   <strong>
                     ${escapeHtml(
-                      SECURITY_LABELS[
-                        areaId
-                      ]
+                      areaLabel
                     )}
                   </strong>
 

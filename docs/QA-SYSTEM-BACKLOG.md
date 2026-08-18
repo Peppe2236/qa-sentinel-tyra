@@ -116,8 +116,8 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | ID | Item | Why | Status | Suggested command |
 |---|---|---|---|---|
 | Q-01 | `config/security-performance.json` thresholds | Empty thresholds left performance `not-verified` | **done** | `npm run test:unit` |
-| Q-02 | `requiredChecks` list | Documents intended security areas | **partial** | Analyzer does **not** read `requiredChecks` yet |
-| Q-03 | Wire `requiredChecks` into `analyzeSecurity` | Config is otherwise unused | **not done** | Update `reporters/analyzers/sentinel-security-performance.ts` |
+| Q-02 | `requiredChecks` list | Documents intended security areas | **done** | Inspect `config/security-performance.json` |
+| Q-03 | Wire `requiredChecks` into `analyzeSecurity` | Config is otherwise unused | **done** | `npm run test:unit` |
 | Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **not done** | `expect(page.url()).toMatch(/^https:/)` |
 | Q-05 | Security-header checks | HSTS, CSP, X-Frame-Options | **not done** | Read response headers on `/` and `/signin` |
 | Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **not done** | After N-04 |
@@ -168,7 +168,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | U-03 | Dedup / classifier / diagnostics units | Diagnostics already live under `tests/diagnostics` | **partial** | `npx playwright test tests/diagnostics --project=nation-chromium` |
 | U-04 | Unified scoring golden fixtures | Schema v5 regressions are currently manual | **not done** | Check in a tiny `DashboardRun` fixture |
 | U-05 | Markdown/HTML report snapshot | Easy to break silently | **not done** | Compare a trimmed fixture |
-| U-06 | Coverage of `requiredChecks` once wired | Q-03 needs a unit test | **not done** | Extend `tests/unit/quality-catalog.spec.ts` |
+| U-06 | Coverage of `requiredChecks` once wired | Q-03 needs a unit test | **done** | `npm run test:unit` |
 
 ---
 

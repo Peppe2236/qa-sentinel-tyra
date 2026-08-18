@@ -24,7 +24,7 @@ function pushValues(
 /**
  * Playwright annotations consumed by the QA reporter:
  * requirement, acceptance-criterion, critical-flow, flow-scenario,
- * category, quality-dimension.
+ * category, quality-dimension, security-area.
  */
 export function qualityMeta(input: {
   requirement?: string | string[];
@@ -33,6 +33,7 @@ export function qualityMeta(input: {
   scenario?: string | string[];
   category?: string;
   dimensions?: string | string[];
+  securityCheck?: string | string[];
 }): Pick<TestDetails, 'annotation'> {
   const annotation: Annotation[] = [];
 
@@ -42,6 +43,7 @@ export function qualityMeta(input: {
   pushValues(annotation, 'flow-scenario', input.scenario);
   pushValues(annotation, 'category', input.category);
   pushValues(annotation, 'quality-dimension', input.dimensions);
+  pushValues(annotation, 'security-area', input.securityCheck);
 
   return { annotation };
 }

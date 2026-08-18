@@ -128,7 +128,7 @@ dashboard panel, and discovery-aware release-readiness provenance.
 | 7.2 Unified Advisory Dashboard | ✅ Done | `dashboard/index.html` Autonomous QA panel binds `autonomousQaAssessment` without execution authority |
 | 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel and CSS are wired; still depends on current-run evidence |
 | 7.4 UX/UI Verification Coverage | 🧭 Not started | Analyzer areas remain largely `not-verified`; no a11y axe/lighthouse suite |
-| 7.5 Security Verification Coverage | 🚧 Partial | `config/security-performance.json` lists required checks; there are still no dedicated header/cookie/session tests. `requiredChecks` is not yet consumed by the analyzer |
+| 7.5 Security Verification Coverage | 🚧 Partial | Analyzer consumes `requiredChecks` from `config/security-performance.json`; dashboard security cards follow the catalog. Dedicated header/cookie/session Playwright checks are still missing |
 | 7.6 Performance Verification Coverage | 🚧 Partial | Duration thresholds are configured; page-load and API/backend latency are still not observed as metrics |
 | 7.7 Evidence-grounded Root-cause Intelligence | 🚧 Partial | Sentinel AI is heuristic pattern matching, not an LLM |
 | 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP/README/backlog aligned; full-matrix regression and a safety audit are still due |

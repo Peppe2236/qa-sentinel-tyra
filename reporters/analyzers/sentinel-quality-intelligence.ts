@@ -8,6 +8,7 @@ import type {
   IntelligenceSource,
   QualityDimension,
   QualityDimensionStatistics,
+  RequirementDefinition,
 } from '../models/types';
 
 
@@ -89,6 +90,60 @@ function isQualityDimension(
 ): value is QualityDimension {
   return QUALITY_DIMENSIONS.includes(
     value as QualityDimension
+  );
+}
+
+
+export function qualityDimensionsForRequirements(
+  requirementIds: string[],
+  requirements: RequirementDefinition[]
+): QualityDimension[] {
+  if (
+    requirementIds.length === 0 ||
+    requirements.length === 0
+  ) {
+    return [];
+  }
+
+  const wanted =
+    new Set(
+      requirementIds
+    );
+
+  const dimensions:
+    QualityDimension[] = [];
+
+  for (
+    const requirement
+    of requirements
+  ) {
+    if (
+      !wanted.has(
+        requirement.id
+      )
+    ) {
+      continue;
+    }
+
+    for (
+      const dimension
+      of requirement.qualityDimensions ??
+        []
+    ) {
+      if (
+        isQualityDimension(
+          dimension
+        )
+      ) {
+        dimensions.push(
+          dimension
+        );
+      }
+    }
+  }
+
+  return unique(
+    dimensions
   );
 }
 
@@ -186,7 +241,9 @@ export interface TestQualityContext {
 export function analyzeTestQualityContext(
   test: TestCase,
   result: TestResult,
-  category: Category
+  category: Category,
+  requirements:
+    RequirementDefinition[] = []
 ): TestQualityContext {
   const explicitDimensions =
     splitValues(
@@ -294,6 +351,13 @@ export function analyzeTestQualityContext(
       'critical-flows'
     );
   }
+
+  dimensions.push(
+    ...qualityDimensionsForRequirements(
+      requirementIds,
+      requirements
+    )
+  );
 
   return {
     qualityDimensions:

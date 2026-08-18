@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import {
   analyzeRequirementCoverage,
@@ -11,13 +14,18 @@ import {
   buildCriticalFlowEvidenceFromTests,
 } from '../../reporters/analyzers/sentinel-critical-flows';
 import { analyzeSecurityPerformance } from '../../reporters/analyzers/sentinel-security-performance';
+import { qualityDimensionsForRequirements } from '../../reporters/analyzers/sentinel-quality-intelligence';
 import type {
   DashboardTestResult,
   ReleaseAssessment,
 } from '../../reporters/models/types';
 import { loadCriticalFlows } from '../../reporters/utils/critical-flows';
 import { loadRequirements } from '../../reporters/utils/requirements';
-import { loadSecurityPerformanceConfig } from '../../reporters/utils/security-performance-config';
+import {
+  loadSecurityPerformanceConfig,
+  SECURITY_AREAS,
+  type SecurityPerformanceConfig,
+} from '../../reporters/utils/security-performance-config';
 
 function sampleTest(
   overrides: Partial<DashboardTestResult>
@@ -51,6 +59,20 @@ function sampleRelease(): ReleaseAssessment {
     nonBlockingIssues: 0,
     warnings: 0,
   } as ReleaseAssessment;
+}
+
+function securityConfig(
+  requiredChecks: SecurityPerformanceConfig['security']['requiredChecks']
+): SecurityPerformanceConfig {
+  return {
+    schemaVersion: 1,
+    security: {
+      requiredChecks,
+    },
+    performance: {
+      thresholds: {},
+    },
+  };
 }
 
 test.describe('requirements catalog', () => {
@@ -202,5 +224,147 @@ test.describe('security and performance config', () => {
     expect(testDuration?.thresholdConfigured).toBe(true);
     expect(testDuration?.status).toBe('healthy');
     expect(testDuration?.observedValueMs).toBe(4_000);
+  });
+
+  test('requiredChecks are known security areas and drive unverified scope', () => {
+    const config = loadSecurityPerformanceConfig();
+    const assessment = analyzeSecurityPerformance([], [], {}, config);
+    const areaIds = assessment.security.areas.map(area => area.area);
+
+    expect(config.security.requiredChecks.length).toBeGreaterThan(0);
+    expect(
+      config.security.requiredChecks.every(check => SECURITY_AREAS.includes(check))
+    ).toBe(true);
+    expect(assessment.security.requiredChecks).toEqual(config.security.requiredChecks);
+    expect(areaIds).toEqual(config.security.requiredChecks);
+    expect(assessment.security.unverifiedAreas).toEqual(config.security.requiredChecks);
+    expect(areaIds).not.toContain('authorization');
+    expect(areaIds).not.toContain('dependency-security');
+    expect(assessment.security.areas.every(area => area.required)).toBe(true);
+    expect(assessment.security.status).toBe('not-verified');
+  });
+
+  test('a custom requiredChecks list does not invent unlisted areas', () => {
+    const assessment = analyzeSecurityPerformance(
+      [],
+      [],
+      {},
+      securityConfig(['authentication'])
+    );
+
+    expect(assessment.security.areas.map(area => area.area)).toEqual(['authentication']);
+    expect(assessment.security.unverifiedAreas).toEqual(['authentication']);
+    expect(assessment.security.requiredChecks).toEqual(['authentication']);
+  });
+
+  test('passing authentication tests verify the catalog authentication check', () => {
+    const assessment = analyzeSecurityPerformance(
+      [
+        sampleTest({
+          id: 'signin-form',
+          category: 'authentication',
+          qualityDimensions: ['security-performance'],
+          status: 'passed',
+        }),
+      ],
+      [],
+      {},
+      loadSecurityPerformanceConfig()
+    );
+    const auth = assessment.security.areas.find(area => area.area === 'authentication');
+
+    expect(auth?.status).toBe('healthy');
+    expect(auth?.required).toBe(true);
+    expect(auth?.evidenceSources).toContain('test');
+    expect(assessment.security.verifiedAreas).toEqual(['authentication']);
+    expect(assessment.security.unverifiedAreas).not.toContain('authentication');
+    expect(assessment.security.unverifiedAreas).toContain('transport');
+    expect(assessment.security.status).toBe('not-verified');
+  });
+
+  test('security-area annotations map tests onto a required check', () => {
+    const assessment = analyzeSecurityPerformance(
+      [
+        sampleTest({
+          id: 'https-home',
+          category: 'availability',
+          qualityDimensions: ['security-performance'],
+          annotations: [{ type: 'security-area', description: 'transport' }],
+          status: 'passed',
+        }),
+      ],
+      [],
+      {},
+      securityConfig(['transport', 'authentication'])
+    );
+    const transport = assessment.security.areas.find(area => area.area === 'transport');
+
+    expect(transport?.status).toBe('healthy');
+    expect(assessment.security.verifiedAreas).toEqual(['transport']);
+    expect(assessment.security.unverifiedAreas).toEqual(['authentication']);
+  });
+
+  test('findings outside requiredChecks still surface without becoming catalog gaps', () => {
+    const assessment = analyzeSecurityPerformance(
+      [],
+      [
+        {
+          source: 'discovery',
+          category: 'security',
+          severity: 'high',
+          classification: 'security-issue',
+          title: 'Unexpected authorization failure',
+          evidence: 'HTTP 403 forbidden on /jobs',
+        },
+      ],
+      {},
+      securityConfig(['authentication'])
+    );
+    const authorization = assessment.security.areas.find(
+      area => area.area === 'authorization'
+    );
+
+    expect(authorization?.required).toBe(false);
+    expect(authorization?.status).toBe('poor');
+    expect(assessment.security.unverifiedAreas).toEqual(['authentication']);
+    expect(assessment.security.status).toBe('poor');
+  });
+
+  test('rejects unknown requiredChecks values', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-sec-'));
+    const file = path.join(dir, 'security-performance.json');
+
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        schemaVersion: 1,
+        security: {
+          requiredChecks: ['authentication', 'not-a-real-check'],
+        },
+        performance: {
+          thresholds: {},
+        },
+      })
+    );
+
+    expect(() => loadSecurityPerformanceConfig(file)).toThrow(/not-a-real-check/);
+  });
+
+  test('requirement catalog qualityDimensions feed dashboard dimensions', () => {
+    const dimensions = qualityDimensionsForRequirements(
+      ['REQ-NATION-HOME-001'],
+      loadRequirements()
+    );
+
+    expect(dimensions).toEqual(
+      expect.arrayContaining([
+        'requirements-functionality',
+        'ux-ui',
+        'api-backend',
+      ])
+    );
+    expect(
+      qualityDimensionsForRequirements(['REQ-DOES-NOT-EXIST'], loadRequirements())
+    ).toEqual([]);
   });
 });

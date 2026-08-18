@@ -165,6 +165,7 @@ import type {
   DashboardTestResult,
   IssueClassification,
   ReleaseAssessment,
+  RequirementDefinition,
   RiskLevel,
   RunMetadata,
   ApiIntelligenceIssue,
@@ -1047,6 +1048,7 @@ class QaDashboardReporter implements Reporter {
   private results: DashboardTestResult[] = [];
   private config?: FullConfig;
   private discoveredTests = 0;
+  private requirements: RequirementDefinition[] = [];
 
   onBegin(
     config: FullConfig,
@@ -1055,6 +1057,8 @@ class QaDashboardReporter implements Reporter {
     this.config = config;
     this.startedAt = new Date();
     this.results = [];
+    this.requirements =
+      loadRequirements();
     this.discoveredTests =
       suite.allTests().length;
 
@@ -1101,7 +1105,8 @@ class QaDashboardReporter implements Reporter {
       analyzeTestQualityContext(
         test,
         result,
-        category
+        category,
+        this.requirements
       );
 
     const fullTitle =
@@ -1540,7 +1545,7 @@ const compatibilityAssessment =
   );
 
 const requirements =
-  loadRequirements();
+  this.requirements;
 
 const requirementEvidence =
   buildRequirementEvidenceFromTests(

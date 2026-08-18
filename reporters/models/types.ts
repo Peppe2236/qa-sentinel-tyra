@@ -1750,6 +1750,9 @@ export interface SecurityAreaAssessment {
   status:
     SecurityPerformanceStatus;
 
+  required:
+    boolean;
+
   evidenceCount:
     number;
 
@@ -1782,6 +1785,9 @@ export interface SecurityAssessment {
 
   issueCount:
     number;
+
+  requiredChecks:
+    SecurityArea[];
 
   verifiedAreas:
     SecurityArea[];
