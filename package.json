@@ -7,26 +7,28 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "test:chromium": "playwright test --project=chromium",
-    "test:chromium:headed": "playwright test --project=chromium --headed",
+    "test:chromium": "playwright test --project=nation-chromium --project=ai-skills-chromium",
+    "test:chromium:headed": "playwright test --project=nation-chromium --project=ai-skills-chromium --headed",
 
-    "test:nation": "playwright test tests/nation --project=chromium --headed",
-    "test:nation:ci": "playwright test tests/nation --project=chromium",
+    "test:nation": "playwright test tests/nation --project=nation-chromium --headed",
+    "test:nation:ci": "playwright test tests/nation --project=nation-chromium",
 
-    "test:skills": "playwright test tests/skills --project=chromium --headed",
-    "test:skills:ci": "playwright test tests/skills --project=chromium",
+    "test:skills": "playwright test tests/skills --project=ai-skills-chromium --headed",
+    "test:skills:ci": "playwright test tests/skills --project=ai-skills-chromium",
 
-    "test:discovered": "playwright test tests/generated/discovered-pages.spec.ts --project=chromium",
+    "test:discovered": "playwright test tests/generated/discovered-pages-nation.spec.ts tests/generated/discovered-pages-ai-skills.spec.ts --project=nation-chromium --project=ai-skills-chromium",
+    "test:discovered:nation": "playwright test tests/generated/discovered-pages-nation.spec.ts --project=nation-chromium",
+    "test:discovered:skills": "playwright test tests/generated/discovered-pages-ai-skills.spec.ts --project=ai-skills-chromium",
 
-    "test:all": "playwright test --project=chromium",
-    "test:all:headed": "playwright test --project=chromium --headed",
+    "test:all": "playwright test",
+    "test:all:headed": "playwright test --headed",
 
     "qa": "node scripts/run-qa.mjs",
     "qa:full": "npm run scan:all && npm run qa",
 
     "scan": "node scripts/scan-site.mjs",
-    "scan:nation": "node scripts/scan-site.mjs https://nation.dev/",
-    "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/skills",
+    "scan:nation": "node scripts/scan-site.mjs https://nation.dev/ nation",
+    "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/skills ai-skills",
     "scan:all": "npm run scan:nation && npm run scan:skills",
 
     "dashboard": "node scripts/serve-dashboard.mjs",

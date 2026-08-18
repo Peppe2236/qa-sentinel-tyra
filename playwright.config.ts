@@ -153,11 +153,12 @@ export default defineConfig({
       name:
         'nation-chromium',
 
- testMatch: [
-  /nation\/.*\.spec\.ts/,
-  /discovery\/.*\.spec\.ts/,
-  /diagnostics\/.*\.spec\.ts/,
-],
+      testMatch: [
+        /nation\/.*\.spec\.ts/,
+        /discovery\/.*\.spec\.ts/,
+        /diagnostics\/.*\.spec\.ts/,
+        /generated\/discovered-pages-nation\.spec\.ts/,
+      ],
       use: {
         ...devices[
           'Desktop Chrome'
@@ -269,9 +270,10 @@ export default defineConfig({
     'ai-skills-chromium',
 
   testMatch: [
-  'skills/**/*.spec.ts',
-  'discovery/**/*.spec.ts',
-],
+    'skills/**/*.spec.ts',
+    'discovery/**/*.spec.ts',
+    'generated/discovered-pages-ai-skills.spec.ts',
+  ],
 
   use: {
     ...devices[

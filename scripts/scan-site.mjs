@@ -7,11 +7,50 @@ const startUrl =
   process.env.QA_SCAN_URL ??
   'https://nation.dev/';
 
+const requestedSiteId =
+  process.argv[3] ??
+  process.env.QA_SCAN_SITE;
+
+function siteIdFromUrl(value) {
+  const hostname = new URL(value).hostname.toLowerCase();
+
+  if (hostname === 'aiskills.nation.dev') {
+    return 'ai-skills';
+  }
+
+  if (hostname === 'nation.dev' || hostname === 'www.nation.dev') {
+    return 'nation';
+  }
+
+  return hostname.replace(/[^a-z0-9]+/g, '-');
+}
+
+function normalizeSiteId(value) {
+  const normalized = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  if (!normalized) {
+    throw new Error('A safe scan site id could not be determined.');
+  }
+
+  return normalized;
+}
+
+const siteId = normalizeSiteId(
+  requestedSiteId ?? siteIdFromUrl(startUrl)
+);
+
 const maxPages = Number(process.env.QA_MAX_PAGES ?? 50);
 const navigationTimeout = Number(process.env.QA_NAV_TIMEOUT ?? 30000);
 
 const outputDirectory = path.resolve(process.cwd(), 'dashboard', 'data');
-const outputFile = path.join(outputDirectory, 'discovered-pages.json');
+const outputFile = path.join(
+  outputDirectory,
+  `discovered-pages-${siteId}.json`
+);
 
 const ignoredProtocols = ['mailto:', 'tel:', 'javascript:', 'data:'];
 
@@ -297,6 +336,7 @@ async function scanSite() {
   console.log('             QA SENTINEL TYRA SMART SCANNER');
   console.log(divider);
   console.log(`Target URL       : ${normalizedStart}`);
+  console.log(`Site id          : ${siteId}`);
   console.log(`Maximum pages    : ${maxPages}`);
   console.log(`Navigation limit : ${navigationTimeout} ms`);
   console.log('Classification   : warnings separated from user-impacting errors');
@@ -476,6 +516,7 @@ async function scanSite() {
 
   const report = {
     schemaVersion: 2,
+    siteId,
     startedFrom: normalizedStart,
     origin,
     scannedAt: new Date().toISOString(),
