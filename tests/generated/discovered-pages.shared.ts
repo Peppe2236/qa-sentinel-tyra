@@ -96,9 +96,13 @@ export function defineDiscoveredPageTests(
       ? 'AC-NATION-DISCOVERY-001-HTTP'
       : 'AC-SKILLS-DETAIL-001-HTTP';
   const flowId =
-    options.siteId === 'nation' ? undefined : 'FLOW-SKILLS-DETAIL';
+    options.siteId === 'nation'
+      ? 'FLOW-NATION-DISCOVERY'
+      : 'FLOW-SKILLS-DETAIL';
   const scenarioId =
-    options.siteId === 'nation' ? undefined : 'SCN-SKILLS-DETAIL-HTTP';
+    options.siteId === 'nation'
+      ? 'SCN-NATION-DISCOVERY-HTTP'
+      : 'SCN-SKILLS-DETAIL-HTTP';
   const quality = qualityMeta({
     requirement: requirementId,
     criteria: criterionId,

@@ -1688,3 +1688,51 @@ export function analyzeUnifiedDecisioning(
     decisionUnits,
   };
 }
+
+
+/**
+ * Dashboard "Blocking issues" must not stay at 0 while Unified
+ * Decisioning lists blocking quality gates. Gate counts are semantic
+ * blockers; decision units are confirmed issue blockers. Show the
+ * larger of the two so the card matches the gates.
+ */
+export function blockingIssueCountFromDecision(
+  decision:
+    UnifiedDecisionAssessment
+): number {
+
+  const gates =
+    decision.gateSummary;
+
+  const gateBlockers =
+    safeCount(
+      gates.blockingRequirements
+    ) +
+    safeCount(
+      gates.blockingFlows
+    ) +
+    safeCount(
+      gates.blockingUxAreas
+    ) +
+    safeCount(
+      gates.blockingSecurityAreas
+    ) +
+    safeCount(
+      gates.blockingPerformanceAreas
+    ) +
+    safeCount(
+      gates.blockingCompatibilityRegressions
+    ) +
+    safeCount(
+      gates.blockingApiIssues
+    ) +
+    safeCount(
+      gates.blockingBackendIssues
+    );
+
+
+  return Math.max(
+    decision.blockingUnits,
+    gateBlockers
+  );
+}

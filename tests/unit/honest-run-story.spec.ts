@@ -4,7 +4,7 @@ import {
   analyzeSecurityPerformance,
   securityAreasForIssue,
 } from '../../reporters/analyzers/sentinel-security-performance';
-import { analyzeUnifiedDecisioning } from '../../reporters/analyzers/sentinel-unified-scoring';
+import { analyzeUnifiedDecisioning, blockingIssueCountFromDecision } from '../../reporters/analyzers/sentinel-unified-scoring';
 import { qualityDimensionsForCategory } from '../../reporters/analyzers/sentinel-quality-intelligence';
 import type { CrossLayerAssessment } from '../../reporters/models/types';
 import { refineDiscoveryIssues } from '../../reporters/utils/discovery-issues';
@@ -198,6 +198,25 @@ test.describe('honest run scoring', () => {
     expect(decision.verificationGapDimensions).toEqual(
       expect.arrayContaining(['ux-ui', 'security', 'performance', 'compatibility'])
     );
+  });
+
+  test('blocking issue count matches blocking quality gates', () => {
+    const decision = analyzeUnifiedDecisioning(
+      [],
+      emptyCrossLayer([]),
+      {
+        complete: true,
+        blockingRequirements: 1,
+        blockingFlows: 3,
+      }
+    );
+
+    expect(decision.blockingGateDimensions).toEqual([
+      'requirements-functionality',
+      'critical-flows',
+    ]);
+    expect(decision.blockingUnits).toBe(0);
+    expect(blockingIssueCountFromDecision(decision)).toBe(4);
   });
 
   test('a real HIGH checkout failure still drives decision-unit risk', () => {

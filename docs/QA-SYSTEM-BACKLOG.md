@@ -36,9 +36,9 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-01 | GitHub Actions workflow | Without CI, GitHub has no proof the suite still typechecks | **done** | Inspect `.github/workflows/qa-ci.yml` |
 | CI-02 | Typecheck as a required gate | Reporter TypeScript is the product | **done** | `npm run typecheck` |
 | CI-03 | Analyzer unit tests as a required gate | Catalog/config regressions should fail CI without hitting live sites | **done** | `npm run test:unit` |
-| CI-04 | Live Nation Chromium in CI | Catches homepage/auth smoke breakage | **partial** | `npm run test:nation:ci` (CI continues on failure; artifacts still upload) |
+| CI-04 | Live Nation Chromium in CI | Catches homepage/auth smoke breakage | **partial** | `npm run test:nation:ci` (CI continues on failure; artifacts still upload). Local both-sites command: `npm run qa:sites` |
 | CI-05 | Live Skills Chromium in CI | Same for the catalog page | **partial** | `npm run test:skills:ci` |
-| CI-06 | Combined Chromium quality job | Split jobs overwrite `playwright-report/`; a single combined run would be a better release artifact | **not done** | `npx playwright test --project=nation-chromium --project=ai-skills-chromium` |
+| CI-06 | Combined Chromium quality job | Split jobs overwrite `playwright-report/`; a single combined run would be a better release artifact | **partial** | `npm run qa:sites` locally (bounded scan + both Chromium projects, one `latest-run.json`). GitHub still splits jobs |
 | CI-07 | Do not fail the repo on live-site flake | nation.dev is third-party and flaky from GitHub runners | **done** | Live steps use `continue-on-error: true` |
 | CI-08 | Upload Playwright HTML + reports artifacts | GitHub otherwise looks empty because reports are gitignored | **done** | Workflow `qa-reports` artifact |
 | CI-09 | Cache Playwright browsers | CI is slow without cache | **not done** | Add `actions/cache` on `~/.cache/ms-playwright` |
@@ -58,12 +58,12 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | N-03 | Sign-in / sign-up / reset **forms** | Proves controls render; does not prove login | **done** | `npx playwright test tests/nation/Authentication.spec.ts --project=nation-chromium` |
 | N-04 | Real login with a test account | Without a session, /home /jobs /profile stay untested | **partial** | Set `NATION_TEST_*` in `.env`, then `npx playwright test tests/nation/auth-session.spec.ts --project=nation-chromium` |
 | N-05 | `storageState` auth setup project | Every spec currently repeats anonymous visits | **not done** | Add Playwright setup project writing `playwright/.auth/nation.json` |
-| N-06 | Authenticated /home | Discovery redirects anonymous users to /signin | **not done** | New spec after N-04 |
-| N-07 | Authenticated /jobs | Listed in scan inventory; no member test | **not done** | New spec after N-04 |
-| N-08 | Authenticated /profile | Same | **not done** | New spec after N-04 |
-| N-09 | Invalid-password error handling | Critical flow scenario `SCN-NATION-SIGNIN-REJECT` is documented only | **not done** | Assert visible error, no stack trace |
+| N-06 | Authenticated /home | Discovery redirects anonymous users to /signin | **partial** | Spec exists and **skips** without `NATION_TEST_*` (gap, not a crash). Anonymous redirect is covered by `tests/nation/anonymous-gated.spec.ts` |
+| N-07 | Authenticated /jobs | Listed in scan inventory; no member test | **partial** | Same skip + anonymous `/jobs` → `/signin` (jobs listing is not public) |
+| N-08 | Authenticated /profile | Same | **partial** | Same skip + anonymous redirect |
+| N-09 | Invalid-password error handling | Critical flow scenario `SCN-NATION-SIGNIN-REJECT` is documented only | **done** | Asserts stay on `/signin` with no stack trace |
 | N-10 | Session expiry / recovery | Documented as not implemented | **not done** | Expire cookie, expect redirect to /signin |
-| N-11 | Partner-join / manifesto / made-with-sweden | Discovered public routes; only HTTP smoke if scan output exists | **partial** | `npm run scan:nation && npm run test:discovered:nation` |
+| N-11 | Partner-join / manifesto / made-with-sweden | Discovered public routes; only HTTP smoke if scan output exists | **done** | `npx playwright test tests/nation/public-pages.spec.ts --project=nation-chromium` |
 | N-12 | Cross-browser Nation CI | Firefox/WebKit/mobile projects exist locally only | **not done** | `npx playwright test tests/nation --project=nation-firefox` |
 
 ---
@@ -73,12 +73,12 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | ID | Item | Why | Status | Suggested command |
 |---|---|---|---|---|
 | S-01 | Catalog page smoke | `/skills` is the public entry | **done** | `npm run test:skills:ci` |
-| S-02 | Skill detail pages (gamma, claude, notebooklm) | Only generated HTTP loads, no UI assertions | **partial** | `npm run scan:skills && npm run test:discovered:skills` |
-| S-03 | Nested task pages | Scan has task URLs; no “complete task” scenario | **not done** | New page objects under `tests/pages/` |
-| S-04 | Assessment flow | `/assessment` is a core product path and is untested | **not done** | `npx playwright test tests/skills/assessment.spec.ts --project=ai-skills-chromium` (file does not exist yet) |
-| S-05 | Learning path flow | `/path` untested | **not done** | New spec |
-| S-06 | Practice flow | `/practice` untested | **not done** | New spec |
-| S-07 | AI Skills sign-in | Scan has marked `/signin` failed; no dedicated spec | **not done** | New spec + optional `AI_SKILLS_TEST_*` |
+| S-02 | Skill detail pages (gamma, claude, notebooklm) | Only generated HTTP loads, no UI assertions | **partial** | `tests/skills/detail.spec.ts` plus generated scan smoke |
+| S-03 | Nested task pages | Scan has task URLs; no “complete task” scenario | **partial** | Generated HTTP smoke after `npm run qa:sites`; no complete-task scenario |
+| S-04 | Assessment flow | `/assessment` is a core product path and is untested | **partial** | Anonymous page-load in `tests/skills/learn.spec.ts`; completing the assessment is not covered |
+| S-05 | Learning path flow | `/path` untested | **partial** | Same learn spec, load only |
+| S-06 | Practice flow | `/practice` untested | **partial** | Same learn spec, load only |
+| S-07 | AI Skills sign-in | Scan has marked `/signin` failed; no dedicated spec | **done** | Form coverage in `tests/skills/auth.spec.ts`; login skips without `AI_SKILLS_TEST_*` |
 | S-08 | Authenticated Skills session | Same gap as Nation | **not done** | Setup project + storageState |
 | S-09 | notebooklm network failure | Scan recorded an unexpected failed request | **not done** | Reproduce, classify product vs third-party |
 
@@ -93,7 +93,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | R-03 | Acceptance-criteria IDs on tests | Requirement status stays `partially-verified` without them | **done** for current specs | Same |
 | R-04 | Catalog includes known **untested** requirements | Honest gaps (real login, jobs, assessment) | **done** | Read `REQ-NATION-AUTH-005`, `REQ-SKILLS-LEARN-001` |
 | R-05 | Release-blocking `critical` only where tests exist | Untested critical ACs would mark every run `not-ready` | **done** | Unit test in `tests/unit/quality-catalog.spec.ts` |
-| R-06 | Site-filtered requirement assessment | A Nation-only run currently evaluates Skills requirements as not-tested | **not done** | Filter catalog by projects in the run |
+| R-06 | Site-filtered requirement assessment | A Nation-only run currently evaluates Skills requirements as not-tested | **done** | `filterCatalogBySites` in the reporter; combined command is `npm run qa:sites` |
 | R-07 | Traceability matrix report | Need a single table: requirement → tests → last result | **not done** | Extend markdown report |
 | R-08 | Ban new specs without annotations | Drift will return | **not done** | Unit test that greps `tests/**/*.spec.ts` |
 
@@ -207,7 +207,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | W-01 | LF via `.gitattributes` | Shell/TS/JSON must not pick up CRLF | **done** | `git add --renormalize .` if old files still have CRLF |
 | W-02 | `.vscode/settings.json` LF + tab size | VS Code on Windows otherwise writes CRLF | **done** | Open folder in VS Code |
 | W-03 | Recommended Playwright + Remote-WSL extensions | Default workflow | **done** | `.vscode/extensions.json` |
-| W-04 | Tasks: typecheck, unit, nation CI, dashboard | Avoid memorizing npm scripts | **done** | Terminal → Run Task |
+| W-04 | Tasks: typecheck, unit, nation CI, dashboard | Avoid memorizing npm scripts | **done** | Terminal → Run Task; preferred live task is `qa:sites` |
 | W-05 | Launch configs | Debug current spec | **done** | Run and Debug |
 | W-06 | README Ubuntu section | Path `/mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main` | **done** | See README |
 | W-07 | WSL default terminal profile | May fail if the distro is not named `Ubuntu` | **partial** | Change distro name in `.vscode/settings.json` if needed |

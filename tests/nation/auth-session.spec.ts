@@ -1,7 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { readOptionalCredentials } from '../helpers/env';
 import { qualityMeta } from '../helpers/quality';
-import { NationAuthPage } from '../pages/nation-auth.page';
+import { NationAuthPage, NATION_ORIGIN } from '../pages/nation-auth.page';
+
+const SKIP_LOGIN =
+  'Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login.';
+
+const PROTECTED_ROUTES = [
+  {
+    path: '/home',
+    criterion: 'AC-NATION-PROTECTED-001-HOME',
+  },
+  {
+    path: '/jobs',
+    criterion: 'AC-NATION-PROTECTED-001-JOBS',
+  },
+  {
+    path: '/profile',
+    criterion: 'AC-NATION-PROTECTED-001-PROFILE',
+  },
+] as const;
 
 test.describe('Nation authenticated session', () => {
   test(
@@ -16,10 +34,7 @@ test.describe('Nation authenticated session', () => {
     async ({ page }) => {
       const credentials = readOptionalCredentials('nation');
 
-      test.skip(
-        !credentials,
-        'Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login.'
-      );
+      test.skip(!credentials, SKIP_LOGIN);
 
       const auth = new NationAuthPage(page);
 
@@ -31,4 +46,45 @@ test.describe('Nation authenticated session', () => {
       await expect(page.locator('body')).toBeVisible();
     }
   );
+
+  for (const route of PROTECTED_ROUTES) {
+    test(
+      `authenticated session can open ${route.path}`,
+      qualityMeta({
+        requirement: 'REQ-NATION-PROTECTED-001',
+        criteria: route.criterion,
+        flow: 'FLOW-NATION-AUTHENTICATED-SESSION',
+        scenario: 'SCN-NATION-SESSION-PROTECTED',
+        category: 'authentication',
+      }),
+      async ({ page }) => {
+        const credentials = readOptionalCredentials('nation');
+
+        test.skip(!credentials, SKIP_LOGIN);
+
+        const auth = new NationAuthPage(page);
+
+        await auth.goto('/signin');
+        await auth.emailField().fill(credentials!.email);
+        await auth.passwordField().fill(credentials!.password);
+        await auth.signInSubmit().click();
+        await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
+
+        const response = await page.goto(`${NATION_ORIGIN}${route.path}`, {
+          waitUntil: 'domcontentloaded',
+        });
+
+        expect(
+          response,
+          `${route.path} returned no main response`
+        ).not.toBeNull();
+        expect(
+          response?.status(),
+          `${route.path} returned HTTP ${response?.status()}`
+        ).toBeLessThan(400);
+        await expect(page).not.toHaveURL(/\/signin/i);
+        await expect(page.locator('body')).toBeVisible();
+      }
+    );
+  }
 });

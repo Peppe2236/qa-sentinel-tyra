@@ -25,6 +25,9 @@
 
     "qa": "node scripts/run-qa.mjs",
     "qa:full": "npm run scan:all && npm run qa",
+    "qa:sites": "node scripts/qa-sites.mjs",
+    "qa:nation": "node scripts/qa-sites.mjs --nation-only",
+    "qa:skills": "node scripts/qa-sites.mjs --skills-only",
 
     "scan": "node scripts/scan-site.mjs",
     "scan:nation": "node scripts/scan-site.mjs https://nation.dev/ nation",

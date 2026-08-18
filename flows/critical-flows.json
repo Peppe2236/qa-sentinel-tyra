@@ -90,11 +90,12 @@
         },
         {
           "id": "SCN-NATION-SIGNIN-REJECT",
-          "title": "Invalid credentials show a controlled error (not implemented)",
+          "title": "Invalid credentials stay on sign-in without a raw runtime error",
           "type": "error-handling",
           "critical": false,
           "requirementIds": [
-            "REQ-NATION-AUTH-001"
+            "REQ-NATION-AUTH-001",
+            "REQ-NATION-AUTH-004"
           ]
         }
       ]
@@ -199,13 +200,22 @@
           "requirementIds": [
             "REQ-SKILLS-HOME-001"
           ]
+        },
+        {
+          "id": "SCN-SKILLS-CATALOG-NAV",
+          "title": "Catalog exposes links toward learning or named skills",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-HOME-001"
+          ]
         }
       ]
     },
     {
       "id": "FLOW-SKILLS-LEARN",
-      "title": "Learner uses assessment, path and practice",
-      "description": "Routes exist in scan output. No Playwright scenario completes these flows.",
+      "title": "Learner opens assessment, path and practice pages",
+      "description": "Anonymous smoke coverage of /assessment, /path and /practice. Completing those journeys is still out of scope without AI_SKILLS_TEST_* credentials.",
       "site": "ai-skills",
       "critical": false,
       "requirementIds": [
@@ -214,7 +224,7 @@
       "scenarios": [
         {
           "id": "SCN-SKILLS-ASSESSMENT",
-          "title": "Start or resume an assessment (not implemented)",
+          "title": "Assessment page loads with a prompt or start control",
           "type": "happy-path",
           "critical": false,
           "requirementIds": [
@@ -223,7 +233,7 @@
         },
         {
           "id": "SCN-SKILLS-PATH",
-          "title": "Open a learning path (not implemented)",
+          "title": "Learning path page loads with visible structure",
           "type": "happy-path",
           "critical": false,
           "requirementIds": [
@@ -232,7 +242,7 @@
         },
         {
           "id": "SCN-SKILLS-PRACTICE",
-          "title": "Open a practice task (not implemented)",
+          "title": "Practice page loads with a visible task or prompt",
           "type": "happy-path",
           "critical": false,
           "requirementIds": [
@@ -244,7 +254,7 @@
     {
       "id": "FLOW-SKILLS-DETAIL",
       "title": "Visitor opens a named skill or task page",
-      "description": "Generated HTTP smoke tests only. Not a functional skill-completion flow.",
+      "description": "Named skill pages plus generated HTTP smoke tests. Not a functional skill-completion flow.",
       "site": "ai-skills",
       "critical": false,
       "requirementIds": [
@@ -258,6 +268,109 @@
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-DETAIL-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-SKILLS-AUTH",
+      "title": "Anonymous visitor uses the AI Skills sign-in page",
+      "description": "Form presence only. Successful Skills login is skipped unless AI_SKILLS_TEST_* is set.",
+      "site": "ai-skills",
+      "critical": false,
+      "requirementIds": [
+        "REQ-SKILLS-AUTH-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-SKILLS-AUTH-FORM",
+          "title": "AI Skills sign-in page exposes a usable login form",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-AUTH-LOGIN",
+          "title": "Optional AI_SKILLS_TEST_* credentials can establish a session",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-AUTH-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-PUBLIC-PAGES",
+      "title": "Anonymous visitor opens public Nation content pages",
+      "description": "/manifesto, /made-with-sweden, /partner-join, /privacy and /terms without a login.",
+      "site": "nation",
+      "critical": false,
+      "requirementIds": [
+        "REQ-NATION-PUBLIC-001",
+        "REQ-NATION-LEGAL-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-PUBLIC-MARKETING",
+          "title": "Manifesto, Made with Sweden and partner-join pages load",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-PUBLIC-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-LEGAL-PAGES",
+          "title": "Privacy and terms documents load",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-LEGAL-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-ANONYMOUS-GATED",
+      "title": "Anonymous visitor is redirected from member Nation routes",
+      "description": "/home, /jobs, /profile and /benchmarks bounce anonymous users to /signin. Jobs listing is not public.",
+      "site": "nation",
+      "critical": false,
+      "requirementIds": [
+        "REQ-NATION-GATED-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-GATED-REDIRECT",
+          "title": "Anonymous member routes redirect to sign-in",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-GATED-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-DISCOVERY",
+      "title": "Discovered Nation routes return a successful main document",
+      "description": "Generated page-load checks from dashboard/data/discovered-pages-nation.json after npm run qa:sites (bounded scan).",
+      "site": "nation",
+      "critical": false,
+      "requirementIds": [
+        "REQ-NATION-DISCOVERY-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-DISCOVERY-HTTP",
+          "title": "Each discovered Nation page main response is HTTP < 400",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-DISCOVERY-001"
           ]
         }
       ]

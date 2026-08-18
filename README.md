@@ -176,7 +176,37 @@ npm run typecheck
 npm run test:unit
 ```
 
-VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `test:nation:ci`, `dashboard`.
+VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:sites`, `dashboard`.
+
+### The command to run (both sites)
+
+`test:nation:ci` is Nation-only and does not scan. To check **nation.dev and aiskills.nation.dev together** (bounded scan + Chromium tests, one `latest-run.json`):
+
+```bash
+cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
+npm run qa:sites
+```
+
+That is the Ubuntu command to use. It:
+
+1. Scans both sites with `QA_MAX_PAGES` default **20** (the live apps have ~12–13 public routes each).
+2. Runs Nation + AI Skills Chromium tests, including generated discovered-page smoke tests.
+3. Writes one dashboard run covering both sites.
+
+Then:
+
+```bash
+npm run dashboard
+```
+
+Open `http://127.0.0.1:4173/`.
+
+Nation-only or Skills-only (still scans first):
+
+```bash
+npm run qa:nation
+npm run qa:skills
+```
 
 Line endings are LF (`.gitattributes` + `.vscode/settings.json`). If an old file is still CRLF:
 
@@ -209,17 +239,13 @@ npx playwright install
 npm run typecheck
 ```
 
-### 5. Run the Nation Chromium test suite
+### 5. Run both sites (preferred)
 
 ```bash
-npx playwright test tests/nation --project=nation-chromium
+npm run qa:sites
 ```
 
-Run the full configured browser and profile matrix with:
-
-```bash
-npx playwright test
-```
+This bounded-scans nation.dev and aiskills.nation.dev, then runs Chromium tests for both into one dashboard run. Do not use `npm run test:nation:ci` if you want Skills coverage or Deep Discovery inventory — that script is Nation tests only and skips the scan.
 
 ### 6. Start the QA dashboard
 

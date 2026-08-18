@@ -123,6 +123,8 @@ export interface RequirementCoverage {
   requirementId: string;
   title: string;
 
+  site?: string;
+
   critical: boolean;
 
   status:
@@ -240,6 +242,8 @@ export interface CriticalFlowCoverage {
   flowId: string;
 
   title: string;
+
+  site?: string;
 
   critical: boolean;
 

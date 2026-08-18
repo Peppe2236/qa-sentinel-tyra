@@ -220,4 +220,23 @@ test.describe('Nation.dev homepage technical checks', () => {
       }
     }
   );
+
+  test(
+    'homepage is served over HTTPS',
+    qualityMeta({
+      requirement: 'REQ-NATION-HOME-001',
+      criteria: 'AC-NATION-HOME-001-HTTPS',
+      flow: 'FLOW-NATION-PUBLIC-HOME',
+      scenario: 'SCN-NATION-HOME-LOAD',
+      category: 'security',
+      dimensions: 'security-performance',
+      securityCheck: 'transport',
+    }),
+    async ({ page }) => {
+      const home = new NationHomePage(page);
+
+      await home.goto();
+      expect(page.url()).toMatch(/^https:/);
+    }
+  );
 });

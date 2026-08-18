@@ -486,6 +486,9 @@ export function analyzeRequirementCoverage(
         title:
           requirement.title,
 
+        site:
+          requirement.site,
+
         critical:
           requirement.critical ??
           false,
@@ -526,19 +529,26 @@ function requirementBlocksRelease(
   requirement:
     RequirementCoverage
 ): boolean {
+  const criticalCriteria =
+    requirement.criteria.filter(
+      criterion =>
+        criterion.critical
+    );
+
   if (
+    criticalCriteria.length > 0
+  ) {
+    return criticalCriteria.some(
+      criterion =>
+        criterion.status !==
+        'pass'
+    );
+  }
+
+  return Boolean(
     requirement.critical &&
     requirement.status !==
       'pass'
-  ) {
-    return true;
-  }
-
-  return requirement.criteria.some(
-    criterion =>
-      criterion.critical &&
-      criterion.status !==
-        'pass'
   );
 }
 

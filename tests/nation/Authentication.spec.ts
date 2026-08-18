@@ -149,4 +149,33 @@ test.describe('Nation.dev authentication pages', () => {
       }
     }
   );
+
+  test(
+    'invalid credentials stay on sign-in without a raw runtime error',
+    qualityMeta({
+      requirement: ['REQ-NATION-AUTH-001', 'REQ-NATION-AUTH-004'],
+      criteria: ['AC-NATION-AUTH-001-FORM', 'AC-NATION-AUTH-004-NO-ERRORS'],
+      flow: 'FLOW-NATION-SIGNIN',
+      scenario: 'SCN-NATION-SIGNIN-REJECT',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
+
+      await auth.goto('/signin');
+      await auth.emailField().fill('qa-invalid@example.com');
+      await auth.passwordField().fill('WrongPassword!123');
+      await auth.signInSubmit().click();
+      await expect(page).toHaveURL(/\/signin/i, { timeout: 15_000 });
+
+      const visibleText = await auth.bodyText();
+
+      expect(
+        visibleText,
+        'Invalid sign-in exposed a raw runtime error'
+      ).not.toMatch(
+        /typeerror|referenceerror|syntaxerror|uncaught exception|internal server error|application error|stack trace/i
+      );
+    }
+  );
 });

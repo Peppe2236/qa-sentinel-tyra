@@ -19,6 +19,13 @@
       "problemMatcher": []
     },
     {
+      "label": "qa:sites",
+      "type": "npm",
+      "script": "qa:sites",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "test:nation:ci",
       "type": "npm",
       "script": "test:nation:ci",

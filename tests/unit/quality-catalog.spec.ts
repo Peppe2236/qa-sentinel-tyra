@@ -20,6 +20,7 @@ import type {
   ReleaseAssessment,
 } from '../../reporters/models/types';
 import { loadCriticalFlows } from '../../reporters/utils/critical-flows';
+import { filterCatalogBySites } from '../../reporters/utils/catalog-scope';
 import { loadRequirements } from '../../reporters/utils/requirements';
 import {
   loadSecurityPerformanceConfig,
@@ -211,7 +212,7 @@ test.describe('requirements catalog', () => {
       criterion => criterion.criterionId === 'AC-NATION-HOME-002-LEGAL'
     );
 
-    expect(legal?.status).toBe('pass');
+    expect(legal?.status).toBe('partially-verified');
     expect(legalCriterion?.status).toBe('pass');
     expect(homeLegal?.status).toBe('pass');
     expect(
@@ -239,6 +240,84 @@ test.describe('requirements catalog', () => {
     );
     expect(gated.status).toBe('not-ready');
     expect(gated.risk).toBe('critical');
+  });
+
+  test('Nation-only catalog filter hides Skills requirements', () => {
+    const filtered = filterCatalogBySites(
+      loadRequirements(),
+      new Set(['nation'])
+    );
+    const ids = filtered.map(requirement => requirement.id);
+
+    expect(ids).toContain('REQ-NATION-HOME-001');
+    expect(ids).toContain('REQ-PLATFORM-DISCOVERY-001');
+    expect(ids).not.toContain('REQ-SKILLS-HOME-001');
+    expect(ids).not.toContain('REQ-SKILLS-LEARN-001');
+  });
+
+  test('skipped credential tests are gaps, not release blockers', () => {
+    const requirements = loadRequirements().filter(requirement =>
+      ['REQ-NATION-AUTH-005', 'REQ-NATION-PROTECTED-001'].includes(
+        requirement.id
+      )
+    );
+    const evidence = buildRequirementEvidenceFromTests([
+      sampleTest({
+        id: 'login-skip',
+        requirementIds: ['REQ-NATION-AUTH-005'],
+        acceptanceCriteriaIds: ['AC-NATION-AUTH-005-LOGIN'],
+        status: 'skipped',
+      }),
+      sampleTest({
+        id: 'jobs-skip',
+        requirementIds: ['REQ-NATION-PROTECTED-001'],
+        acceptanceCriteriaIds: ['AC-NATION-PROTECTED-001-JOBS'],
+        status: 'skipped',
+      }),
+    ]);
+    const coverage = analyzeRequirementCoverage(requirements, evidence);
+    const gated = applyRequirementReleaseGate(sampleRelease(), coverage);
+    const login = coverage.find(
+      item => item.requirementId === 'REQ-NATION-AUTH-005'
+    );
+    const protectedRoutes = coverage.find(
+      item => item.requirementId === 'REQ-NATION-PROTECTED-001'
+    );
+
+    expect(login?.status).toBe('partially-verified');
+    expect(protectedRoutes?.status).toBe('partially-verified');
+    expect(gated.blockingRequirements).toBe(0);
+    expect(gated.status).not.toBe('not-ready');
+  });
+
+  test('non-critical acceptance failures do not block a critical requirement', () => {
+    const requirements = loadRequirements().filter(
+      requirement => requirement.id === 'REQ-NATION-HOME-001'
+    );
+    const evidence = buildRequirementEvidenceFromTests([
+      sampleTest({
+        id: 'home-core',
+        requirementIds: ['REQ-NATION-HOME-001'],
+        acceptanceCriteriaIds: [
+          'AC-NATION-HOME-001-HTTP',
+          'AC-NATION-HOME-001-TITLE',
+          'AC-NATION-HOME-001-CONTENT',
+        ],
+        status: 'passed',
+      }),
+      sampleTest({
+        id: 'home-js',
+        requirementIds: ['REQ-NATION-HOME-001'],
+        acceptanceCriteriaIds: ['AC-NATION-HOME-001-JS'],
+        status: 'failed',
+      }),
+    ]);
+    const coverage = analyzeRequirementCoverage(requirements, evidence);
+    const gated = applyRequirementReleaseGate(sampleRelease(), coverage);
+
+    expect(coverage[0].status).toBe('fail');
+    expect(gated.blockingRequirements).toBe(0);
+    expect(gated.status).not.toBe('not-ready');
   });
 });
 
@@ -288,6 +367,39 @@ test.describe('critical flows catalog', () => {
       ].sort()
     );
     expect(gated.status).toBe('not-ready');
+  });
+
+  test('non-critical scenario failure does not block a critical flow', () => {
+    const flows = loadCriticalFlows().filter(
+      flow => flow.id === 'FLOW-NATION-PUBLIC-HOME'
+    );
+    const evidence = buildCriticalFlowEvidenceFromTests([
+      sampleTest({
+        id: 'home-load',
+        criticalFlowIds: ['FLOW-NATION-PUBLIC-HOME'],
+        flowScenarioIds: ['SCN-NATION-HOME-LOAD'],
+        status: 'passed',
+      }),
+      sampleTest({
+        id: 'home-join',
+        criticalFlowIds: ['FLOW-NATION-PUBLIC-HOME'],
+        flowScenarioIds: ['SCN-NATION-HOME-JOIN'],
+        status: 'passed',
+      }),
+      sampleTest({
+        id: 'home-theme',
+        criticalFlowIds: ['FLOW-NATION-PUBLIC-HOME'],
+        flowScenarioIds: ['SCN-NATION-HOME-THEME'],
+        status: 'failed',
+      }),
+    ]);
+    const coverage = analyzeCriticalFlowCoverage(flows, evidence);
+    const gated = applyCriticalFlowReleaseGate(sampleRelease(), coverage);
+
+    expect(coverage[0].status).toBe('fail');
+    expect(gated.blockingFlows).toBe(0);
+    expect(gated.flowGaps).toBeGreaterThan(0);
+    expect(gated.status).not.toBe('not-ready');
   });
 });
 

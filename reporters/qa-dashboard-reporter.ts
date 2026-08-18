@@ -4,6 +4,7 @@ import {
 
 import {
   analyzeUnifiedDecisioning,
+  blockingIssueCountFromDecision,
 } from './analyzers/sentinel-unified-scoring';
 
 import {
@@ -134,6 +135,11 @@ import {
 import {
   loadRequirements,
 } from './utils/requirements';
+
+import {
+  filterCatalogBySites,
+  sitesInScopeFromTests,
+} from './utils/catalog-scope';
 
 import {
   analyzeRequirementCoverage,
@@ -936,7 +942,9 @@ function buildCanonicalReleaseAssessment(
      * not duplicated raw evidence records.
      */
     blockingIssues:
-      decision.blockingUnits,
+      blockingIssueCountFromDecision(
+        decision
+      ),
 
     nonBlockingIssues:
       decision.warningUnits,
@@ -1544,8 +1552,16 @@ const compatibilityAssessment =
     }
   );
 
+const sitesInScope =
+  sitesInScopeFromTests(
+    this.results
+  );
+
 const requirements =
-  this.requirements;
+  filterCatalogBySites(
+    this.requirements,
+    sitesInScope
+  );
 
 const requirementEvidence =
   buildRequirementEvidenceFromTests(
@@ -1560,7 +1576,10 @@ const requirementCoverage =
   );
 
 const criticalFlows =
-  loadCriticalFlows();
+  filterCatalogBySites(
+    loadCriticalFlows(),
+    sitesInScope
+  );
 
 const criticalFlowEvidence =
   buildCriticalFlowEvidenceFromTests(

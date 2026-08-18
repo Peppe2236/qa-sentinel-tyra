@@ -285,6 +285,9 @@ export function analyzeCriticalFlowCoverage(
         title:
           flow.title,
 
+        site:
+          flow.site,
+
         critical:
           flow.critical ??
           false,
@@ -442,19 +445,26 @@ function flowBlocksRelease(
   flow:
     CriticalFlowCoverage
 ): boolean {
+  const criticalScenarios =
+    flow.scenarios.filter(
+      scenario =>
+        scenario.critical
+    );
+
   if (
+    criticalScenarios.length > 0
+  ) {
+    return criticalScenarios.some(
+      scenario =>
+        scenario.status !==
+        'pass'
+    );
+  }
+
+  return Boolean(
     flow.critical &&
     flow.status !==
       'pass'
-  ) {
-    return true;
-  }
-
-  return flow.scenarios.some(
-    scenario =>
-      scenario.critical &&
-      scenario.status !==
-        'pass'
   );
 }
 

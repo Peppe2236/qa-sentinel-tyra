@@ -47,6 +47,11 @@
           "id": "AC-NATION-HOME-001-LINKS",
           "title": "Visible homepage links use valid URL schemes",
           "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-001-HTTPS",
+          "title": "Homepage is served over HTTPS",
+          "critical": false
         }
       ]
     },
@@ -264,6 +269,16 @@
           "id": "AC-NATION-LEGAL-001-LINKS",
           "title": "Homepage privacy and terms links have non-empty href values",
           "critical": true
+        },
+        {
+          "id": "AC-NATION-LEGAL-001-PRIVACY",
+          "title": "Privacy Policy page loads without an HTTP error",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-LEGAL-001-TERMS",
+          "title": "Terms of Use page loads without an HTTP error",
+          "critical": false
         }
       ]
     },
@@ -281,6 +296,68 @@
         {
           "id": "AC-NATION-DISCOVERY-001-HTTP",
           "title": "Each discovered Nation page main response is HTTP < 400 and renders a body",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-PUBLIC-001",
+      "title": "Public Nation marketing and community pages load",
+      "description": "Anonymous visitors can open /manifesto, /made-with-sweden and /partner-join without a login. These are public routes from Deep Discovery, not authenticated member pages.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-PUBLIC-001-MANIFESTO",
+          "title": "/manifesto loads with visible content",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-PUBLIC-001-SWEDEN",
+          "title": "/made-with-sweden loads with visible content",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-PUBLIC-001-PARTNER",
+          "title": "/partner-join loads with visible content",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-GATED-001",
+      "title": "Anonymous visitors are sent to sign-in for member routes",
+      "description": "/home, /jobs, /profile and /benchmarks are not public. Without NATION_TEST_* credentials the suite asserts the anonymous redirect to /signin rather than member content. Authenticated access remains REQ-NATION-PROTECTED-001.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows",
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-GATED-001-HOME",
+          "title": "Anonymous /home redirects to /signin",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-GATED-001-JOBS",
+          "title": "Anonymous /jobs redirects to /signin (jobs listing is not public)",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-GATED-001-PROFILE",
+          "title": "Anonymous /profile redirects to /signin",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-GATED-001-BENCHMARKS",
+          "title": "Anonymous /benchmarks redirects to /signin",
           "critical": false
         }
       ]
@@ -326,13 +403,23 @@
           "id": "AC-SKILLS-HOME-001-STATUS",
           "title": "Catalog page has no HTTP 4xx/5xx responses during load",
           "critical": false
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-NAV",
+          "title": "Catalog exposes navigation toward learning or named skill pages",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-HTTPS",
+          "title": "Catalog is served over HTTPS",
+          "critical": false
         }
       ]
     },
     {
       "id": "REQ-SKILLS-LEARN-001",
       "title": "AI Skills learning routes are usable",
-      "description": "Discovery has seen /assessment, /path and /practice return 200 for an anonymous crawl. There are no dedicated Playwright scenarios that complete an assessment, follow a path, or practice a task.",
+      "description": "Anonymous /assessment, /path and /practice load with visible content. Completing an assessment, finishing a path, or submitting practice still requires a product scenario and may need AI_SKILLS_TEST_* credentials.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -342,7 +429,7 @@
       "acceptanceCriteria": [
         {
           "id": "AC-SKILLS-LEARN-001-ASSESSMENT",
-          "title": "Assessment flow can be started and shows a task or prompt",
+          "title": "Assessment page loads and shows a task, prompt or start control",
           "critical": false
         },
         {
@@ -377,7 +464,7 @@
     {
       "id": "REQ-SKILLS-AUTH-001",
       "title": "AI Skills sign-in is usable",
-      "description": "Discovery has recorded /signin on aiskills.nation.dev. There is no dedicated skills auth spec, and scan output has marked that route failed because of an unexpected network request.",
+      "description": "https://aiskills.nation.dev/signin exposes a login form for anonymous visitors. Successful Skills login stays skipped unless AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD are set.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
