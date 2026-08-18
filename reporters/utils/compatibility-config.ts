@@ -14,7 +14,7 @@ export interface CompatibilityConfig {
 const DEFAULT_CONFIG: CompatibilityConfig = {
   schemaVersion: 1,
   browsers: ['Chromium', 'Firefox', 'WebKit'],
-  profiles: ['Desktop', 'Mobile Chrome'],
+  profiles: ['Desktop', 'Tablet', 'Mobile'],
 };
 
 function uniqueStrings(values: unknown, field: string): string[] {

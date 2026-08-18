@@ -176,7 +176,7 @@ npm run typecheck
 npm run test:unit
 ```
 
-VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:sites`, `dashboard`.
+VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:sites`, `qa:matrix`, `dashboard`.
 
 ### The command to run (both sites)
 
@@ -203,20 +203,22 @@ npm run dashboard
 
 Open `http://127.0.0.1:4173/`.
 
-Daily Ubuntu loop:
+Daily Ubuntu loop (Chromium, both sites, including generated page smoke):
 
 ```bash
 git pull && npm i && npm run qa:sites && npm run dashboard
 ```
 
-Optional wider browsers (Firefox, WebKit, mobile Chrome smoke; does not require `NATION_TEST_*`):
+Full browser × device matrix (hand-written tests only — homepage, auth, catalog, security, a11y, perf, and product-bug specs). Generated discovered-page smoke stays on `qa:sites` Chromium so it is not multiplied across 18 projects:
 
 ```bash
-npx playwright install firefox webkit
-npm run qa:compat
+npx playwright install chromium firefox webkit
+npm run qa:matrix
 ```
 
-Browsers that did not execute in a run are **not in this run**, not poor. `qa:sites` stays Chromium-fast.
+`qa:matrix` is 2 sites × Chromium / Firefox / WebKit (Safari) × Desktop / Tablet / Mobile = **18 Playwright projects**. Microsoft Edge is not a separate project; Chromium covers the Edge Blink engine. `qa:browsers` and `qa:compat` are aliases of `qa:matrix`. No `NATION_TEST_*` credentials are required.
+
+Browsers and form factors that did not execute in a run are **not in this run**, not poor. After `qa:sites`, Chrome/Chromium and Desktop are measured; Firefox, Safari, Tablet, and Mobile stay not in this run. After `qa:matrix`, Chrome, Firefox, Safari and Desktop, Tablet, Mobile cards show measured pass/fail. `qa:sites` stays Chromium-fast.
 
 Nation-only or Skills-only (still scans first):
 
@@ -263,6 +265,13 @@ npm run qa:sites
 ```
 
 This bounded-scans nation.dev and aiskills.nation.dev, then runs Chromium tests for both into one dashboard run. Do not use `npm run test:nation:ci` if you want Skills coverage or Deep Discovery inventory — that script is Nation tests only and skips the scan.
+
+Full matrix (Firefox, Safari/WebKit, tablet, mobile) after installing those browsers:
+
+```bash
+npx playwright install chromium firefox webkit
+npm run qa:matrix
+```
 
 ### 6. Start the QA dashboard
 
@@ -519,14 +528,13 @@ Execution profiles are tracked independently:
 
 ```text
 Desktop
-Mobile Chrome
-Mobile Safari
 Tablet
+Mobile
 ```
 
-This prevents device profiles such as Tablet from being treated as browser families and makes cross-environment reporting more accurate.
+Desktop uses Playwright desktop devices at 1280×720. Tablet uses iPad Pro 11. Mobile uses Pixel 5 (Chromium/Firefox) and iPhone 12 (Safari/WebKit). This prevents device profiles from being treated as browser families.
 
-The reporting model now provides both a **Browser Matrix** and a **Profile Matrix**.
+The reporting model now provides both a **Browser Matrix** (Chrome / Firefox / Safari) and a **Profile Matrix** (Desktop / Tablet / Mobile). Safari is Playwright WebKit. Chromium covers Microsoft Edge; there is no dedicated `msedge` project.
 
 ### Cross-browser actionable issue deduplication
 

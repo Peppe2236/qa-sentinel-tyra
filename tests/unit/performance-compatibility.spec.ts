@@ -257,14 +257,14 @@ test.describe('performance threshold classification', () => {
 });
 
 test.describe('compatibility not-in-this-run', () => {
-  test('catalog includes Chromium, Firefox, WebKit and mobile chrome', () => {
+  test('catalog includes Chromium, Firefox, WebKit and Desktop/Tablet/Mobile', () => {
     const expected = expectedCompatibilityCoverage();
 
     expect(expected.browsers).toEqual(['Chromium', 'Firefox', 'WebKit']);
-    expect(expected.profiles).toEqual(['Desktop', 'Mobile Chrome']);
+    expect(expected.profiles).toEqual(['Desktop', 'Tablet', 'Mobile']);
   });
 
-  test('chromium-only runs measure Chromium and mark others not-in-this-run, not poor', () => {
+  test('chromium-only runs measure Chromium/desktop and mark others not-in-this-run, not poor', () => {
     const assessment = analyzeCompatibility(
       [
         sampleTest({
@@ -288,21 +288,36 @@ test.describe('compatibility not-in-this-run', () => {
     const webkit = assessment.browserAssessments.find(
       item => item.environment === 'WebKit'
     );
-    const mobile = assessment.profileAssessments.find(
-      item => item.environment === 'Mobile Chrome'
-    );
     const desktop = assessment.profileAssessments.find(
       item => item.environment === 'Desktop'
     );
+    const tablet = assessment.profileAssessments.find(
+      item => item.environment === 'Tablet'
+    );
+    const mobile = assessment.profileAssessments.find(
+      item => item.environment === 'Mobile'
+    );
 
+    expect(assessment.browserAssessments.map(item => item.environment)).toEqual([
+      'Chromium',
+      'Firefox',
+      'WebKit',
+    ]);
+    expect(assessment.profileAssessments.map(item => item.environment)).toEqual([
+      'Desktop',
+      'Tablet',
+      'Mobile',
+    ]);
     expect(chromium?.status).toBe('healthy');
     expect(firefox?.status).toBe('not-in-this-run');
     expect(webkit?.status).toBe('not-in-this-run');
-    expect(mobile?.status).toBe('not-in-this-run');
     expect(desktop?.status).toBe('healthy');
+    expect(tablet?.status).toBe('not-in-this-run');
+    expect(mobile?.status).toBe('not-in-this-run');
     expect(assessment.status).toBe('healthy');
     expect(assessment.status).not.toBe('poor');
     expect(firefox?.notes?.join(' ')).toMatch(/not in this run/i);
+    expect(tablet?.notes?.join(' ')).toMatch(/not in this run/i);
   });
 
   test('firefox failure in a multi-browser run is poor, not hidden', () => {
@@ -320,7 +335,7 @@ test.describe('compatibility not-in-this-run', () => {
           title: 'homepage loads successfully',
           browserFamily: 'Firefox',
           profile: 'Desktop',
-          project: 'nation-firefox',
+          project: 'nation-firefox-desktop',
           status: 'failed',
           classification: 'product-bug',
         }),
@@ -335,5 +350,47 @@ test.describe('compatibility not-in-this-run', () => {
 
     expect(firefox?.status).toBe('poor');
     expect(assessment.status).toBe('poor');
+  });
+
+  test('full matrix run measures every browser and form factor', () => {
+    const tests = [
+      sampleTest({
+        id: 'chrome-desktop',
+        title: 'homepage loads successfully',
+        browserFamily: 'Chromium',
+        profile: 'Desktop',
+        project: 'nation-chromium',
+      }),
+      sampleTest({
+        id: 'firefox-tablet',
+        title: 'homepage loads successfully',
+        browserFamily: 'Firefox',
+        profile: 'Tablet',
+        project: 'nation-firefox-tablet',
+      }),
+      sampleTest({
+        id: 'webkit-mobile',
+        title: 'homepage loads successfully',
+        browserFamily: 'WebKit',
+        profile: 'Mobile',
+        project: 'ai-skills-webkit-mobile',
+      }),
+    ];
+
+    const assessment = analyzeCompatibility(
+      tests,
+      [],
+      expectedCompatibilityCoverage()
+    );
+
+    expect(
+      assessment.browserAssessments.every(item => item.status === 'healthy')
+    ).toBe(true);
+    expect(
+      assessment.profileAssessments.every(item => item.status === 'healthy')
+    ).toBe(true);
+    expect(assessment.missingBrowsers).toEqual([]);
+    expect(assessment.missingProfiles).toEqual([]);
+    expect(assessment.status).not.toBe('poor');
   });
 });

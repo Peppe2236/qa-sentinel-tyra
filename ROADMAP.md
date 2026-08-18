@@ -107,9 +107,24 @@ npm install
 npx playwright install chromium
 npm run typecheck
 npm run test:unit
-npm run test:nation:ci
+npm run qa:sites
 npm run dashboard
 ```
+
+Daily Chromium (both sites, generated page smoke included):
+
+```bash
+npm run qa:sites
+```
+
+Full browser × device matrix (18 Playwright projects: both sites × Chromium/Firefox/WebKit × desktop/tablet/mobile). Generated discovered-page smoke stays on `qa:sites` only:
+
+```bash
+npx playwright install chromium firefox webkit
+npm run qa:matrix
+```
+
+`qa:browsers` and `qa:compat` alias `qa:matrix`. Microsoft Edge is covered by Chromium. No `NATION_TEST_*` credentials are required.
 
 Shared editor defaults live in `.vscode/` (LF endings, Playwright extension,
 tasks). Details: README “Ubuntu / WSL and VS Code”.
@@ -124,7 +139,7 @@ dashboard panel, and discovery-aware release-readiness provenance.
 
 | Delivery | Status | What exists / what does not |
 |---|---|---|
-| 7.1 Operational Test Orchestration | ✅ Done | `test:nation`, `test:skills`, `scan:nation`, `scan:skills`, `qa:full` keep site output separate |
+| 7.1 Operational Test Orchestration | ✅ Done | `test:nation`, `test:skills`, `scan:nation`, `scan:skills`, `qa:full`, `qa:sites` (daily Chromium), `qa:matrix` (18-project browser × device matrix) keep site output separate |
 | 7.2 Unified Advisory Dashboard | ✅ Done | `dashboard/index.html` Autonomous QA panel binds `autonomousQaAssessment` without execution authority |
 | 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel and CSS are wired; still depends on current-run evidence |
 | 7.4 UX/UI Verification Coverage | 🧭 Not started | Analyzer areas remain largely `not-verified`; no a11y axe/lighthouse suite |

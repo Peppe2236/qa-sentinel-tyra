@@ -44,7 +44,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-09 | Cache Playwright browsers | CI is slow without cache | **not done** | Add `actions/cache` on `~/.cache/ms-playwright` |
 | CI-10 | Branch protection | `main` can still be pushed without green required gates | **not done** | GitHub: require `quality` job typecheck/unit |
 | CI-11 | PR comment with summary | Artifacts are easy to miss | **not done** | Parse `test-results/playwright-results.json` |
-| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/mobile) never run in CI | **partial** | Local optional: `npm run qa:compat`. Not a required daily gate |
+| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | Local: `npx playwright install chromium firefox webkit` then `npm run qa:matrix`. Not a required daily gate. Daily remains `npm run qa:sites` |
 | CI-13 | Fail CI on `test.only` | Already `forbidOnly` when `CI=true` | **done** | `CI=true npm run test:nation:ci` |
 
 ---
@@ -64,7 +64,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | N-09 | Invalid-password error handling | Critical flow scenario `SCN-NATION-SIGNIN-REJECT` is documented only | **done** | Asserts stay on `/signin` with no stack trace |
 | N-10 | Session expiry / recovery | Documented as not implemented | **not done** | Expire cookie, expect redirect to /signin |
 | N-11 | Partner-join / manifesto / made-with-sweden | Discovered public routes; only HTTP smoke if scan output exists | **done** | `npx playwright test tests/nation/public-pages.spec.ts --project=nation-chromium` |
-| N-12 | Cross-browser Nation CI | Firefox/WebKit/mobile projects exist locally only | **partial** | Daily Chromium: `npm run qa:sites`. Optional: `npm run qa:compat` |
+| N-12 | Cross-browser Nation matrix | Firefox/WebKit/tablet/mobile projects exist locally | **partial** | Daily Chromium: `npm run qa:sites`. Full matrix: `npm run qa:matrix` |
 
 ---
 
@@ -207,7 +207,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | W-01 | LF via `.gitattributes` | Shell/TS/JSON must not pick up CRLF | **done** | `git add --renormalize .` if old files still have CRLF |
 | W-02 | `.vscode/settings.json` LF + tab size | VS Code on Windows otherwise writes CRLF | **done** | Open folder in VS Code |
 | W-03 | Recommended Playwright + Remote-WSL extensions | Default workflow | **done** | `.vscode/extensions.json` |
-| W-04 | Tasks: typecheck, unit, nation CI, dashboard | Avoid memorizing npm scripts | **done** | Terminal → Run Task; preferred live task is `qa:sites` |
+| W-04 | Tasks: typecheck, unit, qa:sites, qa:matrix, dashboard | Avoid memorizing npm scripts | **done** | Terminal → Run Task; daily live task is `qa:sites`; full matrix is `qa:matrix` |
 | W-05 | Launch configs | Debug current spec | **done** | Run and Debug |
 | W-06 | README Ubuntu section | Path `/mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main` | **done** | See README |
 | W-07 | WSL default terminal profile | May fail if the distro is not named `Ubuntu` | **partial** | Change distro name in `.vscode/settings.json` if needed |

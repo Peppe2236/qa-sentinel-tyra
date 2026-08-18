@@ -3225,6 +3225,31 @@ function renderCompatibility(run) {
   }
 
 
+  function browserCardLabel(environment) {
+    if (environment === 'Chromium') {
+      return 'Chrome';
+    }
+
+    if (environment === 'WebKit') {
+      return 'Safari';
+    }
+
+    return environment;
+  }
+
+
+  function environmentLabel(environment) {
+    if (environment.kind === 'browser') {
+      return browserCardLabel(
+        environment.environment ??
+        'Unknown'
+      );
+    }
+
+    return environment.environment ?? 'Unknown';
+  }
+
+
   function environmentCards(
     assessments,
     fallbackText
@@ -3263,8 +3288,9 @@ function renderCompatibility(run) {
 
                 <strong>
                   ${escapeHtml(
-                    environment.environment ??
-                    'Unknown'
+                    environmentLabel(
+                      environment
+                    )
                   )}
                 </strong>
 
@@ -3512,7 +3538,9 @@ function renderCompatibility(run) {
   setText(
     'compatibility-missing-browsers',
     listText(
-      assessment.missingBrowsers,
+      (assessment.missingBrowsers ?? []).map(
+        browserCardLabel
+      ),
       'None'
     )
   );

@@ -35,6 +35,11 @@ import {
 } from './utils/compatibility-config';
 
 import {
+  resolveBrowserFamily,
+  resolveProfile,
+} from './utils/execution-environment';
+
+import {
   analyzeUxUi,
   applyUxUiReleaseGate,
 } from './analyzers/sentinel-ux-ui';
@@ -181,81 +186,6 @@ import type {
   ApiIntelligenceIssue,
   BackendIntelligenceIssue,
 } from './models/types';
-
-function resolveBrowserFamily(
-  projectName: string,
-  configuredBrowserName?: string
-): string {
-  const browser =
-    configuredBrowserName?.toLowerCase();
-
-  if (browser === 'chromium') {
-    return 'Chromium';
-  }
-
-  if (browser === 'firefox') {
-    return 'Firefox';
-  }
-
-  if (browser === 'webkit') {
-    return 'WebKit';
-  }
-
-  const normalized =
-    projectName.toLowerCase();
-
-  if (normalized.includes('firefox')) {
-    return 'Firefox';
-  }
-
-  if (
-    normalized.includes('webkit') ||
-    normalized.includes('safari')
-  ) {
-    return 'WebKit';
-  }
-
-  if (
-    normalized.includes('chromium') ||
-    normalized.includes('chrome')
-  ) {
-    return 'Chromium';
-  }
-
-  if (normalized.includes('tablet')) {
-    return 'Chromium';
-  }
-
-  return 'Unknown';
-}
-
-function resolveProfile(
-  projectName: string
-): string {
-  const normalized =
-    projectName.toLowerCase();
-
-  if (
-    normalized.includes('mobile-chrome')
-  ) {
-    return 'Mobile Chrome';
-  }
-
-  if (
-    normalized.includes('mobile-safari')
-  ) {
-    return 'Mobile Safari';
-  }
-
-  if (
-    normalized.includes('tablet')
-  ) {
-    return 'Tablet';
-  }
-
-  return 'Desktop';
-}
-
 
 function countClassification(
   tests: DashboardTestResult[],
@@ -1102,9 +1032,18 @@ class QaDashboardReporter implements Reporter {
     test: TestCase,
     result: TestResult
   ): void {
+    const projectConfig =
+      test.parent.project();
+
     const project =
-      test.parent.project()?.name ??
+      projectConfig?.name ??
       'unknown';
+
+    const projectMetadata =
+      (projectConfig?.metadata ?? {}) as {
+        browserFamily?: string;
+        profile?: string;
+      };
 
     const category =
       detectCategory(test, result);
@@ -1163,11 +1102,15 @@ browserFamily:
     this.config?.projects.find(
       configuredProject =>
         configuredProject.name === project
-    )?.use?.browserName
+    )?.use?.browserName,
+    projectMetadata.browserFamily
   ),
 
 profile:
-  resolveProfile(project),
+  resolveProfile(
+    project,
+    projectMetadata.profile
+  ),
 
       status: result.status,
       expectedStatus:

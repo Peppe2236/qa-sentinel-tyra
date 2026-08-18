@@ -770,8 +770,8 @@ function buildEnvironmentAssessments(
 
   const environments =
     unique([
-      ...observed,
       ...expected,
+      ...observed,
     ]);
 
 

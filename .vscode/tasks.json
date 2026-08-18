@@ -40,6 +40,13 @@
       "problemMatcher": []
     },
     {
+      "label": "qa:matrix",
+      "type": "npm",
+      "script": "qa:matrix",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "qa:compat",
       "type": "npm",
       "script": "qa:compat",

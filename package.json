@@ -23,6 +23,8 @@
     "qa:sites": "node scripts/qa-sites.mjs",
     "qa:nation": "node scripts/qa-sites.mjs --nation-only",
     "qa:skills": "node scripts/qa-sites.mjs --skills-only",
+    "qa:matrix": "node scripts/qa-matrix.mjs",
+    "qa:browsers": "node scripts/qa-matrix.mjs",
     "qa:compat": "node scripts/qa-compat.mjs",
     "scan": "node scripts/scan-site.mjs",
     "scan:nation": "node scripts/scan-site.mjs https://nation.dev/ nation",

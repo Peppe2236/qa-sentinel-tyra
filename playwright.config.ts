@@ -4,10 +4,23 @@ import path from 'node:path';
 import {
   defineConfig,
   devices,
+  type Project,
 } from '@playwright/test';
 
 import {
+  BROWSER_FAMILY,
+  FORM_FACTOR_PROFILE,
+  MATRIX_BROWSERS,
+  MATRIX_FORM_FACTORS,
+  playwrightProjectName,
+  type MatrixBrowser,
+  type MatrixFormFactor,
+  type MatrixSite,
+} from './config/playwright-matrix';
+
+import {
   SENTINEL_SITES,
+  type SentinelSite,
 } from './config/sites';
 
 function loadLocalEnv(fileName: string): void {
@@ -48,69 +61,141 @@ function loadLocalEnv(fileName: string): void {
 
 loadLocalEnv('.env');
 
+function requireSite(id: MatrixSite): SentinelSite {
+  const site = SENTINEL_SITES.find(candidate => candidate.id === id);
 
-const nation =
-  SENTINEL_SITES.find(
-    site => site.id === 'nation'
-  );
+  if (!site) {
+    throw new Error(`Sentinel site configuration for ${id} was not found.`);
+  }
 
-const aiSkills =
-  SENTINEL_SITES.find(
-    site => site.id === 'ai-skills'
-  );
-
-
-if (!nation) {
-  throw new Error(
-    'Sentinel site configuration for Nation was not found.'
-  );
+  return site;
 }
 
-if (!aiSkills) {
-  throw new Error(
-    'Sentinel site configuration for AI Skills was not found.'
-  );
+const nation = requireSite('nation');
+const aiSkills = requireSite('ai-skills');
+const configuredSites: SentinelSite[] = [nation, aiSkills];
+
+function requireDevice(name: string) {
+  const device = devices[name];
+
+  if (!device) {
+    throw new Error(
+      `Playwright device "${name}" is not available in this Playwright version.`
+    );
+  }
+
+  return device;
 }
 
+function deviceFor(
+  browser: MatrixBrowser,
+  formFactor: MatrixFormFactor
+) {
+  if (formFactor === 'desktop') {
+    if (browser === 'chromium') {
+      return {
+        ...requireDevice('Desktop Chrome'),
+        viewport: { width: 1280, height: 720 },
+      };
+    }
+
+    if (browser === 'firefox') {
+      return requireDevice('Desktop Firefox');
+    }
+
+    return requireDevice('Desktop Safari');
+  }
+
+  if (formFactor === 'tablet') {
+    return {
+      ...requireDevice('iPad Pro 11'),
+      browserName: browser,
+    };
+  }
+
+  if (browser === 'webkit') {
+    return requireDevice('iPhone 12');
+  }
+
+  return {
+    ...requireDevice('Pixel 5'),
+    browserName: browser,
+  };
+}
+
+function handwrittenTestMatch(site: SentinelSite): Project['testMatch'] {
+  return site.id === 'nation'
+    ? ['nation/**/*.spec.ts']
+    : ['skills/**/*.spec.ts'];
+}
+
+function dailyChromiumTestMatch(site: SentinelSite): Project['testMatch'] {
+  if (site.id === 'nation') {
+    return [
+      'nation/**/*.spec.ts',
+      'discovery/**/*.spec.ts',
+      'diagnostics/**/*.spec.ts',
+      'generated/discovered-pages-nation.spec.ts',
+    ];
+  }
+
+  return [
+    'skills/**/*.spec.ts',
+    'discovery/**/*.spec.ts',
+    'generated/discovered-pages-ai-skills.spec.ts',
+  ];
+}
+
+function isDailyChromium(
+  browser: MatrixBrowser,
+  formFactor: MatrixFormFactor
+): boolean {
+  return browser === 'chromium' && formFactor === 'desktop';
+}
+
+function buildMatrixProjects(): Project[] {
+  const projects: Project[] = [];
+
+  for (const site of configuredSites) {
+    for (const browser of MATRIX_BROWSERS) {
+      for (const formFactor of MATRIX_FORM_FACTORS) {
+        projects.push({
+          name: playwrightProjectName(site.id as MatrixSite, browser, formFactor),
+          testMatch: isDailyChromium(browser, formFactor)
+            ? dailyChromiumTestMatch(site)
+            : handwrittenTestMatch(site),
+          metadata: {
+            browserFamily: BROWSER_FAMILY[browser],
+            profile: FORM_FACTOR_PROFILE[formFactor],
+          },
+          use: {
+            ...deviceFor(browser, formFactor),
+            baseURL: site.baseURL,
+          },
+        });
+      }
+    }
+  }
+
+  return projects;
+}
 
 export default defineConfig({
-
-  // =========================================================
-  // TEST DISCOVERY
-  // =========================================================
-
   testDir: './tests',
 
   fullyParallel: true,
 
-  forbidOnly:
-    Boolean(process.env.CI),
+  forbidOnly: Boolean(process.env.CI),
 
-  retries:
-    process.env.CI
-      ? 2
-      : 0,
+  retries: process.env.CI ? 2 : 0,
 
-  workers:
-    process.env.CI
-      ? 1
-      : undefined,
-
-
-  // =========================================================
-  // TIMEOUTS
-  // =========================================================
+  workers: process.env.CI ? 1 : undefined,
 
   timeout: 30_000,
 
   expect: {
     timeout: 5_000,
   },
-
-
-  // =========================================================
-  // REPORTERS
-  // =========================================================
 
   reporter: [
     [
@@ -120,295 +205,40 @@ export default defineConfig({
         printFailuresInline: true,
       },
     ],
-
     [
       'html',
       {
-        outputFolder:
-          'playwright-report',
-
+        outputFolder: 'playwright-report',
         open: 'never',
       },
     ],
-
     [
       'json',
       {
-        outputFile:
-          'test-results/playwright-results.json',
+        outputFile: 'test-results/playwright-results.json',
       },
     ],
-
     [
       './reporters/qa-dashboard-reporter.ts',
     ],
   ],
 
-
-  // =========================================================
-  // GLOBAL PLAYWRIGHT SETTINGS
-  // =========================================================
-
   use: {
-
-    trace:
-      'on-first-retry',
-
-    screenshot:
-      'only-on-failure',
-
-    video:
-      'retain-on-failure',
-
-    navigationTimeout:
-      30_000,
-
-    actionTimeout:
-      10_000,
-
-    ignoreHTTPSErrors:
-      false,
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    navigationTimeout: 30_000,
+    actionTimeout: 10_000,
+    ignoreHTTPSErrors: false,
   },
 
+  outputDir: 'test-results',
 
-  // =========================================================
-  // OUTPUT
-  // =========================================================
-
-  outputDir:
-    'test-results',
-
-
-  // =========================================================
-  // SENTINEL MULTI-SITE PROJECTS
-  // =========================================================
-
-  projects: [
-
-    // =======================================================
-    // NATION
-    // https://nation.dev/home
-    // =======================================================
-
-    {
-      name:
-        'nation-chromium',
-
-      testMatch: [
-        /nation\/.*\.spec\.ts/,
-        /discovery\/.*\.spec\.ts/,
-        /diagnostics\/.*\.spec\.ts/,
-        /generated\/discovered-pages-nation\.spec\.ts/,
-      ],
-      use: {
-        ...devices[
-          'Desktop Chrome'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    {
-      name:
-        'nation-firefox',
-
-      testMatch:
-        /nation\/.*\.spec\.ts/,
-
-      use: {
-        ...devices[
-          'Desktop Firefox'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    {
-      name:
-        'nation-webkit',
-
-      testMatch:
-        /nation\/.*\.spec\.ts/,
-
-      use: {
-        ...devices[
-          'Desktop Safari'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    {
-      name:
-        'nation-mobile-chrome',
-
-      testMatch:
-        /nation\/.*\.spec\.ts/,
-
-      use: {
-        ...devices[
-          'Pixel 7'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    {
-      name:
-        'nation-mobile-safari',
-
-      testMatch:
-        /nation\/.*\.spec\.ts/,
-
-      use: {
-        ...devices[
-          'iPhone 15'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    {
-      name:
-        'nation-tablet',
-
-      testMatch:
-        /nation\/.*\.spec\.ts/,
-
-      use: {
-        ...devices[
-          'iPad Pro 11'
-        ],
-
-        baseURL:
-          nation.baseURL,
-      },
-    },
-
-
-    // =======================================================
-    // AI SKILLS
-    // https://aiskills.nation.dev/
-    // =======================================================
-
-   {
-  name:
-    'ai-skills-chromium',
-
-  testMatch: [
-    'skills/**/*.spec.ts',
-    'discovery/**/*.spec.ts',
-    'generated/discovered-pages-ai-skills.spec.ts',
-  ],
-
-  use: {
-    ...devices[
-      'Desktop Chrome'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-
-{
-  name:
-    'ai-skills-firefox',
-
-  testMatch:
-  'skills/**/*.spec.ts',
-
-  use: {
-    ...devices[
-      'Desktop Firefox'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-
-{
-  name:
-    'ai-skills-webkit',
-
-  testMatch:
-  'skills/**/*.spec.ts',
-
-  use: {
-    ...devices[
-      'Desktop Safari'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-
-{
-  name:
-    'ai-skills-mobile-chrome',
-
-  testMatch:
-  'skills/**/*.spec.ts',
-
-  use: {
-    ...devices[
-      'Pixel 7'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-
-{
-  name:
-    'ai-skills-mobile-safari',
-
-  testMatch:
-  'skills/**/*.spec.ts',
-
-  use: {
-    ...devices[
-      'iPhone 15'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-
-{
-  name:
-    'ai-skills-tablet',
-
-  testMatch:
-  'skills/**/*.spec.ts',
-
-  use: {
-    ...devices[
-      'iPad Pro 11'
-    ],
-
-    baseURL:
-      aiSkills.baseURL,
-  },
-},
-],
+  /*
+   * 18 projects: both sites × Chromium/Firefox/WebKit × desktop/tablet/mobile.
+   * Generated discovered-page smoke is limited to daily Chromium desktop
+   * (nation-chromium, ai-skills-chromium) so qa:matrix does not multiply it.
+   * Microsoft Edge is not a separate project; Chromium covers the Edge engine.
+   */
+  projects: buildMatrixProjects(),
 });
