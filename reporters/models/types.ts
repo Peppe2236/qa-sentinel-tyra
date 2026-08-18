@@ -50,6 +50,35 @@ export interface HumanReviewCredentials {
   aiSkills: boolean;
 }
 
+export interface IssueCluster {
+  label: string;
+  count: number;
+  titles: string[];
+}
+
+export type CaptchaQueueKind =
+  | 'recaptcha'
+  | 'hcaptcha'
+  | 'unknown-iframe';
+
+export interface CaptchaQueueItem {
+  id: string;
+  site: string;
+  url: string;
+  kind: CaptchaQueueKind;
+  title: string;
+  whyHuman: string;
+  screenshot?: string;
+  solverAttempted: boolean;
+}
+
+export interface HumanReviewLlm {
+  status: 'off-no-key' | 'key-present' | 'enriched' | 'error';
+  label: string;
+  engine: 'heuristic' | 'openai';
+  language?: 'en' | 'sv';
+}
+
 export interface HumanReviewPack {
   verdict: HumanReviewVerdict;
   bullets: string[];
@@ -59,6 +88,53 @@ export interface HumanReviewPack {
   machineOwned: MachineOwnedItem[];
   needsHuman: NeedsHumanItem[];
   untestedRoutes: UntestedRoute[];
+  llm?: HumanReviewLlm;
+  issueClusters?: IssueCluster[];
+  remediationOneLiners?: string[];
+  captchaQueue?: CaptchaQueueItem[];
+}
+
+export type RemediationKind =
+  | 'copy-bug'
+  | 'theme-toggle'
+  | 'header-gap'
+  | 'other';
+
+export interface RemediationSuggestion {
+  id: string;
+  kind: RemediationKind;
+  title: string;
+  site: string;
+  file: string;
+  route: string;
+  quote?: string;
+  suggestedFix: string;
+  owner: 'developer';
+  workKind: 'remediation';
+}
+
+export interface RemediationReport {
+  generatedAt: string;
+  runId: string;
+  productionWrites: 'disabled-by-policy';
+  githubIssues: 'skipped' | 'created' | 'disabled' | 'error';
+  itemCount: number;
+  items: RemediationSuggestion[];
+  markdownPath: string;
+}
+
+export interface ReleaseUpdate {
+  generatedAt: string;
+  runId: string;
+  previousRunId: string | null;
+  verdict: string;
+  status: string;
+  previousStatus: string | null;
+  changed: string[];
+  recommendedNextAction: string;
+  humanReviewRequired: true;
+  artifactPath: string;
+  jsonPath: string;
 }
 
 export type Severity =
@@ -620,7 +696,9 @@ export type AutonomousQaActionKind =
   | 'verification'
   | 'change-impact'
   | 'quality-drift'
-  | 'investigation';
+  | 'investigation'
+  | 'remediation'
+  | 'release-update';
 
 export type AutonomousQaActionState =
   | 'candidate';
@@ -630,7 +708,10 @@ export type AutonomousQaTestSelectionReason =
   | 'failed-current-run'
   | 'requirement-link'
   | 'critical-flow-link'
-  | 'flow-scenario-link';
+  | 'flow-scenario-link'
+  | 'current-run-finding'
+  | 'untested-route'
+  | 'missing-auth';
 
 export interface AutonomousQaTestVariant {
   testId: string;
@@ -1037,6 +1118,16 @@ export type AutonomousQaQualityDriftSignalKind =
   | 'verification-gaps'
   | 'issue-fingerprints';
 
+export type AutonomousQaInvestigationSignalKind =
+  | AutonomousQaQualityDriftSignalKind
+  | 'theme'
+  | 'copy'
+  | 'untested-route'
+  | 'missing-auth'
+  | 'header-gap'
+  | 'captcha'
+  | 'current-run';
+
 export interface AutonomousQaQualityDriftSignal {
   id: string;
 
@@ -1130,7 +1221,7 @@ export interface AutonomousQaInvestigationCase {
   title: string;
 
   signalKind:
-    AutonomousQaQualityDriftSignalKind;
+    AutonomousQaInvestigationSignalKind;
 
   signalDirection:
     AutonomousQaQualityDriftDirection;
@@ -1321,8 +1412,45 @@ export interface AutonomousQaAssessment {
   investigation?:
     AutonomousQaInvestigationAssessment;
 
+  remediationReports?:
+    AutonomousQaRemediationReports;
+
+  releaseUpdate?:
+    AutonomousQaReleaseUpdateCard;
+
+  captcha?:
+    AutonomousQaCaptchaCard;
+
+  llm?:
+    HumanReviewLlm;
+
   reason:
     string;
+}
+
+export interface AutonomousQaRemediationReports {
+  status: 'available' | 'disabled' | 'empty';
+  itemCount: number;
+  markdownPath: string;
+  productionWrites: 'disabled-by-policy';
+  items: RemediationSuggestion[];
+}
+
+export interface AutonomousQaReleaseUpdateCard {
+  status: 'available' | 'no-baseline' | 'disabled';
+  verdict: string;
+  previousStatus: string | null;
+  changedCount: number;
+  nextAction: string;
+  jsonPath: string;
+  changed: string[];
+}
+
+export interface AutonomousQaCaptchaCard {
+  status: 'queued' | 'clear' | 'solver-opt-in';
+  queuedCount: number;
+  solver: 'off' | 'opt-in';
+  firstPartyConsent: true;
 }
 
 export type CrossLayerCorrelationState =
@@ -2471,5 +2599,11 @@ tests: DashboardTestResult[];
 
   policy?:
     QaPolicySnapshot;
+
+  remediation?:
+    RemediationReport;
+
+  releaseUpdate?:
+    ReleaseUpdate;
 
 }

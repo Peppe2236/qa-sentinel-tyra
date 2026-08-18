@@ -239,6 +239,7 @@ export function buildHumanReviewHtml(pack: HumanReviewPack): string {
       <p class="eyebrow">30-second verdict</p>
       <p class="stamp">${escapeHtml(pack.verdict)}</p>
       <p class="muted">Run ${escapeHtml(pack.runId)} · ${escapeHtml(pack.generatedAt)}</p>
+      <p class="muted">LLM: ${escapeHtml(pack.llm?.label ?? 'LLM off — no key')}</p>
       <ul class="why">
         ${pack.bullets.map(bullet => `<li>${escapeHtml(bullet)}</li>`).join('')}
       </ul>
@@ -326,6 +327,8 @@ export function buildHumanReviewMarkdown(pack: HumanReviewPack): string {
     `# Human review pack — ${pack.verdict}`,
     '',
     `Run \`${pack.runId}\` · ${pack.generatedAt}`,
+    '',
+    `LLM: ${pack.llm?.label ?? 'LLM off — no key'}`,
     '',
     '## 30-second verdict',
     '',

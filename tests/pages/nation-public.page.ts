@@ -6,6 +6,7 @@ import {
 } from '@playwright/test';
 
 import { NATION_ORIGIN } from './nation-auth.page';
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
 
 export class NationPublicPage {
   constructor(private readonly page: Page) {}
@@ -27,6 +28,7 @@ export class NationPublicPage {
     ).toBeLessThan(400);
 
     await expect(this.body()).toBeVisible();
+    await dismissFirstPartyChallenges(this.page);
 
     return response;
   }

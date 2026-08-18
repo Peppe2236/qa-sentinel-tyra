@@ -771,6 +771,87 @@
     </a>
 
 
+    <!-- REMEDIATION -->
+    <a
+      class="control-action control-remediation"
+      href="/reports/remediation.md"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M4 20h4l10-10-4-4L4 16v4z" />
+          <path d="M14 6l4 4" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Remediation
+        </strong>
+
+        <small>
+          Local suggested fixes — not production
+        </small>
+
+        <span
+          id="control-remediation-status"
+          class="control-action-status"
+        >
+          LOCAL
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- RELEASE UPDATE -->
+    <a
+      class="control-action control-release"
+      href="/reports/release-update.md"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M12 3v12" />
+          <path d="M8 11l4 4 4-4" />
+          <path d="M5 19h14" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Release update
+        </strong>
+
+        <small>
+          Verdict vs last history.json entry
+        </small>
+
+        <span
+          id="control-release-status"
+          class="control-action-status"
+        >
+          REVIEW
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
     <!-- MARKDOWN -->
     <a
       class="control-action control-markdown"
@@ -1346,7 +1427,8 @@
 
       <p id="autonomous-qa-safety-text">
         Disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes
-        and captcha clicks stay off.
+        stay off. First-party cookie/consent clicks are on. Paid captcha
+        solver and GitHub issues stay off unless env.
       </p>
     </div>
   </div>
@@ -1580,6 +1662,50 @@
       </div>
 
       <div id="autonomous-qa-investigation-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>LOCAL</span>
+          <h3>Remediation reports</h3>
+        </div>
+        <strong id="autonomous-qa-remediation-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Items</span><strong id="autonomous-qa-remediation-items-count">0</strong></div>
+        <div><span>Production writes</span><strong>OFF</strong></div>
+      </div>
+
+      <p class="autonomous-qa-baseline">
+        Artifact:
+        <strong id="autonomous-qa-remediation-path">reports/remediation.md</strong>
+      </p>
+
+      <div id="autonomous-qa-remediation-items" class="autonomous-qa-items"></div>
+    </section>
+
+    <section class="autonomous-qa-stage">
+      <div class="autonomous-qa-stage-heading">
+        <div>
+          <span>LOCAL</span>
+          <h3>Release update</h3>
+        </div>
+        <strong id="autonomous-qa-release-update-status">NOT VERIFIED</strong>
+      </div>
+
+      <div class="autonomous-qa-stage-metrics">
+        <div><span>Verdict</span><strong id="autonomous-qa-release-verdict">—</strong></div>
+        <div><span>Changed</span><strong id="autonomous-qa-release-changed">0</strong></div>
+      </div>
+
+      <p class="autonomous-qa-baseline">
+        Next action:
+        <strong id="autonomous-qa-release-next">—</strong>
+      </p>
+
+      <div id="autonomous-qa-release-update-items" class="autonomous-qa-items"></div>
     </section>
   </div>
 </section>

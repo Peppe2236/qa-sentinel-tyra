@@ -574,6 +574,32 @@ button.control-action {
 }
 
 
+.control-remediation
+.control-action-icon,
+
+.control-remediation
+.control-action-status {
+  color: #7ef5c9;
+}
+
+.control-release
+.control-action-icon,
+
+.control-release
+.control-action-status {
+  color: #8ec5ff;
+}
+
+.control-remediation:hover {
+  border-color:
+    rgba(86, 226, 194, 0.48);
+}
+
+.control-release:hover {
+  border-color:
+    rgba(82, 184, 255, 0.48);
+}
+
 /* JSON */
 
 .control-json

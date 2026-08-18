@@ -10,7 +10,7 @@ import { llmStatusFromEnv, withLlmStatus } from '../../reporters/utils/llm';
 import type { SentinelAiSummary } from '../../reporters/analyzers/sentinel-ai';
 
 test.describe('QA policy snapshot', () => {
-  test('read-only analysis is on and unsafe actions stay disabled by policy', () => {
+  test('read-only analysis is on and production writes stay disabled by policy', () => {
     const policy = snapshotQaPolicy({
       QA_AUTONOMOUS_EXECUTION: 'true',
       QA_PRODUCTION_WRITES: 'true',
@@ -20,11 +20,15 @@ test.describe('QA policy snapshot', () => {
     expect(policy.analysis).toBe('enabled');
     expect(policy.autonomousExecution).toBe('disabled-by-policy');
     expect(policy.productionWrites).toBe('disabled-by-policy');
-    expect(policy.captchaClick).toBe('disabled-by-policy');
+    expect(policy.captchaClick).toBe('first-party-consent');
+    expect(policy.autonomousRemediationReports).toBe('enabled');
+    expect(policy.githubIssues).toBe('disabled-by-policy');
     expect(policy.flags.QA_PRODUCTION_WRITES).toBe(false);
     expect(policy.flags.QA_CLICK_CAPTCHA).toBe(false);
+    expect(policy.flags.QA_FIRST_PARTY_CONSENT).toBe(true);
+    expect(policy.flags.QA_AUTONOMOUS_REMEDIATION).toBe(true);
     expect(policy.llm).toBe('off-no-key');
-    expect(autonomousPolicySummary(policy)).toMatch(/blocked by policy/i);
+    expect(autonomousPolicySummary(policy)).toMatch(/production writes/i);
   });
 
   test('LLM off — no key when neither env key is set', () => {

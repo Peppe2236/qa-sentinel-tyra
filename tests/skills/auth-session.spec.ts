@@ -4,6 +4,7 @@ import { readOptionalCredentials } from '../helpers/env';
 import { AI_SKILLS_AUTH_STATE } from '../helpers/auth-state';
 import { qualityMeta } from '../helpers/quality';
 import { SKILLS_ORIGIN } from '../pages/skills-catalog.page';
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
 
 const SKIP_LOGIN =
   'Set AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD in .env to enable real Skills login.';
@@ -35,6 +36,7 @@ test.describe('AI Skills authenticated session', () => {
       await page.goto(`${SKILLS_ORIGIN}/assessment`, {
         waitUntil: 'domcontentloaded',
       });
+      await dismissFirstPartyChallenges(page);
       await expect(page).not.toHaveURL(/\/signin/i);
       await expect(page.locator('body')).toBeVisible();
     }
@@ -58,6 +60,7 @@ test.describe('AI Skills authenticated session', () => {
         const response = await page.goto(`${SKILLS_ORIGIN}${route.path}`, {
           waitUntil: 'domcontentloaded',
         });
+        await dismissFirstPartyChallenges(page);
 
         expect(
           response,

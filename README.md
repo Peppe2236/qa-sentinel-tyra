@@ -88,8 +88,8 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Positive first-party API/backend verification evidence | ✅ Post-M6 |
 | Full configured compatibility-matrix verification | ✅ Post-M6 |
 | Autonomous test execution | 🔒 Disabled by policy (`QA_AUTONOMOUS_EXECUTION`) |
-| Autonomous remediation and release updates | 🔒 Disabled by policy — production writes stay off |
-| Captcha clicking | 🔒 Disabled by policy |
+| Autonomous remediation and release updates | ✅ Local reports (`reports/remediation.md`, `reports/release-status.json`) — production writes stay off |
+| Captcha clicking | ✅ First-party cookie/consent + native checkboxes; iframe reCAPTCHA/hCaptcha queued unless `SENTINEL_CAPTCHA_SOLVER_KEY` |
 | LLM enrichment | 🔒 Off without `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` — heuristic Sentinel AI still runs |
 | AI-assisted root-cause intelligence | 🚧 In progress |
 | Unified dashboard intelligence | 🚧 In progress |
@@ -231,7 +231,7 @@ That is slower than Chromium-only. It:
 3. Keeps generated discovery smoke, Deep Discovery crawl and diagnostics on daily Chromium only so they are not multiplied by 18.
 4. Runs every reporter analyzer onEnd and writes the human-review pack.
 
-No prompts, no captcha clicking, no production writes. Heuristic Sentinel AI always runs. LLM stays **LLM off — no key** unless `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY` is set.
+No prompts and no production writes. First-party cookie/consent banners are dismissed unattended. Google reCAPTCHA/hCaptcha iframes are queued for a human unless `SENTINEL_CAPTCHA_SOLVER_KEY` is set (their sites only, default off). Heuristic Sentinel AI always runs. LLM stays **LLM off — no key** unless `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY` is set. After `onEnd` the reporter writes local `reports/remediation.md` and `reports/release-update.md` (not a product deploy).
 
 `qa:sites` is the fast Chromium-only alias. `qa:matrix` is the 18-project matrix **without** a fresh scan.
 
@@ -267,6 +267,21 @@ npm run qa:sites
 ```
 
 `qa:matrix` is 2 sites × Chromium / Firefox / WebKit (Safari) × Desktop / Tablet / Mobile = **18 Playwright projects** without a new scan. Microsoft Edge is not a separate project; Chromium covers the Edge Blink engine. `qa:browsers` and `qa:compat` are aliases of `qa:matrix`. No `NATION_TEST_*` credentials are required.
+
+### Advisory, local remediation, captcha, LLM
+
+These run in the reporter `onEnd` of `npm run qa:unattended` (full matrix, not removed):
+
+| Area | Default | Env |
+|---|---|---|
+| Autonomous QA advisory | On — investigation plans and risk-based task selection from latest-run (theme, copy, untested routes, missing auth) | always |
+| Local remediation + release update | On — `reports/remediation.md`, `reports/release-update.md`, `reports/release-status.json` | `QA_AUTONOMOUS_REMEDIATION=1` (set `0` to skip files) |
+| GitHub issues on `Peppe2236/qa-sentinel-tyra` | Off | `QA_CREATE_ISSUES=1` and `GH_TOKEN` or `GITHUB_TOKEN` |
+| First-party cookie/consent click | On (`nation.dev`, `aiskills.nation.dev` only) | always |
+| Iframe captcha solver | Off — detect, screenshot, one human-queue item | `SENTINEL_CAPTCHA_SOLVER_KEY` (optional 2captcha/capsolver) |
+| LLM pack enrichment | Off — dashboard shows **LLM off — no key** | `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY` |
+
+Production writes against nation.dev stay off. Release updates are human-review artifacts, not deploys.
 
 Browsers and form factors that did not execute in a run are **not in this run**, not poor. After `qa:sites`, Chrome/Chromium and Desktop are measured; Firefox, Safari, Tablet, and Mobile stay not in this run until you run `qa:unattended`. After `qa:unattended`, Chrome, Firefox, Safari and Desktop, Tablet, Mobile cards show measured pass/fail.
 
@@ -972,8 +987,9 @@ Completed: 2026-08-17
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry
-- **Autonomous QA:** advisory-only
+- **Autonomous QA:** advisory-only (execution still disabled by `QA_AUTONOMOUS_EXECUTION`)
 - **Autonomous execution:** Disabled by policy (`QA_AUTONOMOUS_EXECUTION`) — not Coming Soon
-- **Remediation authorization:** Disabled by policy — production writes stay off
-- **Automatic release-decision updates:** Disabled by policy
+- **Remediation:** local `reports/remediation.md` — production writes stay off
+- **Release updates:** local `reports/release-status.json` + human review, not a deploy
+- **Captcha:** first-party consent clicks on; iframe solver off unless `SENTINEL_CAPTCHA_SOLVER_KEY`
 - **LLM:** Heuristic Sentinel AI always runs; LLM off — no key unless `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY`

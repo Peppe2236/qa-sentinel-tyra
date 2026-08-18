@@ -3,6 +3,7 @@ import { readOptionalCredentials } from '../helpers/env';
 import { NATION_AUTH_STATE } from '../helpers/auth-state';
 import { qualityMeta } from '../helpers/quality';
 import { NATION_ORIGIN } from '../pages/nation-auth.page';
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
 
 const SKIP_LOGIN =
   'Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login.';
@@ -42,6 +43,7 @@ test.describe('Nation authenticated session', () => {
       await page.goto(`${NATION_ORIGIN}/home`, {
         waitUntil: 'domcontentloaded',
       });
+      await dismissFirstPartyChallenges(page);
       await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
       await expect(page.locator('body')).toBeVisible();
     }
@@ -65,6 +67,7 @@ test.describe('Nation authenticated session', () => {
         const response = await page.goto(`${NATION_ORIGIN}${route.path}`, {
           waitUntil: 'domcontentloaded',
         });
+        await dismissFirstPartyChallenges(page);
 
         expect(
           response,

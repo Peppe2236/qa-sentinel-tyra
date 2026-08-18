@@ -108,11 +108,13 @@ async function renderSettings() {
       analysis: 'enabled',
       autonomousExecution: 'disabled-by-policy',
       productionWrites: 'disabled-by-policy',
-      captchaClick: 'disabled-by-policy',
+      captchaClick: 'first-party-consent',
+      autonomousRemediationReports: 'enabled',
+      githubIssues: 'disabled-by-policy',
       llm: 'off-no-key',
       notes: [
-        'Read-only analyzers default ON.',
-        'Autonomous execution is disabled by policy (QA_AUTONOMOUS_EXECUTION).',
+        'Advisory and local remediation reports default ON.',
+        'Autonomous execution is disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes stay off. First-party cookie/consent clicks are on.',
         'LLM off — no key. Heuristic Sentinel AI still runs.',
       ],
     };
@@ -121,7 +123,9 @@ async function renderSettings() {
       ['Read-only analysis', policy.analysis ?? 'enabled'],
       ['Autonomous execution', policy.autonomousExecution ?? 'disabled-by-policy'],
       ['Production writes', policy.productionWrites ?? 'disabled-by-policy'],
-      ['Captcha clicking', policy.captchaClick ?? 'disabled-by-policy'],
+      ['Captcha clicking', policy.captchaClick ?? 'first-party-consent'],
+      ['Local remediation reports', policy.autonomousRemediationReports ?? 'enabled'],
+      ['GitHub issues', policy.githubIssues ?? 'disabled-by-policy'],
       ['LLM', policy.llm === 'off-no-key' ? 'LLM off — no key' : String(policy.llm ?? 'off-no-key')],
       [
         'Daily everything command',

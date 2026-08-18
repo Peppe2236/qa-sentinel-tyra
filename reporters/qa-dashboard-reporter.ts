@@ -132,6 +132,9 @@ import {
 import {
   maybeEnrichSentinelAi,
 } from './utils/llm';
+import {
+  runAutonomousOnEndHooks,
+} from './utils/autonomous-on-end';
 
 import type {
   SentinelOutput,
@@ -1798,6 +1801,27 @@ const run: DashboardRun = {
       run.humanReview = fallbackHumanReviewPack(error, run.runId);
     }
 
+    const previousCanonical = [...autonomousQaHistory]
+      .reverse()
+      .find(entry =>
+        entry.schemaVersion === 5 &&
+        entry.releaseDecisionSource === 'unified-v5'
+      );
+
+    Object.assign(
+      run,
+      await runAutonomousOnEndHooks({
+        run,
+        previous: previousCanonical,
+        reportsDirectory: path.resolve(process.cwd(), 'reports'),
+        dataDirectory: path.resolve(
+          process.cwd(),
+          'dashboard',
+          'data'
+        ),
+      })
+    );
+
 const sentinelAi =
   await maybeEnrichSentinelAi(
     analyzeSentinelAi(run)
@@ -2031,6 +2055,18 @@ const htmlReportFile =
     if (humanReviewHtml) {
       console.log(
         `Human review pack: ${humanReviewHtml}`
+      );
+    }
+
+    if (run.remediation) {
+      console.log(
+        `Remediation report: ${path.join(reportsDirectory, 'remediation.md')}`
+      );
+    }
+
+    if (run.releaseUpdate) {
+      console.log(
+        `Release update: ${path.join(reportsDirectory, 'release-update.md')}`
       );
     }
 

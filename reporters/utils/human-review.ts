@@ -9,6 +9,7 @@ import {
 import type {
   ApiIntelligenceIssue,
   BackendIntelligenceIssue,
+  CaptchaQueueItem,
   DashboardAttachment,
   DashboardTestResult,
   HumanReviewCredentials,
@@ -738,6 +739,43 @@ export function buildHumanReviewPack(
     machineOwned,
     needsHuman,
     untestedRoutes: untested,
+  };
+}
+
+function captchaNeedsHuman(item: CaptchaQueueItem): NeedsHumanItem {
+  return {
+    id: item.id,
+    site: item.site,
+    url: item.url,
+    title: item.title,
+    whyHuman: item.whyHuman,
+    suggestedCheck:
+      'Open the first-party sign-in page, complete the iframe captcha yourself (or set SENTINEL_CAPTCHA_SOLVER_KEY for nation.dev / aiskills.nation.dev only), then re-run auth setup.',
+    screenshot: item.screenshot,
+  };
+}
+
+export function mergeCaptchaQueue(
+  pack: HumanReviewPack,
+  queue: CaptchaQueueItem[],
+  maxHuman = DEFAULT_MAX_HUMAN
+): HumanReviewPack {
+  if (queue.length === 0) {
+    return {
+      ...pack,
+      captchaQueue: [],
+    };
+  }
+
+  const first = captchaNeedsHuman(queue[0]);
+  const needsHuman = pack.needsHuman.filter(item => item.id !== first.id);
+  const insertAt = needsHuman[0]?.id === 'gap-test-account' ? 1 : 0;
+  needsHuman.splice(insertAt, 0, first);
+
+  return {
+    ...pack,
+    needsHuman: needsHuman.slice(0, maxHuman),
+    captchaQueue: queue,
   };
 }
 

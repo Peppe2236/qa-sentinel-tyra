@@ -165,12 +165,15 @@ videos are retained. The dashboard Control Center links to the pack.
 | Settings Control Center looked unused | **Active** read-only page with policy flags |
 | Sentinel AI looked like a closed LLM product | Heuristic **always runs**; UI says **LLM off — no key** when no key |
 | Autonomous QA “intentionally disabled” copy | UI says **disabled by policy** (`QA_AUTONOMOUS_EXECUTION`) |
+| Local remediation / release-update reports | **Writes** `reports/remediation.md` and `reports/release-status.json` (not production) |
+| First-party cookie/consent clicking | **On** for nation.dev and aiskills.nation.dev |
 
 | Still off by policy (not Coming Soon) | Flag / reason |
 |---|---|
 | Autonomous execution / Playwright launched by the advisor | `QA_AUTONOMOUS_EXECUTION` — even if set, production writes are not implemented |
 | Production mutation / nation.dev writes | Never enabled |
-| Captcha clicking | Never enabled |
+| Paid iframe captcha solver | Off unless `SENTINEL_CAPTCHA_SOLVER_KEY` (first-party hosts only) |
+| GitHub issue creation | Off unless `QA_CREATE_ISSUES=1` and `GH_TOKEN` / `GITHUB_TOKEN` |
 | LLM enrichment | `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY`; without a key heuristic still runs |
 | Auth member routes | Skip without `NATION_TEST_*` / `AI_SKILLS_TEST_*`; one human-queue item |
 | PDF executive reports | Not in the tree yet (planned) |

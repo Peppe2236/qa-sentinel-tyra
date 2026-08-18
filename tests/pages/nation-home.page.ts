@@ -5,6 +5,8 @@ import {
   type Response,
 } from '@playwright/test';
 
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
+
 export const NATION_HOME_URL = 'https://nation.dev/';
 
 export class NationHomePage {
@@ -13,7 +15,10 @@ export class NationHomePage {
   async goto(
     waitUntil: 'domcontentloaded' | 'networkidle' = 'domcontentloaded'
   ): Promise<Response | null> {
-    return this.page.goto(NATION_HOME_URL, { waitUntil });
+    return this.page.goto(NATION_HOME_URL, { waitUntil }).then(async response => {
+      await dismissFirstPartyChallenges(this.page);
+      return response;
+    });
   }
 
   async expectLoaded(): Promise<Response> {

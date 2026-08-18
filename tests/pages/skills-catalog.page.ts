@@ -5,6 +5,8 @@ import {
   type Response,
 } from '@playwright/test';
 
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
+
 export const SKILLS_ORIGIN = 'https://aiskills.nation.dev';
 export const SKILLS_CATALOG_URL = `${SKILLS_ORIGIN}/skills`;
 
@@ -31,6 +33,7 @@ export class SkillsCatalogPage {
     ).toBeLessThan(400);
 
     await expect(this.body()).toBeVisible();
+    await dismissFirstPartyChallenges(this.page);
 
     return response;
   }
@@ -51,6 +54,7 @@ export class SkillsCatalogPage {
     ).toBeLessThan(400);
 
     await expect(this.body()).toBeVisible();
+    await dismissFirstPartyChallenges(this.page);
 
     return response;
   }

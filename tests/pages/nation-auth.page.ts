@@ -5,6 +5,8 @@ import {
   type Response,
 } from '@playwright/test';
 
+import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
+
 export const NATION_ORIGIN = 'https://nation.dev';
 
 export class NationAuthPage {
@@ -28,6 +30,7 @@ export class NationAuthPage {
     ).toBeLessThan(400);
 
     await expect(this.page.locator('body')).toBeVisible();
+    await dismissFirstPartyChallenges(this.page);
 
     return response;
   }

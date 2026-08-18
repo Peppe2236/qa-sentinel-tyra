@@ -1622,6 +1622,77 @@ function renderAutonomousInvestigation(assessment = {}) {
   );
 }
 
+function renderAutonomousRemediation(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-remediation-status', assessment.status);
+  setText('autonomous-qa-remediation-items-count', assessment.itemCount ?? 0);
+  setText(
+    'autonomous-qa-remediation-path',
+    assessment.markdownPath ?? 'reports/remediation.md'
+  );
+
+  renderAutonomousCollection(
+    'autonomous-qa-remediation-items',
+    assessment.items,
+    item => autonomousCard({
+      title: item.title,
+      eyebrow: item.kind ?? 'developer',
+      status: 'local-report',
+      meta: [
+        ['Site', item.site ?? 'unknown'],
+        ['File', item.file ?? 'unknown'],
+        ['Route', item.route ?? '—'],
+      ],
+      body: `
+        <p>${escapeHtml(item.suggestedFix ?? 'No suggested fix recorded.')}</p>
+      `,
+      flags: [
+        ['Owner developer', true, true],
+        ['Production write', false, false],
+      ],
+      provenance: {},
+    }),
+    assessment.status === 'disabled'
+      ? 'Local remediation reports are off (QA_AUTONOMOUS_REMEDIATION=0).'
+      : 'No developer-owned copy, theme, or header remediations in this run.'
+  );
+}
+
+function renderAutonomousReleaseUpdate(assessment = {}) {
+  setAutonomousStatus('autonomous-qa-release-update-status', assessment.status);
+  setText('autonomous-qa-release-verdict', assessment.verdict ?? '—');
+  setText('autonomous-qa-release-changed', assessment.changedCount ?? 0);
+  setText(
+    'autonomous-qa-release-next',
+    assessment.nextAction ?? 'Review the human pack before any product release.'
+  );
+
+  const changes = Array.isArray(assessment.changed)
+    ? assessment.changed
+    : [];
+
+  renderAutonomousCollection(
+    'autonomous-qa-release-update-items',
+    changes,
+    change => autonomousCard({
+      title: change,
+      eyebrow: 'vs last history.json',
+      status: assessment.status,
+      meta: [
+        ['Previous', assessment.previousStatus ?? 'none'],
+      ],
+      body: '',
+      flags: [
+        ['Human review required', true, false],
+        ['Deploys product', false, false],
+      ],
+      provenance: {},
+    }),
+    assessment.status === 'no-baseline'
+      ? 'No prior history.json entry; this run is the baseline.'
+      : 'No release-update notes for this run.'
+  );
+}
+
 function renderAutonomousQa(run) {
   const panel = byId('autonomous-qa-panel');
 
@@ -1658,6 +1729,8 @@ function renderAutonomousQa(run) {
     renderAutonomousChangeImpact({ status: 'not-verified' });
     renderAutonomousQualityDrift({ status: 'not-verified' });
     renderAutonomousInvestigation({ status: 'not-verified' });
+    renderAutonomousRemediation({ status: 'not-verified' });
+    renderAutonomousReleaseUpdate({ status: 'not-verified' });
     return;
   }
 
@@ -1710,7 +1783,7 @@ function renderAutonomousQa(run) {
       ? 'Safety contract violation: autonomous execution was reported as enabled. This dashboard still performs no execution and requires immediate human review.'
       : (
           assessment.policySummary ??
-          'Disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes and captcha clicks stay off. Every item below is advisory and requires explicit human action.'
+          'Disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes stay off. First-party cookie/consent clicks are on. Paid captcha solver stays off unless SENTINEL_CAPTCHA_SOLVER_KEY is set. Every item below is advisory and requires explicit human action.'
         )
   );
 
@@ -1728,6 +1801,8 @@ function renderAutonomousQa(run) {
   renderAutonomousChangeImpact(assessment.changeImpact);
   renderAutonomousQualityDrift(assessment.qualityDrift);
   renderAutonomousInvestigation(assessment.investigation);
+  renderAutonomousRemediation(assessment.remediationReports);
+  renderAutonomousReleaseUpdate(assessment.releaseUpdate);
 }
 
 
@@ -7099,6 +7174,18 @@ function renderControlCenter(
   setText(
     'control-human-status',
     String(run?.humanReview?.verdict ?? 'PACK')
+  );
+
+  setText(
+    'control-remediation-status',
+    run?.remediation
+      ? `${run.remediation.itemCount ?? 0} LOCAL`
+      : 'LOCAL'
+  );
+
+  setText(
+    'control-release-status',
+    String(run?.releaseUpdate?.verdict ?? run?.humanReview?.verdict ?? 'REVIEW')
   );
 
   setText(
