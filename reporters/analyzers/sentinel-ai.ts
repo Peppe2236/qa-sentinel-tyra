@@ -888,8 +888,52 @@ export class SentinelAI {
       [];
 
     parts.push(
-      `${run.passed} of ${run.totalTests} tests passed with a health score of ${run.health}%.`
+      `${run.passed} of ${run.totalTests} tests passed (test pass rate ${run.health}%). This is not a release GO by itself.`
     );
+
+    const release =
+      run.releaseAssessment;
+
+    if (
+      release?.status
+    ) {
+      parts.push(
+        `Canonical release state is ${String(
+          release.status
+        ).replaceAll('-', ' ')} with ${String(
+          release.risk ?? 'unknown'
+        )} risk.`
+      );
+    }
+
+    const discoveryCount =
+      run.discoveryIssues?.length ??
+      0;
+
+    if (
+      discoveryCount > 0
+    ) {
+      parts.push(
+        `${discoveryCount} discovery finding${
+          discoveryCount === 1
+            ? ''
+            : 's'
+        } remain for review.`
+      );
+    }
+
+    const gaps =
+      run.unifiedDecisionAssessment
+        ?.verificationGapDimensions ??
+      [];
+
+    if (
+      gaps.length > 0
+    ) {
+      parts.push(
+        `Verification is incomplete for: ${gaps.join(', ')}.`
+      );
+    }
 
     if (
       counts.productBugs > 0

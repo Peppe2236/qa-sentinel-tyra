@@ -17,6 +17,10 @@ import type {
   SecurityPerformanceConfig,
 } from '../utils/security-performance-config';
 
+import {
+  isAnalyticsOrTelemetryIssue,
+} from '../utils/signal-classification';
+
 
 type UnifiedSecurityPerformanceIssue = {
   source?:
@@ -217,9 +221,42 @@ export function securityAreasForIssue(
       issue
     );
 
+  const analyticsTelemetry =
+    isAnalyticsOrTelemetryIssue(
+      issue
+    ) ||
+    category ===
+      'analytics';
+
 
   const areas:
     SecurityArea[] = [];
+
+
+  if (
+    analyticsTelemetry
+  ) {
+    return [
+      'content-security-policy',
+    ];
+  }
+
+
+  if (
+    category ===
+      'network' &&
+    !text.includes(
+      'tls'
+    ) &&
+    !text.includes(
+      'certificate'
+    ) &&
+    !text.includes(
+      'mixed content'
+    )
+  ) {
+    return [];
+  }
 
 
   if (
@@ -337,10 +374,19 @@ export function securityAreasForIssue(
       'tls'
     ) ||
     text.includes(
-      'https'
+      'ssl certificate'
     ) ||
     text.includes(
-      'transport'
+      'mixed content'
+    ) ||
+    text.includes(
+      'strict-transport-security'
+    ) ||
+    /\bhsts\b/.test(
+      text
+    ) ||
+    text.includes(
+      'insecure http'
     )
   ) {
     areas.push(
@@ -351,13 +397,16 @@ export function securityAreasForIssue(
 
   if (
     text.includes(
-      'dependency'
+      'dependency vulnerability'
     ) ||
     text.includes(
-      'third-party'
+      'npm audit'
     ) ||
-    text.includes(
-      'third party'
+    (
+      text.includes(
+        'supply chain'
+      ) &&
+      !analyticsTelemetry
     )
   ) {
     areas.push(
@@ -723,13 +772,45 @@ function analyzeSecurity(
           }
 
 
+          let areaStatus =
+            statusFromSeverity(
+              areaIssues
+            );
+
+          if (
+            area ===
+              'content-security-policy' &&
+            areaIssues.length >
+              0 &&
+            areaIssues.every(
+              issue =>
+                isAnalyticsOrTelemetryIssue(
+                  issue
+                ) ||
+                String(
+                  issue.category ??
+                  ''
+                ).toLowerCase() ===
+                  'analytics'
+            )
+          ) {
+            if (
+              areaStatus ===
+                'critical' ||
+              areaStatus ===
+                'poor'
+            ) {
+              areaStatus =
+                'degraded';
+            }
+          }
+
+
           return {
             area,
 
             status:
-              statusFromSeverity(
-                areaIssues
-              ),
+              areaStatus,
 
             evidenceCount,
 
@@ -835,11 +916,17 @@ function analyzeSecurity(
       area =>
         area.status ===
           'degraded'
-    ) ||
-    unverifiedAreas.length > 0
+    )
   ) {
     status =
       'degraded';
+  }
+
+  else if (
+    unverifiedAreas.length > 0
+  ) {
+    status =
+      'not-verified';
   }
 
   else {
@@ -1208,11 +1295,17 @@ function analyzePerformance(
       area =>
         area.status ===
           'degraded'
-    ) ||
-    unverifiedAreas.length > 0
+    )
   ) {
     status =
       'degraded';
+  }
+
+  else if (
+    unverifiedAreas.length > 0
+  ) {
+    status =
+      'not-verified';
   }
 
   else {

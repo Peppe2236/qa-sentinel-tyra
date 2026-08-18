@@ -148,12 +148,32 @@ function classificationCounts(tests = []) {
   return counts;
 }
 
-function qualityLabel(health) {
+function qualityLabel(health, release) {
+  const status = String(release?.status ?? '');
+
+  if (status === 'not-ready') {
+    return 'Release blocked';
+  }
+
+  if (status === 'not-verified') {
+    return 'Not fully verified';
+  }
+
+  if (status === 'ready-with-warnings') {
+    return health >= 90
+      ? 'Tests passed — warnings remain'
+      : 'Needs attention';
+  }
+
   if (health >= 95) return 'Excellent';
   if (health >= 90) return 'Very good';
   if (health >= 80) return 'Good';
   if (health >= 70) return 'Needs attention';
   return 'Needs work';
+}
+
+function notMeasuredCopy() {
+  return 'Not measured this run. This is a coverage gap, not a failed check.';
 }
 
 function renderMetadata(run) {
@@ -191,6 +211,7 @@ function renderReleaseAssessment(run) {
     ready: 'READY FOR RELEASE',
     'ready-with-warnings': 'READY WITH WARNINGS',
     'not-ready': 'DO NOT RELEASE',
+    'not-verified': 'RELEASE NOT VERIFIED',
   };
 
   const releaseCard = byId('release-card');
@@ -663,7 +684,10 @@ function renderMetrics(run) {
 
   setText(
     'health-label',
-    qualityLabel(health)
+    qualityLabel(
+      health,
+      run?.releaseAssessment
+    )
   );
 
   setText(
@@ -736,13 +760,31 @@ function renderMetrics(run) {
     byId('run-status');
 
   if (statusElement) {
+    const releaseStatus =
+      String(
+        run?.releaseAssessment?.status ??
+        ''
+      );
+
     statusElement.textContent =
-      status.toUpperCase();
+      status === 'passed'
+        ? (
+            releaseStatus === 'ready'
+              ? 'TESTS PASSED'
+              : 'TESTS PASSED'
+          )
+        : status.toUpperCase();
 
     statusElement.style.color =
-      status === 'passed'
-        ? 'var(--good)'
-        : 'var(--bad)';
+      status === 'passed' &&
+      (
+        releaseStatus === 'ready-with-warnings' ||
+        releaseStatus === 'not-verified'
+      )
+        ? 'var(--warning, #f3c760)'
+        : status === 'passed'
+          ? 'var(--good)'
+          : 'var(--bad)';
   }
 }
 
@@ -1883,9 +1925,11 @@ function renderUxUi(run) {
 
   setText(
     'ux-ui-score',
-    Number.isFinite(score)
-      ? `${Math.round(score)}%`
-      : '—'
+    status === 'not-verified'
+      ? 'Not measured'
+      : Number.isFinite(score)
+        ? `${Math.round(score)}%`
+        : '—'
   );
 
 
@@ -1971,8 +2015,12 @@ function renderUxUi(run) {
                 areaId
             );
 
+          const areaStatus =
+            safeStatus(
+              area?.status
+            );
 
-          if (!area) {
+          if (!area || areaStatus === 'not-verified') {
             return `
               <article
                 class="ux-ui-area-card"
@@ -1986,23 +2034,16 @@ function renderUxUi(run) {
                   </strong>
 
                   <span>
-                    NOT VERIFIED
+                    NOT MEASURED
                   </span>
                 </div>
 
                 <p>
-                  No assessment was generated
-                  for this quality area.
+                  ${escapeHtml(notMeasuredCopy())}
                 </p>
               </article>
             `;
           }
-
-
-          const areaStatus =
-            safeStatus(
-              area.status
-            );
 
 
           const areaScore =
@@ -2638,7 +2679,11 @@ function renderSecurityPerformance(run) {
               );
 
 
-            if (!area) {
+            if (
+              !area ||
+              safeStatus(area.status) ===
+                'not-verified'
+            ) {
               return `
                 <article
                   class="sp-area-card"
@@ -2655,13 +2700,13 @@ function renderSecurityPerformance(run) {
                     </strong>
 
                     <span>
-                      NOT VERIFIED
+                      NOT MEASURED
                     </span>
 
                   </div>
 
                   <p>
-                    No assessment generated.
+                    ${escapeHtml(notMeasuredCopy())}
                   </p>
                 </article>
               `;
@@ -2794,7 +2839,11 @@ function renderSecurityPerformance(run) {
               );
 
 
-            if (!area) {
+            if (
+              !area ||
+              safeStatus(area.status) ===
+                'not-verified'
+            ) {
               return `
                 <article
                   class="sp-area-card"
@@ -2811,13 +2860,13 @@ function renderSecurityPerformance(run) {
                     </strong>
 
                     <span>
-                      NOT VERIFIED
+                      NOT MEASURED
                     </span>
 
                   </div>
 
                   <p>
-                    No assessment generated.
+                    ${escapeHtml(notMeasuredCopy())}
                   </p>
                 </article>
               `;
@@ -3291,13 +3340,17 @@ function renderCompatibility(run) {
 
   setText(
     'compatibility-status',
-    STATUS_LABELS[status]
+    status === 'not-verified'
+      ? 'NOT MEASURED THIS RUN'
+      : STATUS_LABELS[status]
   );
 
 
   setText(
     'compatibility-overall-status',
-    STATUS_LABELS[status]
+    status === 'not-verified'
+      ? 'NOT MEASURED'
+      : STATUS_LABELS[status]
   );
 
 
@@ -5581,9 +5634,22 @@ function renderExecutiveSummary(run) {
   const assessment = run.releaseAssessment;
   const parts = [];
 
-  parts.push(
-    `${run.passed ?? 0} of ${run.totalTests ?? 0} tests passed.`
-  );
+    parts.push(
+      `${run.passed ?? 0} of ${run.totalTests ?? 0} tests passed.`
+    );
+
+    const discoveryCount =
+      Array.isArray(run.discoveryIssues)
+        ? run.discoveryIssues.length
+        : 0;
+
+    if (discoveryCount > 0) {
+      parts.push(
+        `${discoveryCount} discovery finding${
+          discoveryCount === 1 ? '' : 's'
+        } still need review.`
+      );
+    }
 
   if ((counts.productBugs ?? 0) > 0) {
     parts.push(
@@ -6833,7 +6899,12 @@ function renderControlCenter(
   setText(
     'control-playwright-status',
     failed === 0
-      ? 'ALL PASSED'
+      ? (
+          String(assessment.status ?? '') ===
+            'ready'
+            ? 'ALL PASSED'
+            : 'TESTS PASSED'
+        )
       : `${failed} FAILURE${
           failed === 1 ? '' : 'S'
         }`

@@ -60,6 +60,7 @@ import {
   loadApiBackendEvidence,
   loadDiscoveryIssues,
   loadSmartScanDiscoveryIssues,
+  refineDiscoveryIssues,
 } from './utils/discovery-issues';
 
 import type {
@@ -1376,20 +1377,21 @@ const smartScanSites = [
   ),
 ];
 
-const discoveryIssues = [
-  ...(
-    hasDeepDiscoveryRun
-      ? loadDiscoveryIssues()
-      : []
-  ),
-  ...(
-    smartScanSites.length > 0
-      ? loadSmartScanDiscoveryIssues(
-          smartScanSites
-        )
-      : []
-  ),
-];
+const discoveryIssues =
+  refineDiscoveryIssues([
+    ...(
+      hasDeepDiscoveryRun
+        ? loadDiscoveryIssues()
+        : []
+    ),
+    ...(
+      smartScanSites.length > 0
+        ? loadSmartScanDiscoveryIssues(
+            smartScanSites
+          )
+        : []
+    ),
+  ]);
 
 const apiBackendEvidence =
   hasDeepDiscoveryRun

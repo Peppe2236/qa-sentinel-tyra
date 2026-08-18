@@ -17,6 +17,10 @@ import {
   buildDiagnosis,
 } from './sentinel-diagnostics';
 
+import {
+  classifyFailedNetworkSignal,
+} from '../utils/signal-classification';
+
 import type {
   ApiBackendEvidence,
 } from '../models/types';
@@ -1127,6 +1131,43 @@ function analyzeObservation(
     continue;
   }
 
+  const classified =
+    classifyFailedNetworkSignal({
+      url:
+        request.url,
+      error:
+        request.failure,
+      method:
+        request.method,
+      pageUrl:
+        observation.url,
+      pageRoute:
+        route,
+    });
+
+  if (
+    classified.action ===
+      'ignore' ||
+    classified.severity ===
+      'info'
+  ) {
+    continue;
+  }
+
+  const discoveryCategory:
+    DiscoveryCategory =
+      classified.category ===
+        'network' ||
+      classified.category ===
+        'asset' ||
+      classified.category ===
+        'security'
+        ? classified.category
+        : classified.kind ===
+            'analytics-csp'
+          ? 'security'
+          : 'network';
+
   findings.push(
     createFinding({
       site:
@@ -1138,30 +1179,39 @@ function analyzeObservation(
       route,
 
       category:
-        'network',
+        discoveryCategory,
 
       severity:
-        'high',
+        classified.severity as DiscoverySeverity,
 
       title:
-        'Network request failed',
+        classified.title,
 
       description:
+        classified.annotation ||
         `${request.method ?? 'GET'} request failed.`,
 
       evidence:
         [
           request.url,
           request.failure,
+          classified.annotation,
         ]
           .filter(Boolean)
           .join(' — '),
 
       userImpact:
-        'Content or functionality depending on this request may be unavailable.',
+        classified.userImpact
+          ? 'Content or functionality depending on this request may be unavailable.'
+          : classified.annotation ||
+            'Primary functionality may continue working.',
 
       recommendation:
-        'Inspect the request failure, endpoint availability, CORS configuration and client-side error handling.',
+        classified.kind ===
+          'product-network'
+          ? 'Inspect the request failure, endpoint availability, CORS configuration and client-side error handling.'
+          : classified.annotation ||
+            'Review whether this discovery signal is expected.',
 
       discoveredAt,
     })

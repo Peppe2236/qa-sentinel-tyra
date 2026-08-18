@@ -117,6 +117,8 @@ The latest full configured Playwright matrix was manually executed on **2026-08-
 | Compatibility release gaps | 0 |
 | Remaining verification gaps | UX/UI, security and performance |
 
+Positive API/backend evidence is **verified first-party responses**, not a vulnerability count. The live dashboard always follows `dashboard/data/latest-run.json` from the latest Playwright run. This table is a dated snapshot, not a permanent GO.
+
 This is a dated validation snapshot, not a permanent guarantee of current application health. Compatibility remained `degraded` because real failures were retained even though configured matrix coverage was complete.
 
 ---

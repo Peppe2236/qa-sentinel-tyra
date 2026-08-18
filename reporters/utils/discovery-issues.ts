@@ -5,8 +5,14 @@ import path from 'node:path';
 import type {
   ApiBackendEvidence,
   DiscoveryEvidenceOrigin,
+  IssueClassification,
   QualityDimension,
 } from '../models/types';
+
+import {
+  classifyFailedNetworkSignal,
+  isAnalyticsOrTelemetryIssue,
+} from './signal-classification';
 
 import {
   qualityDimensionsForCategory,
@@ -46,6 +52,13 @@ export interface DashboardDiscoveryIssue {
   userImpact: string;
   recommendation: string;
 
+  classification?:
+    IssueClassification;
+
+  annotation?: string;
+
+  requestedUrl?: string;
+
   priorityScore: number;
   priority: DiscoveryPriority;
 
@@ -84,6 +97,7 @@ interface SmartScanFinding {
   category?: string;
   code?: string;
   title?: string;
+  message?: string;
   userImpact?: boolean;
 }
 
@@ -361,12 +375,51 @@ function readSmartScanFile(
         const title =
           finding.title ??
           'Smart Scan finding';
+        const classified =
+          classifyFailedNetworkSignal({
+            code,
+            category:
+              finding.category,
+            title,
+            message:
+              finding.message,
+            url:
+              safeUrl ??
+              route,
+            pageUrl:
+              safeUrl ??
+              undefined,
+            pageRoute:
+              route,
+            pageStatus:
+              page.status,
+            evidence:
+              finding.message ??
+              `${code} at ${safeUrl ?? route}`,
+          });
+
+        if (
+          classified.action ===
+            'ignore' ||
+          classified.severity ===
+            'info'
+        ) {
+          continue;
+        }
+
         const key = [
           'smart-scan',
           expectedSite,
-          code,
-          rawSeverity,
-          title,
+          classified.kind,
+          classified.category,
+          classified.kind ===
+            'product-network'
+            ? (
+                classified.requestedUrl ??
+                code
+              )
+            : code,
+          classified.title,
         ].join('|');
         const fingerprint =
           smartScanFingerprint(key);
@@ -388,9 +441,6 @@ function readSmartScanFile(
           continue;
         }
 
-        const userImpacting =
-          finding.userImpact === true;
-
         issues.set(
           fingerprint,
           {
@@ -400,38 +450,71 @@ function readSmartScanFile(
               expectedSite,
             route,
             category:
-              finding.category ??
+              classified.category ||
+              finding.category ||
               'other',
             severity:
-              smartScanSeverity(
-                rawSeverity
-              ),
+              classified.severity,
+            classification:
+              classified.classification,
+            annotation:
+              classified.annotation,
+            requestedUrl:
+              classified.requestedUrl,
             qualityDimensions:
               qualityDimensionsForCategory(
-                finding.category ??
+                classified.category ||
+                finding.category ||
                 'other'
               ),
-            title,
+            title:
+              classified.title ||
+              title,
             description:
+              classified.annotation ||
               `${title} was recorded by Smart Scan.`,
             evidence:
+              finding.message ??
               `${code} at ${safeUrl ?? route}`,
             userImpact:
-              userImpacting
-                ? 'The finding may affect a user-visible route or interaction.'
-                : 'No direct user impact is confirmed; human review is still required.',
+              classified.userImpact
+                ? classified.annotation ||
+                  'The finding may affect a user-visible route or interaction.'
+                : classified.annotation ||
+                  'No direct user impact is confirmed; human review is still required.',
             recommendation:
-              userImpacting
-                ? 'Inspect and resolve the Smart Scan finding, then rerun the scan and affected route tests.'
-                : 'Review whether the warning is expected, document the decision and rerun Smart Scan after changes.',
+              classified.kind ===
+                'analytics-csp'
+                ? 'Align Content Security Policy connect-src/script-src with the analytics domains actually used, or remove the unused integration. This is not a product-flow failure.'
+                : classified.kind ===
+                    'product-network'
+                  ? 'Inspect the failed request URL, status and the page route below, then rerun the scan and affected route tests.'
+                  : 'Review whether the warning is expected, document the decision and rerun Smart Scan after changes.',
             priorityScore:
-              smartScanPriorityScore(
-                rawSeverity
-              ),
+              classified.severity ===
+                'high' ||
+              classified.severity ===
+                'critical'
+                ? smartScanPriorityScore(
+                    'error'
+                  )
+                : classified.severity ===
+                    'medium'
+                  ? smartScanPriorityScore(
+                      'warning'
+                    )
+                  : 30,
             priority:
-              smartScanPriority(
-                rawSeverity
-              ),
+              classified.severity ===
+                'critical'
+                ? 'P0'
+                : classified.severity ===
+                    'high'
+                  ? 'P1'
+                  : classified.severity ===
+                      'medium'
+                    ? 'P3'
+                    : 'P4',
             occurrences:
               1,
             affectedRoutes:
@@ -615,6 +698,203 @@ function readApiBackendEvidence(
   } catch {
     return [];
   }
+}
+
+
+function telemetryFamily(
+  issue: DashboardDiscoveryIssue
+): string | null {
+  if (
+    !isAnalyticsOrTelemetryIssue(
+      issue
+    ) &&
+    issue.category !==
+      'analytics'
+  ) {
+    return null;
+  }
+
+  const text =
+    `${issue.title} ${issue.evidence ?? ''}`.toLowerCase();
+
+  if (
+    text.includes(
+      'clarity'
+    )
+  ) {
+    return 'clarity';
+  }
+
+  if (
+    text.includes(
+      'google'
+    ) ||
+    text.includes(
+      'analytics'
+    )
+  ) {
+    return 'ga';
+  }
+
+  return 'telemetry';
+}
+
+
+export function refineDiscoveryIssues(
+  issues: DashboardDiscoveryIssue[]
+): DashboardDiscoveryIssue[] {
+  const kept:
+    DashboardDiscoveryIssue[] =
+      [];
+
+  for (
+    const issue of
+    issues
+  ) {
+    const classified =
+      classifyFailedNetworkSignal({
+        title:
+          issue.title,
+        category:
+          issue.category,
+        evidence:
+          issue.evidence,
+        message:
+          issue.evidence,
+        url:
+          issue.requestedUrl ??
+          issue.route,
+        pageRoute:
+          issue.route,
+      });
+
+    if (
+      classified.action ===
+        'ignore' ||
+      classified.severity ===
+        'info'
+    ) {
+      continue;
+    }
+
+    kept.push({
+      ...issue,
+      category:
+        classified.category ||
+        issue.category,
+      severity:
+        classified.severity,
+      classification:
+        classified.classification,
+      annotation:
+        classified.annotation ??
+        issue.annotation,
+      requestedUrl:
+        classified.requestedUrl ??
+        issue.requestedUrl,
+      qualityDimensions:
+        qualityDimensionsForCategory(
+          classified.category ||
+          issue.category
+        ),
+      description:
+        issue.description,
+      userImpact:
+        classified.userImpact
+          ? issue.userImpact
+          : classified.annotation ||
+            issue.userImpact,
+      recommendation:
+        classified.kind ===
+          'analytics-csp'
+          ? 'Align Content Security Policy with the analytics/telemetry domains actually used, or remove the unused integration. This does not mean the product flow is broken.'
+          : issue.recommendation,
+    });
+  }
+
+  const collapsed =
+    new Map<
+      string,
+      DashboardDiscoveryIssue
+    >();
+
+  for (
+    const issue of
+    kept
+  ) {
+    const family =
+      telemetryFamily(
+        issue
+      );
+
+    if (!family) {
+      collapsed.set(
+        `unique:${issue.fingerprint}`,
+        issue
+      );
+      continue;
+    }
+
+    const key =
+      `telemetry:${issue.site}:${family}`;
+    const existing =
+      collapsed.get(
+        key
+      );
+
+    if (!existing) {
+      collapsed.set(
+        key,
+        {
+          ...issue,
+          fingerprint:
+            smartScanFingerprint(
+              key
+            ),
+        }
+      );
+      continue;
+    }
+
+    const longerEvidence =
+      String(
+        issue.evidence ??
+        ''
+      ).length >
+      String(
+        existing.evidence ??
+        ''
+      ).length
+        ? issue
+        : existing;
+
+    collapsed.set(
+      key,
+      {
+        ...longerEvidence,
+        fingerprint:
+          existing.fingerprint,
+        occurrences:
+          existing.occurrences +
+          issue.occurrences,
+        affectedRoutes:
+          [
+            ...new Set([
+              ...existing.affectedRoutes,
+              ...issue.affectedRoutes,
+            ]),
+          ],
+      }
+    );
+  }
+
+  return [
+    ...collapsed.values(),
+  ].sort(
+    (a, b) =>
+      b.priorityScore -
+      a.priorityScore
+  );
 }
 
 

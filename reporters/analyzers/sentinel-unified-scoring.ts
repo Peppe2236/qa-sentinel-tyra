@@ -471,14 +471,6 @@ function issueEvidenceState(
     DecisionIssue
 ): UnifiedDecisionUnit['evidenceState'] {
 
-  if (
-    issue.source !==
-      'test'
-  ) {
-    return 'confirmed';
-  }
-
-
   const classification =
     normalizedClassification(
       issue
@@ -498,6 +490,22 @@ function issueEvidenceState(
       'needs-investigation' ||
     classification ===
       'warning' ||
+    classification ===
+      'none'
+  ) {
+    return 'uncertain';
+  }
+
+
+  if (
+    issue.source !==
+      'test'
+  ) {
+    return 'confirmed';
+  }
+
+
+  if (
     classification.length === 0
   ) {
     return 'uncertain';
@@ -1462,6 +1470,27 @@ export function analyzeUnifiedDecisioning(
     number | null;
 
 
+  const materialRiskUnits =
+    riskEligibleUnits.filter(
+      unit =>
+        unit.priority === 'P0' ||
+        unit.priority === 'P1' ||
+        unit.severity === 'critical' ||
+        unit.severity === 'high'
+    );
+
+
+  const materialRiskScore =
+    materialRiskUnits.length > 0
+      ? Math.max(
+          ...materialRiskUnits.map(
+            unit =>
+              unit.priorityScore
+          )
+        )
+      : null;
+
+
   if (
     !gates.complete
   ) {
@@ -1487,13 +1516,13 @@ export function analyzeUnifiedDecisioning(
   }
 
   else if (
-    unitRiskScore !== null
+    materialRiskScore !== null
   ) {
     scoreBasis =
       'decision-units';
 
     riskScore =
-      unitRiskScore;
+      materialRiskScore;
   }
 
   else if (
@@ -1508,6 +1537,16 @@ export function analyzeUnifiedDecisioning(
 
     riskScore =
       null;
+  }
+
+  else if (
+    unitRiskScore !== null
+  ) {
+    scoreBasis =
+      'decision-units';
+
+    riskScore =
+      unitRiskScore;
   }
 
   else {
@@ -1616,9 +1655,16 @@ export function analyzeUnifiedDecisioning(
     qualityScore,
 
     confidence:
-      evidenceConfidence(
-        decisionUnits
-      ),
+      gapDimensions.length > 0
+        ? Math.min(
+            evidenceConfidence(
+              decisionUnits
+            ) ?? 70,
+            72
+          )
+        : evidenceConfidence(
+            decisionUnits
+          ),
 
     highestPriority:
       highestPriority(

@@ -163,6 +163,26 @@ function classifyConsoleMessage(message) {
   };
 }
 
+function isMediaUrl(url) {
+  try {
+    return /\.(mp4|webm|mov|m4v|mkv|mp3|ogg|wav|m3u8)(?:$|[/?#])/i.test(
+      new URL(url).pathname
+    );
+  } catch {
+    return /\.(mp4|webm|mov|m4v|mkv|mp3|ogg|wav|m3u8)(?:$|[/?#])/i.test(
+      String(url)
+    );
+  }
+}
+
+function isCheckoutConfirm(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().includes('/checkout/confirm');
+  } catch {
+    return String(url).toLowerCase().includes('/checkout/confirm');
+  }
+}
+
 function classifyFailedRequest(request) {
   const url = request.url;
   const error = String(request.error ?? '').toLowerCase();
@@ -190,6 +210,37 @@ function classifyFailedRequest(request) {
       category: 'framework',
       code: 'NEXT_RSC_ABORTED',
       title: 'Expected Next.js prefetch cancellation',
+      message: `${request.method} ${url} - ${request.error}`,
+      userImpact: false,
+    };
+  }
+
+  if (
+    error.includes('err_aborted') &&
+    isMediaUrl(url)
+  ) {
+    return {
+      severity: 'info',
+      category: 'asset',
+      code: 'MEDIA_ABORTED',
+      title: 'Aborted media request during discovery',
+      message: `${request.method} ${url} - ${request.error}`,
+      userImpact: false,
+    };
+  }
+
+  if (
+    isCheckoutConfirm(url) &&
+    (
+      error.includes('err_aborted') ||
+      error.includes('404')
+    )
+  ) {
+    return {
+      severity: 'warning',
+      category: 'network',
+      code: 'CHECKOUT_CONFIRM_DISCOVERY_NOISE',
+      title: '/checkout/confirm request aborted or missing during discovery',
       message: `${request.method} ${url} - ${request.error}`,
       userImpact: false,
     };

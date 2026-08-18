@@ -478,7 +478,7 @@
     <section class="hero-grid">
       <article class="health-card card">
         <span class="label">
-          Quality score
+          Test pass rate
         </span>
 
         <div class="health-wrap">
@@ -506,8 +506,8 @@
               Calculating…
             </p>
 
-            <p class="muted">
-              Weighted by test results and issue classification.
+            <p class="muted" id="health-constraint">
+              Test outcomes only. Release readiness is the card above and can warn even when every test passed.
             </p>
           </div>
         </div>
@@ -2851,7 +2851,7 @@
           <div>
 
             <span class="unified-decision-eyebrow">
-              SHADOW DECISION ENGINE
+              CANONICAL DECISION ENGINE
             </span>
 
             <h2>
@@ -2859,8 +2859,8 @@
             </h2>
 
             <p class="unified-decision-subtitle">
-              Compares the existing official release decision
-              with deduplicated incident-based decisioning.
+              Canonical schema-v5 release authority. One run
+              produces one decision, constrained by verification gaps.
             </p>
 
           </div>
@@ -2870,7 +2870,7 @@
             id="unified-decision-mode"
             class="unified-decision-mode"
           >
-            SHADOW MODE
+            CANONICAL · UNIFIED v5
           </span>
 
         </div>

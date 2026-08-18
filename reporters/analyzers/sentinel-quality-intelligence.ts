@@ -134,6 +134,8 @@ export function qualityDimensionsForCategory(
 
     case 'security':
     case 'performance':
+    case 'analytics':
+    case 'security-policy':
       return [
         'security-performance',
       ];
