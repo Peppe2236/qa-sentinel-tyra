@@ -3,6 +3,7 @@ import type {
   IntelligenceSource,
   ReleaseAssessment,
   RequirementCoverage,
+  RequirementCriterionCoverage,
   RequirementDefinition,
   RequirementEvidence,
   RequirementStatus,
@@ -133,37 +134,13 @@ export function buildRequirementEvidenceFromTests(
 }
 
 
-function validateEvidenceReferences(
+function catalogCriterionIds(
   requirements:
-    RequirementDefinition[],
-
-  evidence:
-    RequirementEvidence[]
-): void {
-  const requirementMap =
-    new Map(
-      requirements.map(
-        requirement => [
-          requirement.id,
-          requirement,
-        ]
-      )
-    );
-
-  for (const item of evidence) {
-    const requirement =
-      requirementMap.get(
-        item.requirementId
-      );
-
-    if (!requirement) {
-      throw new Error(
-        `Requirement evidence references unknown requirement: ${item.requirementId}`
-      );
-    }
-
-    const criteria =
-      new Set(
+    RequirementDefinition[]
+): Set<string> {
+  return new Set(
+    requirements.flatMap(
+      requirement =>
         (
           requirement
             .acceptanceCriteria ??
@@ -172,24 +149,50 @@ function validateEvidenceReferences(
           criterion =>
             criterion.id
         )
-      );
+    )
+  );
+}
 
-    for (
-      const criterionId
-      of item.acceptanceCriteriaIds ??
-      []
-    ) {
-      if (
-        !criteria.has(
-          criterionId
+
+function unknownAcceptanceCriteriaForRequirement(
+  requirement:
+    RequirementDefinition,
+
+  relatedEvidence:
+    RequirementEvidence[],
+
+  knownCriterionIds:
+    Set<string>
+): string[] {
+  const ownedIds =
+    new Set(
+      (
+        requirement
+          .acceptanceCriteria ??
+        []
+      ).map(
+        criterion =>
+          criterion.id
+      )
+    );
+
+  return unique(
+    relatedEvidence.flatMap(
+      item =>
+        (
+          item.acceptanceCriteriaIds ??
+          []
+        ).filter(
+          criterionId =>
+            !ownedIds.has(
+              criterionId
+            ) &&
+            !knownCriterionIds.has(
+              criterionId
+            )
         )
-      ) {
-        throw new Error(
-          `Requirement evidence references unknown acceptance criterion ${criterionId} for ${requirement.id}`
-        );
-      }
-    }
-  }
+    )
+  );
 }
 
 
@@ -227,6 +230,60 @@ function statusFromEvidence(
 }
 
 
+function criterionCoverageFromEvidence(
+  criterionId: string,
+
+  title: string,
+
+  critical: boolean,
+
+  relatedEvidence:
+    RequirementEvidence[]
+): RequirementCriterionCoverage {
+  const criterionEvidence =
+    relatedEvidence.filter(
+      item =>
+        (
+          item
+            .acceptanceCriteriaIds ??
+          []
+        ).includes(
+          criterionId
+        )
+    );
+
+  return {
+    criterionId,
+
+    title,
+
+    critical,
+
+    status:
+      statusFromEvidence(
+        criterionEvidence
+      ),
+
+    evidenceCount:
+      criterionEvidence.length,
+
+    passedEvidenceCount:
+      criterionEvidence.filter(
+        item =>
+          item.status ===
+          'passed'
+      ).length,
+
+    failedEvidenceCount:
+      criterionEvidence.filter(
+        item =>
+          item.status ===
+          'failed'
+      ).length,
+  };
+}
+
+
 export function analyzeRequirementCoverage(
   requirements:
     RequirementDefinition[],
@@ -234,10 +291,10 @@ export function analyzeRequirementCoverage(
   evidence:
     RequirementEvidence[]
 ): RequirementCoverage[] {
-  validateEvidenceReferences(
-    requirements,
-    evidence
-  );
+  const knownCriterionIds =
+    catalogCriterionIds(
+      requirements
+    );
 
   return requirements.map(
     requirement => {
@@ -248,62 +305,55 @@ export function analyzeRequirementCoverage(
             requirement.id
         );
 
-      const criteria =
+      const definedCriteria =
         (
           requirement
             .acceptanceCriteria ??
           []
         ).map(
-          criterion => {
-            const criterionEvidence =
-              relatedEvidence.filter(
-                item =>
-                  (
-                    item
-                      .acceptanceCriteriaIds ??
-                    []
-                  ).includes(
-                    criterion.id
-                  )
+          criterion =>
+            criterionCoverageFromEvidence(
+              criterion.id,
+              criterion.title,
+              criterion.critical ??
+                false,
+              relatedEvidence
+            )
+        );
+
+      const unknownCriterionIds =
+        unknownAcceptanceCriteriaForRequirement(
+          requirement,
+          relatedEvidence,
+          knownCriterionIds
+        );
+
+      const criteria = [
+        ...definedCriteria,
+        ...unknownCriterionIds.map(
+          criterionId => {
+            const coverage =
+              criterionCoverageFromEvidence(
+                criterionId,
+                'Evidence references this acceptance criterion, but it is not defined in the requirements catalog.',
+                false,
+                relatedEvidence
               );
 
-            const status =
-              statusFromEvidence(
-                criterionEvidence
-              );
+            const status:
+              RequirementStatus =
+              coverage.status ===
+              'fail'
+                ? 'fail'
+                : 'partially-verified';
 
             return {
-              criterionId:
-                criterion.id,
-
-              title:
-                criterion.title,
-
-              critical:
-                criterion.critical ??
-                false,
-
+              ...coverage,
               status,
-
-              evidenceCount:
-                criterionEvidence.length,
-
-              passedEvidenceCount:
-                criterionEvidence.filter(
-                  item =>
-                    item.status ===
-                    'passed'
-                ).length,
-
-              failedEvidenceCount:
-                criterionEvidence.filter(
-                  item =>
-                    item.status ===
-                    'failed'
-                ).length,
             };
           }
-        );
+        ),
+      ];
 
       let status:
         RequirementStatus;
@@ -336,7 +386,7 @@ export function analyzeRequirementCoverage(
       }
 
       else if (
-        criteria.length === 0
+        definedCriteria.length === 0
       ) {
         status =
           'partially-verified';
@@ -346,7 +396,7 @@ export function analyzeRequirementCoverage(
       }
 
       else if (
-        criteria.some(
+        definedCriteria.some(
           criterion =>
             criterion.status ===
             'fail'
@@ -360,11 +410,12 @@ export function analyzeRequirementCoverage(
       }
 
       else if (
-        criteria.every(
+        definedCriteria.every(
           criterion =>
             criterion.status ===
             'pass'
-        )
+        ) &&
+        unknownCriterionIds.length === 0
       ) {
         status =
           'pass';
@@ -379,6 +430,29 @@ export function analyzeRequirementCoverage(
 
         reason =
           'Some acceptance criteria are verified, but coverage is incomplete.';
+      }
+
+      if (
+        unknownCriterionIds.length > 0
+      ) {
+        const unknownReason =
+          `Evidence references unknown acceptance criterion ${unknownCriterionIds.join(', ')}.`;
+
+        if (
+          status ===
+          'pass'
+        ) {
+          status =
+            'partially-verified';
+
+          reason =
+            unknownReason;
+        }
+
+        else {
+          reason =
+            `${reason} ${unknownReason}`;
+        }
       }
 
       const coveredBySources =

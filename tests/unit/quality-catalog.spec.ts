@@ -124,6 +124,103 @@ test.describe('requirements catalog', () => {
     );
   });
 
+  test('unknown acceptance criteria do not crash coverage analysis', () => {
+    const requirements = loadRequirements().filter(
+      requirement => requirement.id === 'REQ-NATION-AUTH-002'
+    );
+    const evidence = buildRequirementEvidenceFromTests([
+      sampleTest({
+        id: 'reset-form-unknown-ac',
+        requirementIds: ['REQ-NATION-AUTH-002'],
+        acceptanceCriteriaIds: [
+          'AC-NATION-AUTH-002-EMAIL',
+          'AC-NATION-AUTH-002-SUBMIT',
+          'AC-DOES-NOT-EXIST',
+        ],
+        status: 'passed',
+      }),
+    ]);
+
+    expect(() => analyzeRequirementCoverage(requirements, evidence)).not.toThrow();
+
+    const coverage = analyzeRequirementCoverage(requirements, evidence);
+
+    expect(coverage).toHaveLength(1);
+    expect(coverage[0].status).toBe('partially-verified');
+    expect(coverage[0].reason).toMatch(
+      /unknown acceptance criterion AC-DOES-NOT-EXIST/i
+    );
+    expect(
+      coverage[0].criteria.some(
+        criterion => criterion.criterionId === 'AC-DOES-NOT-EXIST'
+      )
+    ).toBe(true);
+  });
+
+  test('unknown requirement ids do not crash coverage analysis', () => {
+    const requirements = loadRequirements().filter(
+      requirement => requirement.id === 'REQ-NATION-AUTH-002'
+    );
+    const evidence = buildRequirementEvidenceFromTests([
+      sampleTest({
+        id: 'ghost-requirement',
+        requirementIds: ['REQ-DOES-NOT-EXIST'],
+        acceptanceCriteriaIds: ['AC-DOES-NOT-EXIST'],
+        status: 'passed',
+      }),
+    ]);
+
+    expect(() => analyzeRequirementCoverage(requirements, evidence)).not.toThrow();
+
+    const coverage = analyzeRequirementCoverage(requirements, evidence);
+
+    expect(coverage).toHaveLength(1);
+    expect(coverage[0].requirementId).toBe('REQ-NATION-AUTH-002');
+    expect(coverage[0].status).toBe('not-tested');
+  });
+
+  test('legal-links annotations map onto both home and legal catalog ids', () => {
+    const requirements = loadRequirements().filter(requirement =>
+      ['REQ-NATION-HOME-002', 'REQ-NATION-LEGAL-001'].includes(requirement.id)
+    );
+    const evidence = buildRequirementEvidenceFromTests([
+      sampleTest({
+        id: 'legal-links',
+        requirementIds: ['REQ-NATION-HOME-002', 'REQ-NATION-LEGAL-001'],
+        acceptanceCriteriaIds: [
+          'AC-NATION-HOME-002-LEGAL',
+          'AC-NATION-LEGAL-001-LINKS',
+        ],
+        status: 'passed',
+      }),
+    ]);
+
+    expect(() => analyzeRequirementCoverage(requirements, evidence)).not.toThrow();
+
+    const coverage = analyzeRequirementCoverage(requirements, evidence);
+    const home = coverage.find(
+      item => item.requirementId === 'REQ-NATION-HOME-002'
+    );
+    const legal = coverage.find(
+      item => item.requirementId === 'REQ-NATION-LEGAL-001'
+    );
+    const legalCriterion = legal?.criteria.find(
+      criterion => criterion.criterionId === 'AC-NATION-LEGAL-001-LINKS'
+    );
+    const homeLegal = home?.criteria.find(
+      criterion => criterion.criterionId === 'AC-NATION-HOME-002-LEGAL'
+    );
+
+    expect(legal?.status).toBe('pass');
+    expect(legalCriterion?.status).toBe('pass');
+    expect(homeLegal?.status).toBe('pass');
+    expect(
+      home?.criteria.some(
+        criterion => criterion.criterionId === 'AC-NATION-LEGAL-001-LINKS'
+      )
+    ).toBe(false);
+  });
+
   test('critical untested requirements make the release gate not-ready', () => {
     const coverage = analyzeRequirementCoverage(loadRequirements(), []);
     const gated = applyRequirementReleaseGate(sampleRelease(), coverage);

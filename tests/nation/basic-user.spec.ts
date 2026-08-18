@@ -87,24 +87,43 @@ test.describe('Nation.dev basic user review', () => {
     }),
     async ({ page }) => {
       const home = new NationHomePage(page);
+      // Prefer the header "Toggle theme" control, not "Toggle Sidebar".
+      // If that button exists and does not change theme, this is a product finding
+      // (default-dark site with a no-op toggle), not an automation skip.
       const button = home.themeToggle();
 
       await expect(button).toBeVisible();
       await expect(button).toBeEnabled();
+      await button.scrollIntoViewIfNeeded();
 
       const readTheme = async (): Promise<string> =>
         page.locator('body').evaluate(body => {
           const html = document.documentElement;
+          const htmlStyle = window.getComputedStyle(html);
           const bodyStyle = window.getComputedStyle(body);
+          const storageKeys = [
+            'theme',
+            'vite-ui-theme',
+            'color-mode',
+            'colorMode',
+            'nation-theme',
+          ];
 
           return JSON.stringify({
             htmlClass: html.className,
-            dataTheme: html.getAttribute('data-theme'),
+            bodyClass: body.className,
+            dataTheme:
+              html.getAttribute('data-theme') ??
+              body.getAttribute('data-theme'),
+            dataMode:
+              html.getAttribute('data-mode') ??
+              html.getAttribute('data-color-mode'),
+            colorScheme: htmlStyle.colorScheme,
             background: bodyStyle.backgroundColor,
             color: bodyStyle.color,
-            storedTheme:
-              localStorage.getItem('theme') ??
-              localStorage.getItem('vite-ui-theme'),
+            storedTheme: storageKeys
+              .map(key => `${key}=${localStorage.getItem(key) ?? ''}`)
+              .join('|'),
           });
         });
 

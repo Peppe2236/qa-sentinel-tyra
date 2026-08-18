@@ -113,7 +113,7 @@
       "acceptanceCriteria": [
         {
           "id": "AC-NATION-AUTH-001-LOAD",
-          "title": "Sign-in page loads with HTTP < 400 and a Sign in heading",
+          "title": "Sign-in page loads with HTTP < 400 and a usable email/password form",
           "critical": true
         },
         {

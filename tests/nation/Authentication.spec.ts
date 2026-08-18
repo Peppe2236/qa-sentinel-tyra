@@ -16,7 +16,8 @@ test.describe('Nation.dev authentication pages', () => {
       const auth = new NationAuthPage(page);
 
       await auth.goto('/signin');
-      await expect(auth.signInHeading()).toBeVisible();
+      await expect(page).toHaveURL(/\/signin/i);
+      await expect(page).toHaveTitle(/sign in|welcome back/i);
       await expect(auth.emailField()).toBeVisible();
       await expect(auth.emailField()).toBeEditable();
       await expect(auth.passwordField()).toBeVisible();

@@ -55,7 +55,7 @@ export class NationHomePage {
   }
 
   themeToggle(): Locator {
-    return this.page.getByRole('button', { name: /toggle theme/i });
+    return this.page.getByRole('button', { name: 'Toggle theme', exact: true });
   }
 
   sidebarTrigger(): Locator {

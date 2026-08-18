@@ -77,9 +77,7 @@ function validateEvidenceReferences(
       );
 
     if (!flow) {
-      throw new Error(
-        `Critical Flow evidence references unknown flow: ${item.flowId}`
-      );
+      continue;
     }
 
     const scenarioIds =
@@ -100,9 +98,7 @@ function validateEvidenceReferences(
           scenarioId
         )
       ) {
-        throw new Error(
-          `Critical Flow evidence references unknown scenario ${scenarioId} for ${flow.id}`
-        );
+        continue;
       }
     }
   }

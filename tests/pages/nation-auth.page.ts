@@ -32,8 +32,21 @@ export class NationAuthPage {
     return response;
   }
 
+  /**
+   * Live /signin uses a brand heading ("nation.dev") and a Sign in submit
+   * control, not an h1 "Sign in". Prefer email/password form locators.
+   */
   signInHeading(): Locator {
-    return this.page.getByRole('heading', { name: /sign in/i }).first();
+    return this.page.getByRole('heading', {
+      name: /sign in|welcome back|log in/i,
+    }).first();
+  }
+
+  signInForm(): Locator {
+    return this.page
+      .locator('form')
+      .filter({ has: this.emailField() })
+      .first();
   }
 
   signUpHeading(): Locator {
