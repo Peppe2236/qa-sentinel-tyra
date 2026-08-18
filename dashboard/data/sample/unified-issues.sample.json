@@ -1,0 +1,13 @@
+[
+  {
+    "id": "sample-signin-form",
+    "source": "test",
+    "site": "nation",
+    "title": "sign-in page loads and contains a usable form",
+    "severity": "medium",
+    "category": "authentication",
+    "classification": "product-bug",
+    "requirementIds": ["REQ-NATION-AUTH-001"],
+    "criticalFlowIds": ["FLOW-NATION-SIGNIN"]
+  }
+]

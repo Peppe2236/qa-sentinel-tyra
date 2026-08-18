@@ -80,35 +80,58 @@ Unified Decisioning is the canonical schema-v5 release authority. Legacy release
 
 ## Remaining planned work
 
-These capabilities remain part of the long-term direction. They are not silently treated as completed by Milestone 5 or Milestone 6 and have not yet been assigned to a new numbered milestone.
+The long-term product still needs real E2E depth, CI quality gates, persistence,
+observability and (optionally) an LLM. Those items live in
+[`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). They are not silently
+treated as completed by Milestone 5 or Milestone 6.
 
 | Capability | Status | Direction |
 |---|---|---|
-| AI-assisted root-cause intelligence | 🚧 In progress | Sentinel AI is live; deepen evidence-grounded explanations without claiming unverified certainty |
-| Unified dashboard intelligence | 🚧 In progress | Sentinel AI is bound; complete presentation of the advisory Autonomous QA assessment and remaining intelligence layers |
-| Discovery-aware release readiness | 🚧 In progress | Positive API/backend evidence now participates; complete broader discovery provenance and decision presentation |
+| AI-assisted root-cause intelligence | 🚧 In progress | Sentinel AI is heuristic; it is not an LLM and must keep uncertainty labels |
+| Unified dashboard intelligence | 🚧 In progress | M7.2 advisory panel exists; remaining intelligence layers still have evidence gaps |
+| Discovery-aware release readiness | 🚧 In progress | M7.3 provenance panel exists; UX/UI, security and performance evidence is still thin |
+| GitHub Actions integration | 🚧 In progress | Typecheck and analyzer unit tests are required; live Nation/Skills Chromium runs upload artifacts and may flake |
+| Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` seeds a tiny stub; live JSON stays gitignored |
+| Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; many flows are still not-tested |
 | PDF executive reports | 🚧 Planned | Add distributable executive PDF output |
-| GitHub Actions integration | 🚧 Planned | Add CI execution, artifacts and quality-gate integration |
-| Multi-project dashboard | 🚧 Planned | Expand dashboard support across several projects |
+| Multi-project dashboard | 🚧 Planned | Expand dashboard support across several products |
 
-The first three items preserve the previously documented product direction. The post-M6 enhancements move them forward but do not silently mark the broader capabilities as complete.
+## Ubuntu + VS Code workflow
 
-## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🧭 PLANNED
+Default development is **Ubuntu on WSL** plus **VS Code** (Remote - WSL).
 
-**Status: NOT STARTED**
+```bash
+cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
+cp .env.example .env
+npm install
+npx playwright install chromium
+npm run typecheck
+npm run test:unit
+npm run test:nation:ci
+npm run dashboard
+```
 
-Milestone 7 will turn the completed M5–M6 intelligence foundations into a more complete, operationally reliable product experience. No M7 implementation should begin until its first delivery is explicitly selected and audited.
+Shared editor defaults live in `.vscode/` (LF endings, Playwright extension,
+tasks). Details: README “Ubuntu / WSL and VS Code”.
 
-| Planned delivery | Scope |
-|---|---|
-| 7.1 Operational Test Orchestration | Correct project-specific npm commands and preserve separate per-site scan output |
-| 7.2 Unified Advisory Dashboard | Present the complete M6 `autonomousQaAssessment` without granting execution authority |
-| 7.3 Discovery-aware Release Readiness | Complete positive/negative evidence provenance and canonical decision presentation |
-| 7.4 UX/UI Verification Coverage | Add trustworthy evidence for currently unverified UX/UI areas |
-| 7.5 Security Verification Coverage | Add explicit security checks and close evidence gaps without treating absence as health |
-| 7.6 Performance Verification Coverage | Add configured thresholds and verified page/API/backend performance evidence |
-| 7.7 Evidence-grounded Root-cause Intelligence | Deepen Sentinel AI and investigation explanations while retaining uncertainty labels |
-| 7.8 Milestone Validation & Documentation | Full-matrix regression validation, schema review, safety audit and documentation refresh |
+## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
+
+**Status: IN PROGRESS** (deliveries 7.1–7.3 are in the tree; 7.4–7.8 are not done)
+
+Earlier docs marked Milestone 7 as “not started”. That was stale. Commits on
+`main` already added operational npm commands, the advisory Autonomous QA
+dashboard panel, and discovery-aware release-readiness provenance.
+
+| Delivery | Status | What exists / what does not |
+|---|---|---|
+| 7.1 Operational Test Orchestration | ✅ Done | `test:nation`, `test:skills`, `scan:nation`, `scan:skills`, `qa:full` keep site output separate |
+| 7.2 Unified Advisory Dashboard | ✅ Done | `dashboard/index.html` Autonomous QA panel binds `autonomousQaAssessment` without execution authority |
+| 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel and CSS are wired; still depends on current-run evidence |
+| 7.4 UX/UI Verification Coverage | 🧭 Not started | Analyzer areas remain largely `not-verified`; no a11y axe/lighthouse suite |
+| 7.5 Security Verification Coverage | 🚧 Partial | `config/security-performance.json` lists required checks; there are still no dedicated header/cookie/session tests. `requiredChecks` is not yet consumed by the analyzer |
+| 7.6 Performance Verification Coverage | 🚧 Partial | Duration thresholds are configured; page-load and API/backend latency are still not observed as metrics |
+| 7.7 Evidence-grounded Root-cause Intelligence | 🚧 Partial | Sentinel AI is heuristic pattern matching, not an LLM |
+| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP/README/backlog aligned; full-matrix regression and a safety audit are still due |
 
 ### Milestone 7 authority and safety contract
 
@@ -121,4 +144,4 @@ Milestone 7 will turn the completed M5–M6 intelligence foundations into a more
 - First-party evidence remains sanitized and source provenance remains visible.
 - Compatibility failures, promoted issues and uncertainty must not be hidden by positive evidence.
 
-**Milestone 7:** 🧭 PLANNED — NOT STARTED
+**Milestone 7:** 🚧 IN PROGRESS — 7.1–7.3 in code; 7.4–7.8 open. See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md).

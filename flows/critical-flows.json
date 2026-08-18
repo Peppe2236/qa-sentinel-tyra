@@ -1,4 +1,287 @@
 {
   "schemaVersion": 1,
-  "flows": []
+  "flows": [
+    {
+      "id": "FLOW-NATION-PUBLIC-HOME",
+      "title": "Anonymous visitor opens the Nation marketing homepage",
+      "description": "Load https://nation.dev/, confirm content, and follow primary join links. Does not include authenticated home.",
+      "site": "nation",
+      "critical": true,
+      "requirementIds": [
+        "REQ-NATION-HOME-001",
+        "REQ-NATION-HOME-002"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-HOME-LOAD",
+          "title": "Homepage document loads with title and content",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-NATION-HOME-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-HOME-JOIN",
+          "title": "Talent and organization join links navigate away from the homepage",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-NATION-HOME-002"
+          ]
+        },
+        {
+          "id": "SCN-NATION-HOME-THEME",
+          "title": "Theme toggle changes page theme state",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-HOME-002"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-SIGNIN",
+      "title": "Anonymous visitor uses the Nation sign-in page",
+      "description": "Form presence, input, and forgot-password navigation. Successful login is a separate flow and is not covered here.",
+      "site": "nation",
+      "critical": true,
+      "requirementIds": [
+        "REQ-NATION-AUTH-001",
+        "REQ-NATION-AUTH-004"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-SIGNIN-FORM",
+          "title": "Sign-in heading, fields and submit control are usable",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-NATION-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-INPUT",
+          "title": "Sign-in fields accept typed values",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-FORGOT",
+          "title": "Forgot-password link reaches the reset page",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-NO-STACK",
+          "title": "Sign-in page does not render raw runtime errors",
+          "type": "error-handling",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-004"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-REJECT",
+          "title": "Invalid credentials show a controlled error (not implemented)",
+          "type": "error-handling",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-RESET-PASSWORD",
+      "title": "Anonymous visitor opens password reset",
+      "description": "Page and controls only. Email delivery and token consumption are not tested.",
+      "site": "nation",
+      "critical": true,
+      "requirementIds": [
+        "REQ-NATION-AUTH-002"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-RESET-FORM",
+          "title": "Forgot-password page shows email and submit controls",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-NATION-AUTH-002"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-SIGNUP",
+      "title": "Anonymous visitor opens Nation registration",
+      "description": "Control presence only. Submitting a real registration is not executed.",
+      "site": "nation",
+      "critical": true,
+      "requirementIds": [
+        "REQ-NATION-AUTH-003"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-SIGNUP-FORM",
+          "title": "Sign-up page shows a heading, inputs and submit control",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-NATION-AUTH-003"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-NATION-AUTHENTICATED-SESSION",
+      "title": "Member signs in and reaches protected Nation routes",
+      "description": "Requires NATION_TEST_* credentials. Currently skipped when env is empty. Discovery shows /home, /jobs and /profile bounce anonymous users to /signin.",
+      "site": "nation",
+      "critical": false,
+      "requirementIds": [
+        "REQ-NATION-AUTH-005",
+        "REQ-NATION-PROTECTED-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-NATION-SESSION-LOGIN",
+          "title": "Valid test account leaves /signin after submit",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-005"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SESSION-PROTECTED",
+          "title": "Authenticated session can open /home, /jobs and /profile",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-PROTECTED-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SESSION-RECOVERY",
+          "title": "Expired session returns the user to sign-in (not implemented)",
+          "type": "recovery",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-AUTH-005"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-SKILLS-CATALOG",
+      "title": "Visitor opens the AI Skills catalog",
+      "description": "https://aiskills.nation.dev/skills load and technical smoke checks.",
+      "site": "ai-skills",
+      "critical": true,
+      "requirementIds": [
+        "REQ-SKILLS-HOME-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-SKILLS-CATALOG-LOAD",
+          "title": "Catalog page loads with title and visible content",
+          "type": "happy-path",
+          "critical": true,
+          "requirementIds": [
+            "REQ-SKILLS-HOME-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-SKILLS-LEARN",
+      "title": "Learner uses assessment, path and practice",
+      "description": "Routes exist in scan output. No Playwright scenario completes these flows.",
+      "site": "ai-skills",
+      "critical": false,
+      "requirementIds": [
+        "REQ-SKILLS-LEARN-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-SKILLS-ASSESSMENT",
+          "title": "Start or resume an assessment (not implemented)",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-LEARN-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-PATH",
+          "title": "Open a learning path (not implemented)",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-LEARN-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-PRACTICE",
+          "title": "Open a practice task (not implemented)",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-LEARN-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-SKILLS-DETAIL",
+      "title": "Visitor opens a named skill or task page",
+      "description": "Generated HTTP smoke tests only. Not a functional skill-completion flow.",
+      "site": "ai-skills",
+      "critical": false,
+      "requirementIds": [
+        "REQ-SKILLS-DETAIL-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-SKILLS-DETAIL-HTTP",
+          "title": "Discovered skill/task URLs load without a main HTTP error",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-DETAIL-001"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-PLATFORM-DISCOVERY",
+      "title": "Deep Discovery crawls a configured site",
+      "description": "Project-mapped crawl writes a site-specific discovery report.",
+      "site": "platform",
+      "critical": false,
+      "requirementIds": [
+        "REQ-PLATFORM-DISCOVERY-001"
+      ],
+      "scenarios": [
+        {
+          "id": "SCN-PLATFORM-DISCOVERY-CRAWL",
+          "title": "Discovery completes for the current Playwright project site",
+          "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-PLATFORM-DISCOVERY-001"
+          ]
+        }
+      ]
+    }
+  ]
 }

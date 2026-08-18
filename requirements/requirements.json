@@ -1,4 +1,420 @@
 {
   "schemaVersion": 1,
-  "requirements": []
+  "requirements": [
+    {
+      "id": "REQ-NATION-HOME-001",
+      "title": "Public Nation homepage loads as a usable marketing page",
+      "description": "https://nation.dev/ must return a successful document, show a title and readable content, and avoid unexpected first-party console/network/HTTP failures. This is smoke coverage, not a visual design review.",
+      "site": "nation",
+      "critical": true,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "ux-ui",
+        "api-backend"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-HOME-001-HTTP",
+          "title": "Homepage document response is HTTP < 400",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-001-TITLE",
+          "title": "Homepage has a non-empty document title",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-001-CONTENT",
+          "title": "Homepage body contains visible readable text",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-001-JS",
+          "title": "Homepage has no unexpected JavaScript console errors",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-001-NETWORK",
+          "title": "Homepage has no unexpected failed network requests",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-001-STATUS",
+          "title": "Homepage has no first-party HTTP 4xx/5xx responses during load",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-001-LINKS",
+          "title": "Visible homepage links use valid URL schemes",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-HOME-002",
+      "title": "Public Nation homepage exposes primary user actions",
+      "description": "Anonymous visitors can find talent/organization join paths, theme control, legal links and intact marketing copy. Sidebar collapse is observed, not treated as a release blocker.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "ux-ui",
+        "critical-flows"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-HOME-002-HEADING",
+          "title": "Primary homepage heading is visible",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-002-TALENT",
+          "title": "Join as a talent link is visible and navigates away from the homepage",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-002-ORG",
+          "title": "Join as an organization link is visible and navigates away from the homepage",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-HOME-002-THEME",
+          "title": "Theme toggle changes visible or stored theme state",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-002-SIDEBAR",
+          "title": "Sidebar trigger is visible and clickable",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-002-LEGAL",
+          "title": "Privacy Policy and Terms of Use links have destinations",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-HOME-002-COPY",
+          "title": "Homepage does not contain the known duplicated skills sentence",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-AUTH-001",
+      "title": "Sign-in page presents a usable credential form",
+      "description": "https://nation.dev/signin loads and exposes email, password and submit controls. Coverage does not include a successful authenticated session.",
+      "site": "nation",
+      "critical": true,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows",
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-AUTH-001-LOAD",
+          "title": "Sign-in page loads with HTTP < 400 and a Sign in heading",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-AUTH-001-FORM",
+          "title": "Email, password and submit controls are visible and usable",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-AUTH-001-INPUT",
+          "title": "Sign-in fields accept typed values without submitting a real login",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-AUTH-001-FORGOT",
+          "title": "Forgot-password link from sign-in reaches /forgot-password",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-AUTH-002",
+      "title": "Password reset page collects an email address",
+      "description": "https://nation.dev/forgot-password exposes an email field and a submit control. Mail delivery and token reset are not verified.",
+      "site": "nation",
+      "critical": true,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-AUTH-002-EMAIL",
+          "title": "Forgot-password page has an editable email field",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-AUTH-002-SUBMIT",
+          "title": "Forgot-password page has a visible submit control",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-AUTH-003",
+      "title": "Sign-up page exposes registration controls",
+      "description": "https://nation.dev/signup loads and shows registration inputs plus a submit control. Account creation is not executed.",
+      "site": "nation",
+      "critical": true,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-AUTH-003-LOAD",
+          "title": "Sign-up page loads with a registration heading",
+          "critical": true
+        },
+        {
+          "id": "AC-NATION-AUTH-003-CONTROLS",
+          "title": "Sign-up page has at least one visible input and a submit control",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-AUTH-004",
+      "title": "Authentication pages do not leak raw runtime errors",
+      "description": "Anonymous /signin, /signup and /forgot-password must not render TypeError, stack traces or Internal Server Error text in the body.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "ux-ui",
+        "requirements-functionality"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-AUTH-004-NO-ERRORS",
+          "title": "Sign-in, sign-up and forgot-password pages do not show raw runtime error text",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-AUTH-005",
+      "title": "A test account can establish an authenticated Nation session",
+      "description": "Not covered by the current suite unless NATION_TEST_EMAIL and NATION_TEST_PASSWORD are set. Successful login, session cookie and redirect away from /signin remain a gap.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows",
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-AUTH-005-LOGIN",
+          "title": "Valid test credentials sign in and leave the /signin URL",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-AUTH-005-SESSION",
+          "title": "An authenticated storageState can be reused across tests",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-PROTECTED-001",
+      "title": "Authenticated Nation routes remain available after login",
+      "description": "Deep Discovery currently sees /home, /jobs and /profile redirect anonymous users to /signin. There is no logged-in test that proves those routes work for a member.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-PROTECTED-001-HOME",
+          "title": "Authenticated user can open /home without being sent back to /signin",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-PROTECTED-001-JOBS",
+          "title": "Authenticated user can open /jobs",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-PROTECTED-001-PROFILE",
+          "title": "Authenticated user can open /profile",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-LEGAL-001",
+      "title": "Legal documents are linked from the public site",
+      "description": "Privacy and terms URLs exist on the homepage. Full legal-page content review is out of scope.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-LEGAL-001-LINKS",
+          "title": "Homepage privacy and terms links have non-empty href values",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-DISCOVERY-001",
+      "title": "Discovered Nation routes return a successful main document",
+      "description": "Generated page-load checks cover routes from dashboard/data/discovered-pages-nation.json. This is HTTP smoke coverage, not functional coverage of each route.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "compatibility"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-DISCOVERY-001-HTTP",
+          "title": "Each discovered Nation page main response is HTTP < 400 and renders a body",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-HOME-001",
+      "title": "AI Skills catalog page loads",
+      "description": "https://aiskills.nation.dev/skills is the public catalog entry. Coverage is load/title/content plus unexpected JS/network/HTTP checks.",
+      "site": "ai-skills",
+      "critical": true,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "ux-ui",
+        "api-backend"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-HOME-001-URL",
+          "title": "Catalog URL stays on aiskills.nation.dev/skills",
+          "critical": true
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-TITLE",
+          "title": "Catalog page has a non-empty title",
+          "critical": true
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-CONTENT",
+          "title": "Catalog page has visible body text",
+          "critical": true
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-JS",
+          "title": "Catalog page has no unexpected JavaScript errors",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-NETWORK",
+          "title": "Catalog page has no unexpected failed requests",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-HOME-001-STATUS",
+          "title": "Catalog page has no HTTP 4xx/5xx responses during load",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-LEARN-001",
+      "title": "AI Skills learning routes are usable",
+      "description": "Discovery has seen /assessment, /path and /practice return 200 for an anonymous crawl. There are no dedicated Playwright scenarios that complete an assessment, follow a path, or practice a task.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-LEARN-001-ASSESSMENT",
+          "title": "Assessment flow can be started and shows a task or prompt",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-LEARN-001-PATH",
+          "title": "Learning path page shows a usable path structure",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-LEARN-001-PRACTICE",
+          "title": "Practice page exposes a practice task",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-DETAIL-001",
+      "title": "Named skill and task pages load",
+      "description": "Scanner inventory includes /skills/gamma, /skills/claude, /skills/notebooklm and nested task URLs. Generated smoke tests cover HTTP load only. /skills/notebooklm has previously failed a network check in scan output.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-DETAIL-001-HTTP",
+          "title": "Discovered AI Skills pages return HTTP < 400 for the main document",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-AUTH-001",
+      "title": "AI Skills sign-in is usable",
+      "description": "Discovery has recorded /signin on aiskills.nation.dev. There is no dedicated skills auth spec, and scan output has marked that route failed because of an unexpected network request.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "critical-flows",
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-AUTH-001-FORM",
+          "title": "AI Skills sign-in page exposes a usable login form",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-AUTH-001-LOGIN",
+          "title": "Optional AI_SKILLS_TEST_* credentials can establish a session",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLATFORM-DISCOVERY-001",
+      "title": "Deep Discovery can crawl each configured site",
+      "description": "tests/discovery/sentinel-discovery.spec.ts crawls nation.dev and aiskills.nation.dev and writes reports/discovery/<site>.json.",
+      "site": "platform",
+      "critical": false,
+      "qualityDimensions": [
+        "requirements-functionality",
+        "api-backend"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-PLATFORM-DISCOVERY-001-CRAWL",
+          "title": "Deep Discovery completes for the project-mapped Sentinel site",
+          "critical": false
+        }
+      ]
+    }
+  ]
 }

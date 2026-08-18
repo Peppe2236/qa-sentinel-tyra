@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "test:unit",
+      "type": "npm",
+      "script": "test:unit",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "test:nation:ci",
+      "type": "npm",
+      "script": "test:nation:ci",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "test:skills:ci",
+      "type": "npm",
+      "script": "test:skills:ci",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "dashboard",
+      "type": "npm",
+      "script": "dashboard",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "dashboard:sample",
+      "type": "npm",
+      "script": "dashboard:sample",
+      "problemMatcher": []
+    },
+    {
+      "label": "scan:all",
+      "type": "npm",
+      "script": "scan:all",
+      "problemMatcher": []
+    }
+  ]
+}

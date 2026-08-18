@@ -35,7 +35,10 @@
     "report": "playwright show-report",
 
     "typecheck": "tsc --noEmit",
+    "test:unit": "playwright test --config=playwright.unit.config.ts",
+    "test:ci": "npm run typecheck && npm run test:unit",
     "validate": "npm run typecheck && npm run test:all",
+    "dashboard:sample": "node scripts/seed-dashboard-sample.mjs",
     "sentinel": "node scripts/sentinel.mjs",
 
     "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\""

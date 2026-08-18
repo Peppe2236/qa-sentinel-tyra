@@ -1,0 +1,89 @@
+name: QA CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: qa-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck, unit tests, live Chromium CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Analyzer unit tests
+        run: npm run test:unit
+
+      - name: Nation Chromium CI
+        id: nation
+        continue-on-error: true
+        run: npm run test:nation:ci
+        env:
+          CI: true
+
+      - name: Upload Nation Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-nation
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: AI Skills Chromium CI
+        id: skills
+        continue-on-error: true
+        run: npm run test:skills:ci
+        env:
+          CI: true
+
+      - name: Upload Skills Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-skills
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload QA reports and dashboard data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: |
+            reports/
+            dashboard/data/
+            test-results/playwright-results.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Live E2E note
+        if: steps.nation.outcome == 'failure' || steps.skills.outcome == 'failure'
+        run: |
+          echo "Live site tests failed or were flaky."
+          echo "Typecheck and analyzer unit tests are the required quality gates."
+          echo "Playwright HTML reports and dashboard JSON were uploaded as artifacts."

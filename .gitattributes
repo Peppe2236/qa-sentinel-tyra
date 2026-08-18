@@ -1,0 +1,28 @@
+# Keep source files Unix LF so Ubuntu/WSL and GitHub Actions
+# do not fight Windows CRLF.
+
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.bash text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

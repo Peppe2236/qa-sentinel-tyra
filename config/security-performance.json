@@ -1,9 +1,23 @@
 {
   "schemaVersion": 1,
   "security": {
-    "requiredChecks": []
+    "requiredChecks": [
+      "authentication",
+      "transport",
+      "content-security-policy",
+      "data-exposure",
+      "session-cookies",
+      "security-headers"
+    ]
   },
   "performance": {
-    "thresholds": {}
+    "thresholds": {
+      "averageDurationMs": 8000,
+      "medianDurationMs": 4000,
+      "p95DurationMs": 25000,
+      "pageLoadMs": 8000,
+      "apiLatencyMs": 3000,
+      "backendLatencyMs": 3000
+    }
   }
 }

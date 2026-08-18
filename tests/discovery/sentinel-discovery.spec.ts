@@ -691,6 +691,30 @@ test.describe(
 
     test(
       'discover configured site',
+      {
+        annotation: [
+          {
+            type: 'requirement',
+            description: 'REQ-PLATFORM-DISCOVERY-001',
+          },
+          {
+            type: 'acceptance-criterion',
+            description: 'AC-PLATFORM-DISCOVERY-001-CRAWL',
+          },
+          {
+            type: 'critical-flow',
+            description: 'FLOW-PLATFORM-DISCOVERY',
+          },
+          {
+            type: 'flow-scenario',
+            description: 'SCN-PLATFORM-DISCOVERY-CRAWL',
+          },
+          {
+            type: 'category',
+            description: 'availability',
+          },
+        ],
+      },
       async (
         {
           page,

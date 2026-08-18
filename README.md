@@ -18,7 +18,8 @@
   <img src="https://img.shields.io/badge/Deep%20Discovery-Active-success" alt="Deep Discovery" />
   <img src="https://img.shields.io/badge/Unified%20Decision-v5-00A6A6" alt="Unified Decision v5" />
   <img src="https://img.shields.io/badge/Milestone%206-Advisory%20QA-success" alt="Milestone 6 complete" />
-  <img src="https://img.shields.io/badge/Milestone%207-Planned-5865F2" alt="Milestone 7 planned" />
+  <img src="https://img.shields.io/badge/Milestone%207-In%20progress-yellow" alt="Milestone 7 in progress" />
+  <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
 </p>
 
 ---
@@ -91,9 +92,9 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | AI-assisted root-cause intelligence | 🚧 In progress |
 | Unified dashboard intelligence | 🚧 In progress |
 | Discovery-aware release readiness | 🚧 In progress |
-| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🧭 Planned — not started |
+| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🚧 In progress — 7.1–7.3 in code |
 | PDF executive reports | 🚧 Planned |
-| GitHub Actions integration | 🚧 Planned |
+| GitHub Actions integration | 🚧 In progress — typecheck + unit required; live E2E artifacts may flake |
 | Multi-project dashboard | 🚧 Planned |
 
 ---
@@ -144,6 +145,42 @@ Successful same-origin `document`, `fetch` and `xhr` responses can now contribut
 ---
 
 ## Quick start
+
+Default workflow: **Ubuntu on WSL** + **VS Code** (Remote - WSL). Windows
+PowerShell is not the intended shell.
+
+### Ubuntu / WSL and VS Code
+
+1. Install [Ubuntu from Microsoft Store](https://apps.microsoft.com/detail/9pdxgncfsczv) and [VS Code](https://code.visualstudio.com/).
+2. In VS Code install **Remote - WSL** and **Playwright Test for VS Code** (also listed in `.vscode/extensions.json`).
+3. `Ctrl+Shift+P` → **WSL: Connect to WSL** → open this folder:
+
+```bash
+cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
+```
+
+4. Copy env placeholders (no real secrets in git):
+
+```bash
+cp .env.example .env
+```
+
+5. Install and typecheck:
+
+```bash
+npm install
+npx playwright install chromium
+npm run typecheck
+npm run test:unit
+```
+
+VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `test:nation:ci`, `dashboard`.
+
+Line endings are LF (`.gitattributes` + `.vscode/settings.json`). If an old file is still CRLF:
+
+```bash
+git add --renormalize .
+```
 
 ### 1. Clone the repository
 
@@ -534,7 +571,7 @@ A technical Markdown version is also generated:
 reports/latest-report.md
 ```
 
-Generated runtime reports can be excluded from Git where appropriate so the repository remains clean.
+Generated runtime reports can be excluded from Git where appropriate so the repository remains clean. A tiny committed stub can be seeded with `npm run dashboard:sample`. See [`dashboard/data/sample/README.md`](dashboard/data/sample/README.md).
 
 ---
 
@@ -542,6 +579,8 @@ Generated runtime reports can be excluded from Git where appropriate so the repo
 
 ```text
 qa-sentinel-tyra/
+├── .github/workflows/
+├── .vscode/
 ├── config/
 │
 ├── dashboard/
@@ -554,6 +593,7 @@ qa-sentinel-tyra/
 │   └── site-health.css
 │
 ├── docs/
+│   ├── QA-SYSTEM-BACKLOG.md
 │   └── assets/
 │
 ├── reporters/
@@ -570,8 +610,11 @@ qa-sentinel-tyra/
 ├── tests/
 │   ├── discovery/
 │   ├── generated/
+│   ├── helpers/
 │   ├── nation/
-│   └── skills/
+│   ├── pages/
+│   ├── skills/
+│   └── unit/
 │
 ├── utils/
 ├── package.json
@@ -718,9 +761,11 @@ The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 - pairwise quality-drift comparison
 - advisory investigation cases and unconfirmed hypotheses
 
-### Milestone 7 — Unified Dashboard Intelligence & Operationalization 🧭 PLANNED
+### Milestone 7 — Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
 
-Milestone 7 is defined in `ROADMAP.md` but has **not started**. Its planned scope completes operational test orchestration, presents the full advisory Autonomous QA assessment, deepens discovery-aware release readiness and works down the remaining UX/UI, security and performance verification gaps. Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
+Milestone 7 is defined in `ROADMAP.md`. Deliveries **7.1–7.3 are already in the tree** (site-specific npm commands, advisory Autonomous QA dashboard, discovery-aware release provenance). **7.4–7.8 are not done** (UX/UI, security, performance evidence, LLM-quality root cause, full-matrix validation).
+
+The remaining work is tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
 
 ---
 
@@ -730,6 +775,7 @@ After making changes, validate the exact scope before committing:
 
 ```bash
 npm run typecheck
+npm run test:unit
 git diff --check
 git status --short
 git add <reviewed-files>
@@ -792,7 +838,7 @@ That is the direction of QA Sentinel Tyra.
   Built as part of the TYRA Labs ecosystem.
 </p>
 
-## Project status — Milestones 5 and 6 complete; Milestone 7 planned
+## Project status — Milestones 5 and 6 complete; Milestone 7 in progress
 
 **Milestone 5 – Quality Intelligence Framework: ✅ COMPLETE**
 
@@ -808,8 +854,10 @@ Completed: 2026-08-17
 - Positive first-party API/backend evidence participates in release readiness.
 - The full configured compatibility matrix and API/backend evidence path were manually validated.
 
-**Milestone 7 – Unified Dashboard Intelligence & Operationalization: 🧭 PLANNED — NOT STARTED**
+**Milestone 7 – Unified Dashboard Intelligence & Operationalization: 🚧 IN PROGRESS**
 
+- **7.1–7.3:** operational commands, advisory dashboard, discovery-aware provenance — in code
+- **7.4–7.8:** still open (see `ROADMAP.md` and `docs/QA-SYSTEM-BACKLOG.md`)
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry

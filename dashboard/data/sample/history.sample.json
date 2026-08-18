@@ -1,0 +1,23 @@
+[
+  {
+    "schemaVersion": 5,
+    "runId": "sample-run-not-a-real-execution",
+    "environment": "sample",
+    "startedAt": "2026-08-18T00:00:00.000Z",
+    "finishedAt": "2026-08-18T00:00:12.000Z",
+    "status": "failed",
+    "totalTests": 3,
+    "health": 67,
+    "passed": 2,
+    "failed": 1,
+    "skipped": 0,
+    "timedOut": 0,
+    "interrupted": 0,
+    "flaky": 0,
+    "criticalBugs": 0,
+    "highBugs": 0,
+    "mediumBugs": 1,
+    "lowBugs": 0,
+    "warnings": 0
+  }
+]

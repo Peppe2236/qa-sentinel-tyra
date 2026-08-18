@@ -20,6 +20,8 @@
   },
   "include": [
     "playwright.config.ts",
+    "playwright.unit.config.ts",
+    "config/**/*.ts",
     "tests/**/*.ts",
     "reporters/**/*.ts",
     "utils/**/*.ts"

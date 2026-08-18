@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { qualityMeta } from '../helpers/quality';
+
 interface DiscoveredPage {
   url: string;
   pathname: string;
@@ -85,40 +87,65 @@ export function defineDiscoveredPageTests(
   options: DiscoveredPageTestOptions
 ): void {
   const scannerReport = loadScannerReport(options);
+  const requirementId =
+    options.siteId === 'nation'
+      ? 'REQ-NATION-DISCOVERY-001'
+      : 'REQ-SKILLS-DETAIL-001';
+  const criterionId =
+    options.siteId === 'nation'
+      ? 'AC-NATION-DISCOVERY-001-HTTP'
+      : 'AC-SKILLS-DETAIL-001-HTTP';
+  const flowId =
+    options.siteId === 'nation' ? undefined : 'FLOW-SKILLS-DETAIL';
+  const scenarioId =
+    options.siteId === 'nation' ? undefined : 'SCN-SKILLS-DETAIL-HTTP';
+  const quality = qualityMeta({
+    requirement: requirementId,
+    criteria: criterionId,
+    flow: flowId,
+    scenario: scenarioId,
+    category: 'http',
+  });
 
   test.describe(`Automatically discovered pages - ${options.siteName}`, () => {
     if (!scannerReport || scannerReport.pages.length === 0) {
-      test(`${options.siteName} scan output is available`, () => {
-        test.skip(
-          true,
-          `Run ${options.scanCommand} first to discover ${options.siteName} pages.`
-        );
-      });
+      test(
+        `${options.siteName} scan output is available`,
+        quality,
+        () => {
+          test.skip(
+            true,
+            `Run ${options.scanCommand} first to discover ${options.siteName} pages.`
+          );
+        }
+      );
       return;
     }
 
     for (const [index, discoveredPage] of scannerReport.pages.entries()) {
       const route = discoveredPage.pathname || '/';
 
-      test(`${route} [${index + 1}] loads without a main HTTP error`, async ({
-        page,
-      }) => {
-        const response = await page.goto(discoveredPage.url, {
-          waitUntil: 'domcontentloaded',
-        });
+      test(
+        `${route} [${index + 1}] loads without a main HTTP error`,
+        quality,
+        async ({ page }) => {
+          const response = await page.goto(discoveredPage.url, {
+            waitUntil: 'domcontentloaded',
+          });
 
-        expect(
-          response,
-          `No response was returned for ${discoveredPage.url}`
-        ).not.toBeNull();
+          expect(
+            response,
+            `No response was returned for ${discoveredPage.url}`
+          ).not.toBeNull();
 
-        expect(
-          response?.status(),
-          `${discoveredPage.url} returned HTTP ${response?.status()}`
-        ).toBeLessThan(400);
+          expect(
+            response?.status(),
+            `${discoveredPage.url} returned HTTP ${response?.status()}`
+          ).toBeLessThan(400);
 
-        await expect(page.locator('body')).toBeVisible();
-      });
+          await expect(page.locator('body')).toBeVisible();
+        }
+      );
     }
   });
 }

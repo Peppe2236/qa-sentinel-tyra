@@ -1,175 +1,151 @@
-import { test, expect, type Page } from '@playwright/test';
-
-const BASE_URL = 'https://nation.dev';
-
-async function expectSuccessfulPageLoad(
-  page: Page,
-  route: string
-): Promise<void> {
-  const response = await page.goto(`${BASE_URL}${route}`, {
-    waitUntil: 'domcontentloaded',
-  });
-
-  expect(
-    response,
-    `${route} returned no main response`
-  ).not.toBeNull();
-
-  expect(
-    response?.status(),
-    `${route} returned HTTP ${response?.status()}`
-  ).toBeLessThan(400);
-
-  await expect(page.locator('body')).toBeVisible();
-}
+import { test, expect } from '@playwright/test';
+import { qualityMeta } from '../helpers/quality';
+import { NationAuthPage } from '../pages/nation-auth.page';
 
 test.describe('Nation.dev authentication pages', () => {
-  test('sign-in page loads and contains a usable form', async ({ page }) => {
-    await expectSuccessfulPageLoad(page, '/signin');
+  test(
+    'sign-in page loads and contains a usable form',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-001',
+      criteria: ['AC-NATION-AUTH-001-LOAD', 'AC-NATION-AUTH-001-FORM'],
+      flow: 'FLOW-NATION-SIGNIN',
+      scenario: 'SCN-NATION-SIGNIN-FORM',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
 
-    await expect(
-      page.getByRole('heading', { name: /sign in/i }).first()
-    ).toBeVisible();
+      await auth.goto('/signin');
+      await expect(auth.signInHeading()).toBeVisible();
+      await expect(auth.emailField()).toBeVisible();
+      await expect(auth.emailField()).toBeEditable();
+      await expect(auth.passwordField()).toBeVisible();
+      await expect(auth.passwordField()).toBeEditable();
+      await expect(auth.signInSubmit()).toBeVisible();
+      await expect(auth.signInSubmit()).toBeEnabled();
+    }
+  );
 
-    const emailField = page
-      .getByRole('textbox', { name: /email/i })
-      .first();
+  test(
+    'sign-in form accepts user input',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-001',
+      criteria: 'AC-NATION-AUTH-001-INPUT',
+      flow: 'FLOW-NATION-SIGNIN',
+      scenario: 'SCN-NATION-SIGNIN-INPUT',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
 
-    const passwordField = page
-      .locator('input[type="password"]')
-      .first();
+      await auth.goto('/signin');
+      await auth.emailField().fill('qa-test@example.com');
+      await auth.passwordField().fill('SafeTestPassword123!');
+      await expect(auth.emailField()).toHaveValue('qa-test@example.com');
+      await expect(auth.passwordField()).toHaveValue('SafeTestPassword123!');
+    }
+  );
 
-    await expect(emailField).toBeVisible();
-    await expect(emailField).toBeEditable();
+  test(
+    'forgot-password link from sign-in works',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-001',
+      criteria: 'AC-NATION-AUTH-001-FORGOT',
+      flow: 'FLOW-NATION-SIGNIN',
+      scenario: 'SCN-NATION-SIGNIN-FORGOT',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
 
-    await expect(passwordField).toBeVisible();
-    await expect(passwordField).toBeEditable();
+      await auth.goto('/signin');
+      await expect(auth.forgotPasswordLink()).toBeVisible();
+      await auth.forgotPasswordLink().click();
+      await expect(page).toHaveURL(/forgot-password/i);
+      await expect(page.locator('body')).toBeVisible();
+    }
+  );
 
-    const submitButton = page
-      .getByRole('button', { name: /sign in|log in/i })
-      .first();
+  test(
+    'forgot-password page has an email field and submit control',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-002',
+      criteria: ['AC-NATION-AUTH-002-EMAIL', 'AC-NATION-AUTH-002-SUBMIT'],
+      flow: 'FLOW-NATION-RESET-PASSWORD',
+      scenario: 'SCN-NATION-RESET-FORM',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
 
-    await expect(submitButton).toBeVisible();
-    await expect(submitButton).toBeEnabled();
-  });
+      await auth.goto('/forgot-password');
+      await expect(auth.emailField()).toBeVisible();
+      await expect(auth.emailField()).toBeEditable();
+      await expect(
+        auth.passwordResetSubmit(),
+        'Password-reset submit control was not found'
+      ).toBeVisible();
+    }
+  );
 
-  test('sign-in form accepts user input', async ({ page }) => {
-    await expectSuccessfulPageLoad(page, '/signin');
+  test(
+    'sign-up page loads and exposes registration controls',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-003',
+      criteria: ['AC-NATION-AUTH-003-LOAD', 'AC-NATION-AUTH-003-CONTROLS'],
+      flow: 'FLOW-NATION-SIGNUP',
+      scenario: 'SCN-NATION-SIGNUP-FORM',
+      category: 'authentication',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
 
-    const emailField = page
-      .getByRole('textbox', { name: /email/i })
-      .first();
+      await auth.goto('/signup');
+      await expect(auth.signUpHeading()).toBeVisible();
+      expect(
+        await auth.visibleInputs().count(),
+        'No visible registration inputs were found'
+      ).toBeGreaterThan(0);
+      await expect(
+        auth.signUpSubmit(),
+        'Registration submit control was not found'
+      ).toBeVisible();
+    }
+  );
 
-    const passwordField = page
-      .locator('input[type="password"]')
-      .first();
+  test(
+    'authentication pages do not expose raw runtime errors',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-004',
+      criteria: 'AC-NATION-AUTH-004-NO-ERRORS',
+      flow: 'FLOW-NATION-SIGNIN',
+      scenario: 'SCN-NATION-SIGNIN-NO-STACK',
+      category: 'javascript',
+    }),
+    async ({ page }) => {
+      const auth = new NationAuthPage(page);
+      const routes = ['/signin', '/signup', '/forgot-password'] as const;
+      const forbiddenErrorText = [
+        /typeerror/i,
+        /referenceerror/i,
+        /syntaxerror/i,
+        /uncaught exception/i,
+        /internal server error/i,
+        /application error/i,
+        /stack trace/i,
+      ];
 
-    await emailField.fill('qa-test@example.com');
-    await passwordField.fill('SafeTestPassword123!');
+      for (const route of routes) {
+        await auth.goto(route);
+        const visibleText = await auth.bodyText();
 
-    await expect(emailField).toHaveValue('qa-test@example.com');
-    await expect(passwordField).toHaveValue('SafeTestPassword123!');
-  });
-
-  test('forgot-password link from sign-in works', async ({ page }) => {
-    await expectSuccessfulPageLoad(page, '/signin');
-
-    const forgotPasswordLink = page
-      .getByRole('link', {
-        name: /forgot.*password|reset.*password/i,
-      })
-      .first();
-
-    await expect(forgotPasswordLink).toBeVisible();
-
-    await forgotPasswordLink.click();
-
-    await expect(page).toHaveURL(/forgot-password/i);
-    await expect(page.locator('body')).toBeVisible();
-  });
-
-  test('forgot-password page has an email field and submit control', async ({
-    page,
-  }) => {
-    await expectSuccessfulPageLoad(page, '/forgot-password');
-
-    const emailField = page
-      .getByRole('textbox', { name: /email/i })
-      .first();
-
-    await expect(emailField).toBeVisible();
-    await expect(emailField).toBeEditable();
-
-    const submitControl = page
-      .getByRole('button', {
-        name: /reset|send|continue|submit/i,
-      })
-      .first();
-
-    await expect(
-      submitControl,
-      'Password-reset submit control was not found'
-    ).toBeVisible();
-  });
-
-  test('sign-up page loads and exposes registration controls', async ({
-    page,
-  }) => {
-    await expectSuccessfulPageLoad(page, '/signup');
-
-    await expect(
-      page
-        .getByRole('heading', {
-          name: /sign up|create.*account|join/i,
-        })
-        .first()
-    ).toBeVisible();
-
-    const inputs = page.locator('input:visible');
-
-    expect(
-      await inputs.count(),
-      'No visible registration inputs were found'
-    ).toBeGreaterThan(0);
-
-    const submitButton = page
-      .getByRole('button', {
-        name: /sign up|create.*account|continue|register/i,
-      })
-      .first();
-
-    await expect(
-      submitButton,
-      'Registration submit control was not found'
-    ).toBeVisible();
-  });
-
-  test('authentication pages do not expose raw runtime errors', async ({
-    page,
-  }) => {
-    const routes = ['/signin', '/signup', '/forgot-password'];
-
-    const forbiddenErrorText = [
-      /typeerror/i,
-      /referenceerror/i,
-      /syntaxerror/i,
-      /uncaught exception/i,
-      /internal server error/i,
-      /application error/i,
-      /stack trace/i,
-    ];
-
-    for (const route of routes) {
-      await expectSuccessfulPageLoad(page, route);
-
-      const visibleText = await page.locator('body').innerText();
-
-      for (const pattern of forbiddenErrorText) {
-        expect(
-          visibleText,
-          `Raw runtime error found on ${route}: ${pattern}`
-        ).not.toMatch(pattern);
+        for (const pattern of forbiddenErrorText) {
+          expect(
+            visibleText,
+            `Raw runtime error found on ${route}: ${pattern}`
+          ).not.toMatch(pattern);
+        }
       }
     }
-  });
+  );
 });
