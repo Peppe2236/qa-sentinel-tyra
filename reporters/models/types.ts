@@ -1462,6 +1462,11 @@ export type ApiBackendStatus =
   | 'not-verified';
 
 
+export type DiscoveryEvidenceOrigin =
+  | 'deep-discovery'
+  | 'smart-scan';
+
+
 export type ApiBackendEvidenceKind =
   | 'api-endpoint'
   | 'backend-service';
@@ -1484,6 +1489,11 @@ export interface ApiBackendEvidence {
     IntelligenceSource;
 
   observedAt: string;
+
+  evidenceOrigin?:
+    DiscoveryEvidenceOrigin;
+
+  sourceArtifact?: string;
 }
 
 

@@ -240,6 +240,368 @@ function renderReleaseAssessment(run) {
   }
 }
 
+
+function discoveryArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function discoveryStatus(value) {
+  return String(value ?? 'not-verified')
+    .replaceAll('-', ' ')
+    .toUpperCase();
+}
+
+function discoveryStatusClass(value) {
+  return String(value ?? 'not-verified')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-');
+}
+
+function discoveryPanelStatus(value) {
+  switch (value) {
+    case 'verified':
+      return 'EVIDENCE AVAILABLE';
+
+    case 'verified-with-warnings':
+      return 'EVIDENCE WITH WARNINGS';
+
+    case 'degraded':
+      return 'EVIDENCE REQUIRES ACTION';
+
+    default:
+      return 'NOT VERIFIED';
+  }
+}
+
+function discoverySafeUrl(value) {
+  if (!value) {
+    return '—';
+  }
+
+  try {
+    const url = new URL(String(value));
+    url.username = '';
+    url.password = '';
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return String(value)
+      .split('#')[0]
+      .split('?')[0];
+  }
+}
+
+function discoveryDate(value) {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleString();
+}
+
+function isDiscoveredRouteTest(test) {
+  const file = String(test?.file ?? '')
+    .replaceAll('\\', '/')
+    .toLowerCase();
+  const title = `${test?.title ?? ''} ${test?.fullTitle ?? ''}`
+    .toLowerCase();
+
+  return (
+    file.includes('generated/discovered-pages') ||
+    title.includes('automatically discovered pages')
+  );
+}
+
+function discoveryEvidenceMeta(values) {
+  return `
+    <div class="discovery-release-evidence-meta">
+      ${values
+        .filter(([, value]) =>
+          value !== undefined &&
+          value !== null &&
+          value !== ''
+        )
+        .map(([label, value]) => `
+          <span>
+            ${escapeHtml(label)}:
+            <strong>${escapeHtml(value)}</strong>
+          </span>
+        `)
+        .join('')}
+    </div>
+  `;
+}
+
+function discoveryEvidenceCard(item) {
+  const state =
+    discoveryStatusClass(item.state);
+
+  return `
+    <article
+      class="discovery-release-evidence-item"
+      data-state="${state}"
+    >
+      <div class="discovery-release-evidence-heading">
+        <span>${escapeHtml(item.kind ?? 'DISCOVERY EVIDENCE')}</span>
+        <strong>${escapeHtml(discoveryStatus(item.state))}</strong>
+      </div>
+
+      <h4>${escapeHtml(item.title ?? 'Untitled evidence')}</h4>
+
+      ${discoveryEvidenceMeta([
+        ['Site', item.site ?? 'unknown'],
+        ['Origin', item.origin ?? 'unknown'],
+        ['Collector', item.collector ?? 'unknown'],
+        ['Artifact', item.artifact ?? 'not recorded'],
+        ['Observed', discoveryDate(item.observedAt)],
+      ])}
+
+      <p>${escapeHtml(item.detail ?? 'No additional detail recorded.')}</p>
+    </article>
+  `;
+}
+
+function renderDiscoveryEvidenceList(
+  id,
+  items,
+  emptyText
+) {
+  const container = byId(id);
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = items.length > 0
+    ? items.map(discoveryEvidenceCard).join('')
+    : `
+      <div class="discovery-release-empty">
+        ${escapeHtml(emptyText)}
+      </div>
+    `;
+}
+
+function renderDiscoveryReleaseReadiness(run) {
+  const panel = byId('discovery-release-panel');
+
+  if (!panel) {
+    return;
+  }
+
+  const tests = discoveryArray(run?.tests);
+  const routeTests = tests.filter(isDiscoveredRouteTest);
+  const routePassed = routeTests.filter(
+    test => test.status === 'passed'
+  );
+  const routeFailed = routeTests.filter(
+    test => test.status !== 'passed'
+  );
+  const findings = discoveryArray(run?.discoveryIssues);
+  const apiEvidence = discoveryArray(
+    run?.apiBackendAssessment?.positiveEvidence
+  );
+
+  const negativeFindings = findings.filter(finding => {
+    const severity = String(finding?.severity ?? '')
+      .toLowerCase();
+    const priority = String(finding?.priority ?? '')
+      .toUpperCase();
+
+    return (
+      severity === 'critical' ||
+      severity === 'high' ||
+      priority === 'P0' ||
+      priority === 'P1'
+    );
+  });
+  const warningFindings = findings.filter(
+    finding => !negativeFindings.includes(finding)
+  );
+
+  const positiveItems = [
+    ...routePassed.map(test => ({
+      state: 'verified',
+      kind: 'CURRENT ROUTE CHECK',
+      title: test.title,
+      site: test.site,
+      origin: 'test',
+      collector: test.project,
+      artifact: test.file,
+      observedAt: test.startedAt,
+      detail:
+        `HTTP route verification passed in ${test.duration ?? 0} ms.`,
+    })),
+    ...apiEvidence.map(evidence => ({
+      state: 'verified',
+      kind:
+        evidence.kind === 'api-endpoint'
+          ? 'API ENDPOINT'
+          : 'BACKEND SERVICE',
+      title:
+        `${evidence.method ?? 'GET'} ${discoverySafeUrl(evidence.url)}`,
+      site: evidence.site,
+      origin: evidence.originSource ?? 'discovery',
+      collector: evidence.evidenceOrigin ?? 'deep-discovery',
+      artifact: evidence.sourceArtifact ?? 'reports/discovery',
+      observedAt: evidence.observedAt,
+      detail:
+        `Successful first-party ${evidence.resourceType ?? 'response'} ` +
+        `with HTTP ${evidence.statusCode ?? '—'}.`,
+    })),
+  ];
+
+  const reviewItems = [
+    ...routeFailed.map(test => ({
+      state: 'negative',
+      kind: 'CURRENT ROUTE CHECK',
+      title: test.title,
+      site: test.site,
+      origin: 'test',
+      collector: test.project,
+      artifact: test.file,
+      observedAt: test.startedAt,
+      detail:
+        `Route verification finished with status ${test.status ?? 'unknown'}.`,
+    })),
+    ...findings.map(finding => ({
+      state: negativeFindings.includes(finding)
+        ? 'negative'
+        : 'warning',
+      kind:
+        `${finding.priority ?? 'P4'} · ${finding.severity ?? 'unknown'}`,
+      title: finding.title,
+      site: finding.site,
+      origin: finding.source ?? 'discovery',
+      collector: finding.evidenceOrigin ?? 'deep-discovery',
+      artifact: finding.sourceArtifact ?? 'reports/discovery',
+      observedAt: finding.observedAt,
+      detail:
+        finding.description ??
+        'Discovery finding requires human review.',
+    })),
+  ];
+
+  const sites = [
+    ...new Set([
+      ...routeTests.map(test => test.site),
+      ...apiEvidence.map(evidence => evidence.site),
+      ...findings.map(finding => finding.site),
+    ].filter(Boolean)),
+  ].sort();
+
+  const timestamps = [
+    ...routeTests.map(test => test.startedAt),
+    ...apiEvidence.map(evidence => evidence.observedAt),
+    ...findings.map(finding => finding.observedAt),
+  ]
+    .map(value => new Date(value).getTime())
+    .filter(Number.isFinite);
+  const latestEvidence = timestamps.length > 0
+    ? new Date(Math.max(...timestamps)).toISOString()
+    : null;
+
+  const release = run?.releaseAssessment ?? {};
+  const unified = run?.unifiedDecisionAssessment ?? {};
+  const gate = unified.gateSummary ?? {};
+  const hasEvidence =
+    positiveItems.length > 0 ||
+    reviewItems.length > 0;
+  const apiGaps = Number(
+    gate.apiIntelligenceGaps ??
+    release.apiIntelligenceGaps ??
+    0
+  );
+  const backendGaps = Number(
+    gate.backendIntelligenceGaps ??
+    release.backendIntelligenceGaps ??
+    0
+  );
+
+  let status = 'verified';
+
+  if (!hasEvidence) {
+    status = 'not-verified';
+  } else if (
+    routeFailed.length > 0 ||
+    negativeFindings.length > 0
+  ) {
+    status = 'degraded';
+  } else if (
+    warningFindings.length > 0 ||
+    apiGaps > 0 ||
+    backendGaps > 0
+  ) {
+    status = 'verified-with-warnings';
+  }
+
+  panel.dataset.status = status;
+  setText('discovery-release-status', discoveryPanelStatus(status));
+  setText('discovery-route-positive', routePassed.length);
+  setText('discovery-api-positive', apiEvidence.length);
+  setText(
+    'discovery-negative-count',
+    routeFailed.length + negativeFindings.length
+  );
+  setText('discovery-warning-count', warningFindings.length);
+  setText('discovery-site-count', sites.length);
+  setText(
+    'discovery-sites',
+    sites.length > 0
+      ? sites.join(' · ')
+      : 'No sites recorded'
+  );
+  setText(
+    'discovery-latest-evidence',
+    discoveryDate(latestEvidence)
+  );
+
+  setText(
+    'discovery-release-source',
+    run?.releaseDecisionSource ?? '—'
+  );
+  setText(
+    'discovery-unified-state',
+    discoveryStatus(unified.state)
+  );
+  setText(
+    'discovery-canonical-release-state',
+    discoveryStatus(release.status)
+  );
+  setText('discovery-api-gaps', apiGaps);
+  setText('discovery-backend-gaps', backendGaps);
+  setText(
+    'discovery-verification-gaps',
+    discoveryArray(unified.verificationGapDimensions).length > 0
+      ? unified.verificationGapDimensions.join(' · ')
+      : 'None recorded'
+  );
+  setText(
+    'discovery-blocking-dimensions',
+    discoveryArray(unified.blockingGateDimensions).length > 0
+      ? unified.blockingGateDimensions.join(' · ')
+      : 'None recorded'
+  );
+
+  renderDiscoveryEvidenceList(
+    'discovery-positive-evidence',
+    positiveItems,
+    'No current positive discovery evidence is recorded for this run.'
+  );
+  renderDiscoveryEvidenceList(
+    'discovery-negative-evidence',
+    reviewItems,
+    'No negative or warning discovery evidence is recorded for this run.'
+  );
+}
+
+
 function renderMetrics(run) {
   const isAllSites =
     activeSiteFilter === 'all';
@@ -6666,6 +7028,7 @@ async function render() {
 
   renderMetadata(run);
   renderReleaseAssessment(run);
+  renderDiscoveryReleaseReadiness(run);
   renderMetrics(run);
   renderSentinelAi(run);
   renderAutonomousQa(run);

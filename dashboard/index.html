@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="./command-center.css"/>
 <link rel="stylesheet" href="sentinel-ai.css" />
 <link rel="stylesheet" href="./autonomous-qa.css" />
+<link rel="stylesheet" href="./discovery-release-readiness.css" />
 <link rel="stylesheet" href="./site-health.css" />
   <link rel="stylesheet" href="./ux-ui.css" />
   <link rel="stylesheet" href="./security-performance.css" />
@@ -328,6 +329,151 @@
         </p>
       </div>
     </section>
+
+
+<!-- =========================================================
+     M7.3 DISCOVERY-AWARE RELEASE READINESS
+     ========================================================= -->
+
+<section
+  id="discovery-release-panel"
+  class="card discovery-release-panel"
+  data-status="not-verified"
+>
+  <div class="section-heading discovery-release-heading">
+    <div>
+      <p class="eyebrow">
+        MILESTONE 7.3 EVIDENCE PROVENANCE
+      </p>
+
+      <h2>
+        Discovery-aware Release Readiness
+      </h2>
+
+      <p class="discovery-release-subtitle">
+        Current route checks, Smart Scan findings and first-party
+        Deep Discovery evidence mapped to the canonical release decision.
+      </p>
+    </div>
+
+    <span
+      id="discovery-release-status"
+      class="discovery-release-status"
+    >
+      NOT VERIFIED
+    </span>
+  </div>
+
+  <div class="discovery-release-overview">
+    <article>
+      <span>Verified route evidence</span>
+      <strong id="discovery-route-positive">0</strong>
+      <small>Passing current-run discovered routes</small>
+    </article>
+
+    <article>
+      <span>First-party API/backend</span>
+      <strong id="discovery-api-positive">0</strong>
+      <small>Successful sanitized Deep Discovery responses</small>
+    </article>
+
+    <article>
+      <span>Negative evidence</span>
+      <strong id="discovery-negative-count">0</strong>
+      <small>Failures requiring release review</small>
+    </article>
+
+    <article>
+      <span>Warning evidence</span>
+      <strong id="discovery-warning-count">0</strong>
+      <small>Non-blocking findings requiring review</small>
+    </article>
+
+    <article>
+      <span>Sites represented</span>
+      <strong id="discovery-site-count">0</strong>
+      <small id="discovery-sites">No sites recorded</small>
+    </article>
+
+    <article>
+      <span>Latest evidence</span>
+      <strong id="discovery-latest-evidence">—</strong>
+      <small>Most recent retained observation</small>
+    </article>
+  </div>
+
+  <div class="discovery-release-canonical">
+    <div class="discovery-release-block-heading">
+      <div>
+        <span>CANONICAL DECISION MAPPING</span>
+        <h3>Unified Decision v5</h3>
+      </div>
+
+      <small>
+        No competing score is introduced
+      </small>
+    </div>
+
+    <div class="discovery-release-canonical-grid">
+      <div><span>Release authority</span><strong id="discovery-release-source">—</strong></div>
+      <div><span>Unified state</span><strong id="discovery-unified-state">—</strong></div>
+      <div><span>Release state</span><strong id="discovery-canonical-release-state">—</strong></div>
+      <div><span>API gaps</span><strong id="discovery-api-gaps">—</strong></div>
+      <div><span>Backend gaps</span><strong id="discovery-backend-gaps">—</strong></div>
+    </div>
+
+    <div class="discovery-release-dimensions">
+      <div>
+        <span>Verification gaps</span>
+        <p id="discovery-verification-gaps">None recorded</p>
+      </div>
+
+      <div>
+        <span>Blocking gate dimensions</span>
+        <p id="discovery-blocking-dimensions">None recorded</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="discovery-release-evidence-grid">
+    <section class="discovery-release-evidence-column">
+      <div class="discovery-release-block-heading">
+        <div>
+          <span>POSITIVE EVIDENCE</span>
+          <h3>Verified observations</h3>
+        </div>
+
+        <small>
+          Current run and successful first-party responses
+        </small>
+      </div>
+
+      <div
+        id="discovery-positive-evidence"
+        class="discovery-release-evidence-list"
+      ></div>
+    </section>
+
+    <section class="discovery-release-evidence-column">
+      <div class="discovery-release-block-heading">
+        <div>
+          <span>NEGATIVE &amp; WARNING EVIDENCE</span>
+          <h3>Findings requiring review</h3>
+        </div>
+
+        <small>
+          Source identity and uncertainty remain visible
+        </small>
+      </div>
+
+      <div
+        id="discovery-negative-evidence"
+        class="discovery-release-evidence-list"
+      ></div>
+    </section>
+  </div>
+</section>
+
 
     <section class="hero-grid">
       <article class="health-card card">

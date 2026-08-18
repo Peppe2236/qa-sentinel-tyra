@@ -59,6 +59,7 @@ import path from 'node:path';
 import {
   loadApiBackendEvidence,
   loadDiscoveryIssues,
+  loadSmartScanDiscoveryIssues,
 } from './utils/discovery-issues';
 
 import type {
@@ -1301,26 +1302,97 @@ const aiSkillsDiscoveryFile =
     'ai-skills.json'
   );
 
-     const hasDiscoveryRun =
+const hasDeepDiscoveryRun =
   this.results.some(
-    test =>
-      test.file.includes(
-        'discovery'
-      ) ||
-      test.title
-        .toLowerCase()
-        .includes(
+    test => {
+      const file =
+        test.file
+          .replace(/\\/g, '/')
+          .toLowerCase();
+      const title =
+        `${test.title} ${test.fullTitle}`
+          .toLowerCase();
+
+      return (
+        file.includes('/discovery/') ||
+        title.includes(
           'discover configured site'
         )
+      );
+    }
   );
 
-const discoveryIssues =
-  hasDiscoveryRun
-    ? loadDiscoveryIssues()
-    : [];
+const smartScanSites = [
+  ...new Set(
+    this.results.flatMap(
+      test => {
+      const file =
+        test.file
+          .replace(/\\/g, '/')
+          .toLowerCase();
+      const title =
+        `${test.title} ${test.fullTitle}`
+          .toLowerCase();
+
+      const isSmartScanRoute =
+        file.includes(
+          'generated/discovered-pages'
+        ) ||
+        title.includes(
+          'automatically discovered pages'
+        );
+
+      if (!isSmartScanRoute) {
+        return [];
+      }
+
+      const site =
+        test.site.toLowerCase();
+
+      if (
+        site === 'nation' ||
+        site === 'ai-skills'
+      ) {
+        return [site];
+      }
+
+      if (
+        file.includes('ai-skills') ||
+        title.includes('ai skills')
+      ) {
+        return ['ai-skills'];
+      }
+
+      if (
+        file.includes('nation') ||
+        title.includes('nation')
+      ) {
+        return ['nation'];
+      }
+
+      return [];
+      }
+    )
+  ),
+];
+
+const discoveryIssues = [
+  ...(
+    hasDeepDiscoveryRun
+      ? loadDiscoveryIssues()
+      : []
+  ),
+  ...(
+    smartScanSites.length > 0
+      ? loadSmartScanDiscoveryIssues(
+          smartScanSites
+        )
+      : []
+  ),
+];
 
 const apiBackendEvidence =
-  hasDiscoveryRun
+  hasDeepDiscoveryRun
     ? loadApiBackendEvidence()
     : [];
 
