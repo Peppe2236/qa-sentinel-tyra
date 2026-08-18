@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { readOptionalCredentials } from '../helpers/env';
+import { NATION_AUTH_STATE } from '../helpers/auth-state';
 import { qualityMeta } from '../helpers/quality';
-import { NationAuthPage, NATION_ORIGIN } from '../pages/nation-auth.page';
+import { NATION_ORIGIN } from '../pages/nation-auth.page';
 
 const SKIP_LOGIN =
   'Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login.';
@@ -21,9 +22,11 @@ const PROTECTED_ROUTES = [
   },
 ] as const;
 
+test.use({ storageState: NATION_AUTH_STATE });
+
 test.describe('Nation authenticated session', () => {
   test(
-    'can sign in with configured test account',
+    'can reuse configured Nation storageState',
     qualityMeta({
       requirement: 'REQ-NATION-AUTH-005',
       criteria: 'AC-NATION-AUTH-005-LOGIN',
@@ -36,12 +39,9 @@ test.describe('Nation authenticated session', () => {
 
       test.skip(!credentials, SKIP_LOGIN);
 
-      const auth = new NationAuthPage(page);
-
-      await auth.goto('/signin');
-      await auth.emailField().fill(credentials!.email);
-      await auth.passwordField().fill(credentials!.password);
-      await auth.signInSubmit().click();
+      await page.goto(`${NATION_ORIGIN}/home`, {
+        waitUntil: 'domcontentloaded',
+      });
       await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
       await expect(page.locator('body')).toBeVisible();
     }
@@ -61,14 +61,6 @@ test.describe('Nation authenticated session', () => {
         const credentials = readOptionalCredentials('nation');
 
         test.skip(!credentials, SKIP_LOGIN);
-
-        const auth = new NationAuthPage(page);
-
-        await auth.goto('/signin');
-        await auth.emailField().fill(credentials!.email);
-        await auth.passwordField().fill(credentials!.password);
-        await auth.signInSubmit().click();
-        await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
 
         const response = await page.goto(`${NATION_ORIGIN}${route.path}`, {
           waitUntil: 'domcontentloaded',

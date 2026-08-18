@@ -56,8 +56,8 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | N-01 | Homepage HTTP/title/content/network smoke | Public marketing page is the anonymous entry | **done** | `npx playwright test tests/nation/homepage.spec.ts --project=nation-chromium` |
 | N-02 | Homepage join links, theme, legal, copy | User-facing actions exist today | **done** | `npx playwright test tests/nation/basic-user.spec.ts --project=nation-chromium` |
 | N-03 | Sign-in / sign-up / reset **forms** | Proves controls render; does not prove login | **done** | `npx playwright test tests/nation/Authentication.spec.ts --project=nation-chromium` |
-| N-04 | Real login with a test account | Without a session, /home /jobs /profile stay untested | **partial** | Set `NATION_TEST_*` in `.env`, then `npx playwright test tests/nation/auth-session.spec.ts --project=nation-chromium` |
-| N-05 | `storageState` auth setup project | Every spec currently repeats anonymous visits | **not done** | Add Playwright setup project writing `playwright/.auth/nation.json` |
+| N-04 | Real login with a test account | Without a session, /home /jobs /profile stay untested | **partial** | Set `NATION_TEST_*` in `.env`; `qa:unattended` logs in once via storageState. Missing env = one human-pack item |
+| N-05 | `storageState` auth setup project | Every spec currently repeats anonymous visits | **done** | `tests/auth/nation.setup.ts` writes `playwright/.auth/nation.json`; member specs reuse it |
 | N-06 | Authenticated /home | Discovery redirects anonymous users to /signin | **partial** | Spec exists and **skips** without `NATION_TEST_*` (gap, not a crash). Anonymous redirect is covered by `tests/nation/anonymous-gated.spec.ts` |
 | N-07 | Authenticated /jobs | Listed in scan inventory; no member test | **partial** | Same skip + anonymous `/jobs` → `/signin` (jobs listing is not public) |
 | N-08 | Authenticated /profile | Same | **partial** | Same skip + anonymous redirect |
@@ -79,7 +79,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | S-05 | Learning path flow | `/path` untested | **partial** | Same learn spec, load only |
 | S-06 | Practice flow | `/practice` untested | **partial** | Same learn spec, load only |
 | S-07 | AI Skills sign-in | Scan has marked `/signin` failed; no dedicated spec | **done** | Form coverage in `tests/skills/auth.spec.ts`; login skips without `AI_SKILLS_TEST_*` |
-| S-08 | Authenticated Skills session | Same gap as Nation | **not done** | Setup project + storageState |
+| S-08 | Authenticated Skills session | Same gap as Nation | **partial** | `tests/auth/ai-skills.setup.ts` + `tests/skills/auth-session.spec.ts`; skips without `AI_SKILLS_TEST_*` |
 | S-09 | notebooklm network failure | Scan recorded an unexpected failed request | **not done** | Reproduce, classify product vs third-party |
 
 ---

@@ -728,6 +728,49 @@
     </a>
 
 
+    <!-- HUMAN REVIEW -->
+    <a
+      class="control-action control-human"
+      href="/reports/human-review.html"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle cx="9" cy="8" r="3" />
+          <path d="M4 19c0-3 2.2-5 5-5" />
+          <path d="M14 8h6" />
+          <path d="M14 12h6" />
+          <path d="M14 16h4" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Human review
+        </strong>
+
+        <small>
+          30-second pack: GO / WARN / NO-GO
+        </small>
+
+        <span
+          id="control-human-status"
+          class="control-action-status"
+        >
+          PACK
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
     <!-- MARKDOWN -->
     <a
       class="control-action control-markdown"
@@ -3444,6 +3487,10 @@
 
           <option value="needs-investigation">
             Needs investigation
+          </option>
+
+          <option value="needs-human">
+            Needs human
           </option>
 
           <option value="warning">

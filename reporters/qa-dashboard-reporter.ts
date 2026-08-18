@@ -173,6 +173,13 @@ import {
 import {
   writeHtmlReport,
 } from './utils/html-report';
+import {
+  buildHumanReviewPack,
+  fallbackHumanReviewPack,
+} from './utils/human-review';
+import {
+  writeHumanReviewReports,
+} from './utils/human-review-report';
 
 import type {
   ClassificationSummary,
@@ -1194,6 +1201,16 @@ profile:
   async onEnd(
     fullResult: FullResult
   ): Promise<void> {
+    try {
+      await this.finalizeRun(fullResult);
+    } catch (error) {
+      this.reportReporterFailure(error);
+    }
+  }
+
+  private async finalizeRun(
+    fullResult: FullResult
+  ): Promise<void> {
     if (this.results.length === 0) {
       console.log('');
       console.log(
@@ -1458,11 +1475,37 @@ const requirementEvidence =
     actionableTestIssues
   );
 
-const requirementCoverage =
-  analyzeRequirementCoverage(
-    requirements,
-    requirementEvidence
+let requirementCoverage;
+
+try {
+  requirementCoverage =
+    analyzeRequirementCoverage(
+      requirements,
+      requirementEvidence
+    );
+} catch (error) {
+  console.error(
+    '[QA Sentinel] Requirement coverage failed; treating unknown catalog data as gaps.'
   );
+  console.error(error);
+
+  requirementCoverage =
+    requirements.map(requirement => ({
+      requirementId: requirement.id,
+      title: requirement.title,
+      site: requirement.site,
+      critical: requirement.critical ?? false,
+      status: 'not-tested' as const,
+      reason:
+        'Requirement coverage analysis failed; recorded as a gap.',
+      evidenceCount: 0,
+      passedEvidenceCount: 0,
+      failedEvidenceCount: 0,
+      coveredBySources: [],
+      issueFingerprints: [],
+      criteria: [],
+    }));
+}
 
 const criticalFlows =
   filterCatalogBySites(
@@ -1727,6 +1770,17 @@ const run: DashboardRun = {
       tests:
         this.results,
     };
+
+    try {
+      run.humanReview = buildHumanReviewPack(run);
+    } catch (error) {
+      console.error(
+        '[QA Sentinel] Human review pack failed; writing a gap instead.'
+      );
+      console.error(error);
+      run.humanReview = fallbackHumanReviewPack(error, run.runId);
+    }
+
 const sentinelAi =
   analyzeSentinelAi(run);
 
@@ -1769,6 +1823,13 @@ const outputRun: SentinelOutput = {
       latestRunFile,
       outputRun
     );
+
+    if (run.humanReview) {
+      writeJson(
+        path.join(dataDirectory, 'human-review.json'),
+        run.humanReview
+      );
+    }
 
     writeJson(
       issuesFile,
@@ -1813,6 +1874,31 @@ const htmlReportFile =
     run,
     reportsDirectory
   );
+
+    let humanReviewHtml = '';
+
+    try {
+      const pack =
+        run.humanReview ??
+        buildHumanReviewPack(run);
+      run.humanReview = pack;
+      const written = writeHumanReviewReports(
+        pack,
+        reportsDirectory
+      );
+      humanReviewHtml = written.html;
+    } catch (error) {
+      console.error(
+        '[QA Sentinel] Human review HTML failed; writing a gap instead.'
+      );
+      console.error(error);
+      const pack = fallbackHumanReviewPack(error, run.runId);
+      run.humanReview = pack;
+      humanReviewHtml = writeHumanReviewReports(
+        pack,
+        reportsDirectory
+      ).html;
+    }
 
     console.log('');
     console.log(
@@ -1928,12 +2014,38 @@ const htmlReportFile =
   `HTML report: ${htmlReportFile}`
     );
 
+    if (humanReviewHtml) {
+      console.log(
+        `Human review pack: ${humanReviewHtml}`
+      );
+    }
+
     console.log(
       `Reports folder: ${reportsDirectory}`
     );
     console.log(
       '=================================================='
     );
+  }
+
+  private reportReporterFailure(error: unknown): void {
+    console.error(
+      '[QA Sentinel] Reporter failed; writing a human-review gap so the run still leaves a pack.'
+    );
+    console.error(error);
+
+    try {
+      const pack = fallbackHumanReviewPack(error);
+      writeHumanReviewReports(
+        pack,
+        path.resolve(process.cwd(), 'reports')
+      );
+    } catch (nested) {
+      console.error(
+        '[QA Sentinel] Could not write the fallback human-review pack.'
+      );
+      console.error(nested);
+    }
   }
 
   printsToStdio(): boolean {

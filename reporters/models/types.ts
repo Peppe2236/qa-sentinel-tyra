@@ -13,6 +13,53 @@ export type IssueClassification =
   | 'warning'
   | 'none';
 
+export type HumanReviewVerdict = 'GO' | 'WARN' | 'NO-GO';
+
+export interface MachineOwnedItem {
+  id: string;
+  classification: IssueClassification;
+  title: string;
+  site: string;
+  file: string;
+  route: string;
+}
+
+export interface NeedsHumanItem {
+  id: string;
+  site: string;
+  url: string;
+  title: string;
+  whyHuman: string;
+  suggestedCheck: string;
+  screenshot?: string;
+  trace?: string;
+  video?: string;
+  errorContext?: string;
+  errorMessage?: string;
+}
+
+export interface UntestedRoute {
+  site: string;
+  pathname: string;
+  url: string;
+}
+
+export interface HumanReviewCredentials {
+  nation: boolean;
+  aiSkills: boolean;
+}
+
+export interface HumanReviewPack {
+  verdict: HumanReviewVerdict;
+  bullets: string[];
+  generatedAt: string;
+  runId: string;
+  credentials: HumanReviewCredentials;
+  machineOwned: MachineOwnedItem[];
+  needsHuman: NeedsHumanItem[];
+  untestedRoutes: UntestedRoute[];
+}
+
 export type Severity =
   | 'critical'
   | 'high'
@@ -1987,6 +2034,7 @@ export interface DashboardAttachment {
   name: string;
   contentType: string;
   path?: string;
+  relativePath?: string;
   kind?: AttachmentKind;
 }
 
@@ -2407,5 +2455,8 @@ tests: DashboardTestResult[];
 
   autonomousQaAssessment?:
     AutonomousQaAssessment;
+
+  humanReview?:
+    HumanReviewPack;
 
 }

@@ -541,14 +541,14 @@ button.control-action {
 }
 
 
-/* Markdown */
+/* Human review */
 
-.control-markdown
+.control-human
 .control-action-icon,
 
-.control-markdown
+.control-human
 .control-action-status {
-  color: #bd8cff;
+  color: #f3c760;
 }
 
 

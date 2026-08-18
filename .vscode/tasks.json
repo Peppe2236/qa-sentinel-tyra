@@ -19,6 +19,13 @@
       "problemMatcher": []
     },
     {
+      "label": "qa:unattended",
+      "type": "npm",
+      "script": "qa:unattended",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "qa:sites",
       "type": "npm",
       "script": "qa:sites",

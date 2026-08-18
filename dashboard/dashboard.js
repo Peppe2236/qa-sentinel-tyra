@@ -6171,6 +6171,27 @@ function issuePriorityRank(issue) {
   return ranks[issuePriority(issue)] ?? 0;
 }
 
+function issueNeedsHuman(issue) {
+  const pack = currentRun?.humanReview;
+
+  if (!pack || !Array.isArray(pack.needsHuman) || pack.needsHuman.length === 0) {
+    return issue.classification === 'needs-investigation';
+  }
+
+  const ids = new Set(
+    pack.needsHuman.map(item => item.id).filter(Boolean)
+  );
+  const titles = new Set(
+    pack.needsHuman.map(item => item.title).filter(Boolean)
+  );
+
+  return (
+    ids.has(issue.id) ||
+    titles.has(issue.title) ||
+    issue.classification === 'needs-investigation'
+  );
+}
+
 function issueMatchesFilters(issue) {
   const search =
     byId('issue-search')?.value
@@ -6267,7 +6288,11 @@ function issueMatchesFilters(issue) {
 
   const matchesClassification =
     classification === 'all' ||
-    issue.classification === classification;
+    (
+      classification === 'needs-human'
+        ? issueNeedsHuman(issue)
+        : issue.classification === classification
+    );
 
   const matchesSeverity =
     severity === 'all' ||
@@ -7041,6 +7066,11 @@ function renderControlCenter(
     )
       .replaceAll('-', ' ')
       .toUpperCase()
+  );
+
+  setText(
+    'control-human-status',
+    String(run?.humanReview?.verdict ?? 'PACK')
   );
 
   setText(

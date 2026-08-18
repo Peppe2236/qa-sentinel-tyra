@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import playwrightConfig from '../../playwright.config';
 import { SENTINEL_SITES } from '../../config/sites';
 import {
+  AUTH_SETUP_PROJECTS,
   allPlaywrightProjectNames,
   DAILY_CHROMIUM_PROJECTS,
   EDGE_MATRIX_NOTE,
@@ -49,9 +50,13 @@ test.describe('Playwright browser × device matrix', () => {
       'ai-skills',
     ]);
     expect(EDGE_MATRIX_NOTE).toMatch(/Chromium covers the Edge/i);
-    expect((playwrightConfig.projects ?? []).map(project => project.name)).toEqual(
-      names
-    );
+    expect(
+      (playwrightConfig.projects ?? []).map(project => project.name)
+    ).toEqual([...AUTH_SETUP_PROJECTS, ...names]);
+    expect(AUTH_SETUP_PROJECTS).toEqual([
+      'nation-auth-setup',
+      'ai-skills-auth-setup',
+    ]);
   });
 
   test('keeps daily Chromium names so qa:sites does not change', () => {
@@ -61,6 +66,18 @@ test.describe('Playwright browser × device matrix', () => {
     expect(playwrightProjectName('ai-skills', 'chromium', 'desktop')).toBe(
       'ai-skills-chromium'
     );
+
+    const nationChromium = (playwrightConfig.projects ?? []).find(
+      project => project.name === 'nation-chromium'
+    );
+    const skillsChromium = (playwrightConfig.projects ?? []).find(
+      project => project.name === 'ai-skills-chromium'
+    );
+
+    expect(nationChromium?.dependencies).toEqual(['nation-auth-setup']);
+    expect(skillsChromium?.dependencies).toEqual(['ai-skills-auth-setup']);
+    expect(playwrightConfig.use?.trace).toBe('retain-on-failure');
+    expect(playwrightConfig.use?.video).toBe('retain-on-failure');
   });
 
   test('resolves browser family and Desktop/Tablet/Mobile from project names', () => {

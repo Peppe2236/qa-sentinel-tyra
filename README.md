@@ -176,7 +176,7 @@ npm run typecheck
 npm run test:unit
 ```
 
-VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:sites`, `qa:matrix`, `dashboard`.
+VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:unattended`, `qa:sites`, `qa:matrix`, `dashboard`.
 
 ### The command to run (both sites)
 
@@ -203,10 +203,41 @@ npm run dashboard
 
 Open `http://127.0.0.1:4173/`.
 
+### Unattended run + human review pack
+
+The daily command that needs no human at the keyboard is:
+
+```bash
+git pull && npm i && npm run qa:unattended
+```
+
+That is `qa:sites` (both sites, Chromium, bounded scan + tests + reporter) with a human-review pack at the end. No prompts, no captcha clicking, no production writes, no LLM.
+
+`qa:matrix` is extra: still unattended, but slower (18 browser × device projects).
+
+If `.env` contains `NATION_TEST_EMAIL`/`PASSWORD` and/or `AI_SKILLS_TEST_*`, the run logs in once, writes `playwright/.auth/*.json` (`storageState`), and hits member routes (`/home`, `/jobs`, `/profile`, `/assessment`). If those variables are missing, the tests skip and the pack lists **one** human item: *Add test account to unlock /home /jobs /profile /assessment*.
+
+After the run, open:
+
+```text
+reports/human-review.html
+```
+
+or, with the dashboard up, `http://127.0.0.1:4173/reports/human-review.html`.
+
+The pack is the manual-work minimizer:
+
+- **30-second verdict** — GO / WARN / NO-GO and three bullets why
+- **Do not touch** — already classified product bugs, content bugs, header failures, serious a11y (theme-toggle and duplicated-skills stay here as developer work)
+- **Needs a human (max ~7)** — only gaps that still need judgment or credentials, with screenshot/trace/video links
+- **Untested routes** — crawled by discovery but no hand-written E2E
+
+CSP analytics stays a warning, not a human fire drill. Failed traces use Playwright `retain-on-failure` (plus video on fail).
+
 Daily Ubuntu loop (Chromium, both sites, including generated page smoke):
 
 ```bash
-git pull && npm i && npm run qa:sites && npm run dashboard
+git pull && npm i && npm run qa:unattended && npm run dashboard
 ```
 
 Full browser × device matrix (hand-written tests only — homepage, auth, catalog, security, a11y, perf, and product-bug specs). Generated discovered-page smoke stays on `qa:sites` Chromium so it is not multiplied across 18 projects:
@@ -569,6 +600,7 @@ Every completed run can produce multiple views of the same canonical quality dat
 The live dashboard exposes:
 
 - Unified Decision release readiness and evidence state
+- **Human review pack** (Control Center card + optional “Needs human” issue filter)
 - live Sentinel AI summary, root-cause, impact, recommendation and next action
 - positive API/backend and compatibility evidence state
 - quality, health and pass/fail metrics
@@ -608,6 +640,7 @@ QA Sentinel Tyra generates a styled executive report:
 
 ```text
 reports/latest-report.html
+reports/human-review.html
 ```
 
 When the dashboard server is running:

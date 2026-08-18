@@ -117,18 +117,21 @@ if (scanSkills) {
 const playwrightArgs = nationOnly
   ? [
       'tests/nation',
+      'tests/auth/nation.setup.ts',
       'tests/generated/discovered-pages-nation.spec.ts',
       '--project=nation-chromium',
     ]
   : skillsOnly
     ? [
         'tests/skills',
+        'tests/auth/ai-skills.setup.ts',
         'tests/generated/discovered-pages-ai-skills.spec.ts',
         '--project=ai-skills-chromium',
       ]
     : [
         'tests/nation',
         'tests/skills',
+        'tests/auth',
         'tests/generated',
         '--project=nation-chromium',
         '--project=ai-skills-chromium',
@@ -151,6 +154,9 @@ if (tests.error) {
 console.log('');
 console.log(
   '[QA Sentinel] One dashboard run was written to dashboard/data/latest-run.json.'
+);
+console.log(
+  '[QA Sentinel] Human review pack: reports/human-review.html'
 );
 console.log('[QA Sentinel] Open it with: npm run dashboard');
 console.log('==================================================');

@@ -164,6 +164,10 @@ function buildMatrixProjects(): Project[] {
           testMatch: isDailyChromium(browser, formFactor)
             ? dailyChromiumTestMatch(site)
             : handwrittenTestMatch(site),
+          dependencies:
+            site.id === 'nation'
+              ? ['nation-auth-setup']
+              : ['ai-skills-auth-setup'],
           metadata: {
             browserFamily: BROWSER_FAMILY[browser],
             profile: FORM_FACTOR_PROFILE[formFactor],
@@ -224,7 +228,7 @@ export default defineConfig({
   ],
 
   use: {
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     navigationTimeout: 30_000,
@@ -240,5 +244,23 @@ export default defineConfig({
    * (nation-chromium, ai-skills-chromium) so qa:matrix does not multiply it.
    * Microsoft Edge is not a separate project; Chromium covers the Edge engine.
    */
-  projects: buildMatrixProjects(),
+  projects: [
+    {
+      name: 'nation-auth-setup',
+      testMatch: 'auth/nation.setup.ts',
+      use: {
+        ...deviceFor('chromium', 'desktop'),
+        baseURL: nation.baseURL,
+      },
+    },
+    {
+      name: 'ai-skills-auth-setup',
+      testMatch: 'auth/ai-skills.setup.ts',
+      use: {
+        ...deviceFor('chromium', 'desktop'),
+        baseURL: aiSkills.baseURL,
+      },
+    },
+    ...buildMatrixProjects(),
+  ],
 });

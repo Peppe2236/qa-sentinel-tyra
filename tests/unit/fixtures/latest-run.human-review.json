@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 5,
+  "runId": "fixture-human-review-001",
+  "finishedAt": "2026-08-18T12:00:00.000Z",
+  "releaseAssessment": {
+    "status": "not-ready",
+    "risk": "high",
+    "confidence": 40,
+    "blockingIssues": 4,
+    "nonBlockingIssues": 2,
+    "verdict": "Fixture run used only for human-pack unit tests.",
+    "recommendedAction": "Do not treat this fixture as live site health."
+  },
+  "tests": [
+    {
+      "id": "theme-toggle",
+      "title": "theme toggle visibly changes the page theme",
+      "fullTitle": "Nation.dev basic user review > theme toggle visibly changes the page theme",
+      "file": "tests/nation/basic-user.spec.ts",
+      "line": 80,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 1200,
+      "retry": 0,
+      "severity": "high",
+      "category": "ui",
+      "vitalRank": 2,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "no visible or stored theme state changed"
+      },
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/theme-toggle/screenshot.png",
+          "relativePath": "test-results/theme-toggle/screenshot.png",
+          "kind": "screenshot"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/theme-toggle/trace.zip",
+          "relativePath": "test-results/theme-toggle/trace.zip",
+          "kind": "trace"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/theme-toggle/video.webm",
+          "relativePath": "test-results/theme-toggle/video.webm",
+          "kind": "video"
+        }
+      ],
+      "classification": "product-bug",
+      "classificationReason": "The theme button was clicked, but the page theme did not change."
+    },
+    {
+      "id": "duplicated-skills",
+      "title": "homepage does not contain duplicated skills wording",
+      "fullTitle": "Nation.dev basic user review > homepage does not contain duplicated skills wording",
+      "file": "tests/nation/basic-user.spec.ts",
+      "line": 140,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 900,
+      "retry": 0,
+      "severity": "medium",
+      "category": "content",
+      "vitalRank": 3,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "Possible duplicated or malformed homepage sentence found"
+      },
+      "attachments": [],
+      "classification": "content-bug",
+      "classificationReason": "Visible website text contains malformed or duplicated wording."
+    },
+    {
+      "id": "csp-analytics",
+      "title": "Google Analytics blocked by CSP",
+      "fullTitle": "Discovery > Google Analytics blocked by CSP",
+      "file": "tests/discovery/sentinel-discovery.spec.ts",
+      "line": 1,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 100,
+      "retry": 0,
+      "severity": "low",
+      "category": "analytics",
+      "vitalRank": 8,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "Content Security Policy blocked Google Analytics"
+      },
+      "attachments": [],
+      "classification": "warning",
+      "classificationReason": "A third-party service was blocked without confirmed user impact."
+    },
+    {
+      "id": "header-csp",
+      "title": "homepage document has a Content-Security-Policy header",
+      "fullTitle": "Nation security headers > homepage document has a Content-Security-Policy header",
+      "file": "tests/nation/security-headers.spec.ts",
+      "line": 10,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 400,
+      "retry": 0,
+      "severity": "high",
+      "category": "security",
+      "vitalRank": 1,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "content-security-policy header was not present"
+      },
+      "attachments": [],
+      "classification": "security-issue",
+      "classificationReason": "A measured security header or cookie-flag check failed."
+    },
+    {
+      "id": "axe-home",
+      "title": "Nation homepage axe-core smoke has no serious or critical findings",
+      "fullTitle": "Nation accessibility > Nation homepage axe-core smoke has no serious or critical findings",
+      "file": "tests/nation/accessibility.spec.ts",
+      "line": 8,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 800,
+      "retry": 0,
+      "severity": "high",
+      "category": "accessibility",
+      "vitalRank": 2,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "serious/critical axe findings"
+      },
+      "attachments": [],
+      "classification": "accessibility-issue",
+      "classificationReason": "axe-core reported serious or critical accessibility findings."
+    },
+    {
+      "id": "sidebar",
+      "title": "sidebar button changes visible layout",
+      "fullTitle": "Nation.dev basic user review > sidebar button changes visible layout",
+      "file": "tests/nation/basic-user.spec.ts",
+      "line": 200,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "failed",
+      "expectedStatus": "passed",
+      "duration": 700,
+      "retry": 0,
+      "severity": "medium",
+      "category": "ui",
+      "vitalRank": 4,
+      "tags": [],
+      "annotations": [],
+      "error": {
+        "message": "sidebar state did not change"
+      },
+      "attachments": [
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/sidebar/error-context.md",
+          "relativePath": "test-results/sidebar/error-context.md",
+          "kind": "log"
+        }
+      ],
+      "classification": "needs-investigation",
+      "classificationReason": "The sidebar button was clicked without an observable UI change."
+    },
+    {
+      "id": "auth-home",
+      "title": "authenticated session can open /home",
+      "fullTitle": "Nation authenticated session > authenticated session can open /home",
+      "file": "tests/nation/auth-session.spec.ts",
+      "line": 50,
+      "column": 1,
+      "project": "nation-chromium",
+      "site": "nation",
+      "browserFamily": "Chromium",
+      "profile": "Desktop",
+      "status": "skipped",
+      "expectedStatus": "passed",
+      "duration": 0,
+      "retry": 0,
+      "severity": "none",
+      "category": "authentication",
+      "vitalRank": 2,
+      "tags": [],
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login."
+        }
+      ],
+      "attachments": [],
+      "classification": "none",
+      "classificationReason": "The test was skipped."
+    }
+  ]
+}

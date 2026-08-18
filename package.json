@@ -21,6 +21,7 @@
     "qa": "node scripts/run-qa.mjs",
     "qa:full": "npm run scan:all && npm run qa",
     "qa:sites": "node scripts/qa-sites.mjs",
+    "qa:unattended": "node scripts/qa-unattended.mjs",
     "qa:nation": "node scripts/qa-sites.mjs --nation-only",
     "qa:skills": "node scripts/qa-sites.mjs --skills-only",
     "qa:matrix": "node scripts/qa-matrix.mjs",

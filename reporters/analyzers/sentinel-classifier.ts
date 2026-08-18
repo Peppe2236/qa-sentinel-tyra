@@ -37,6 +37,13 @@ export function classifyIssue(
         };
   }
 
+  if (result.status === 'skipped') {
+    return {
+      classification: 'none',
+      reason: 'The test was skipped.',
+    };
+  }
+
   const title = result.title.toLowerCase();
   const message =
     result.error?.message?.toLowerCase() ?? '';

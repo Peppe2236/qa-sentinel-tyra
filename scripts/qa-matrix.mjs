@@ -54,6 +54,9 @@ console.log(`Projects: ${PROJECTS.length} (${SITES.length} sites × ${BROWSERS.l
 console.log(
   'Hand-written Nation + Skills tests only. Generated page smoke stays on qa:sites Chromium.'
 );
+console.log(
+  'Still unattended. Slower than qa:unattended / qa:sites. Auth setup runs once per site when credentials exist.'
+);
 console.log('Does not require NATION_TEST_* or AI_SKILLS_TEST_*.');
 console.log('Product-bug tests are kept.');
 console.log('This overwrites dashboard/data/latest-run.json.');
@@ -63,6 +66,7 @@ console.log('==================================================');
 const playwrightArgs = [
   'tests/nation',
   'tests/skills',
+  'tests/auth',
   '--timeout=45000',
   ...PROJECTS.map(project => `--project=${project}`),
 ];

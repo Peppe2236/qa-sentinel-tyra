@@ -129,6 +129,23 @@ npm run qa:matrix
 Shared editor defaults live in `.vscode/` (LF endings, Playwright extension,
 tasks). Details: README “Ubuntu / WSL and VS Code”.
 
+## Unattended run + human review pack
+
+The default unattended command is `npm run qa:unattended` (alias of `qa:sites`:
+both sites, Chromium, scan + tests + reporter). It never prompts.
+
+`qa:matrix` remains extra: still unattended, 18 projects, slower.
+
+After each run the reporter writes `reports/human-review.html` (and `.md`):
+
+- **GO / WARN / NO-GO** plus three bullets
+- **Do not touch** — machine-owned product/content/header/a11y failures
+- **Needs a human (max ~7)** — credentials or ambiguous investigation only
+- **Untested routes** — discovery vs hand-written E2E
+
+Missing test accounts become one queue item, not a crash. Traces and failure
+videos are retained. The dashboard Control Center links to the pack.
+
 ## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
 
 **Status: IN PROGRESS** (deliveries 7.1–7.3 are in the tree; 7.4–7.8 are not done)

@@ -103,6 +103,20 @@ function resolveRequestedFile(requestUrl) {
     };
   }
 
+  if (pathname.startsWith('/test-results/')) {
+    const relativePath = pathname
+      .slice('/test-results/'.length);
+
+    return {
+      root: path.join(projectRoot, 'test-results'),
+      filePath: path.resolve(
+        projectRoot,
+        'test-results',
+        relativePath
+      ),
+    };
+  }
+
   const relativePath =
     pathname === '/'
       ? 'index.html'
@@ -232,6 +246,10 @@ server.listen(
 
     console.log(
       `Latest Markdown report: http://127.0.0.1:${port}/reports/latest-report.md`
+    );
+
+    console.log(
+      `Human review pack: http://127.0.0.1:${port}/reports/human-review.html`
     );
 
     console.log(

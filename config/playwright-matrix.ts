@@ -56,6 +56,11 @@ export const DAILY_CHROMIUM_PROJECTS = [
   playwrightProjectName('ai-skills', 'chromium', 'desktop'),
 ] as const;
 
+export const AUTH_SETUP_PROJECTS = [
+  'nation-auth-setup',
+  'ai-skills-auth-setup',
+] as const;
+
 export const PLAYWRIGHT_PROJECT_COUNT = MATRIX_SITES.length
   * MATRIX_BROWSERS.length
   * MATRIX_FORM_FACTORS.length;
