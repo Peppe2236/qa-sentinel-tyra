@@ -21,6 +21,9 @@ import type {
   UntestedRoute,
 } from '../models/types';
 import type { DashboardDiscoveryIssue } from './discovery-issues';
+import {
+  attachRootCauseNotesToPack,
+} from './root-cause';
 
 export type HumanReviewBucket =
   | 'machine-owned'
@@ -724,7 +727,7 @@ export function buildHumanReviewPack(
     releaseStatus: run.releaseAssessment?.status,
   });
 
-  return {
+  const pack: HumanReviewPack = {
     verdict,
     bullets: threeBullets({
       verdict,
@@ -740,6 +743,8 @@ export function buildHumanReviewPack(
     needsHuman,
     untestedRoutes: untested,
   };
+
+  return attachRootCauseNotesToPack(pack, run.tests);
 }
 
 function captchaNeedsHuman(item: CaptchaQueueItem): NeedsHumanItem {

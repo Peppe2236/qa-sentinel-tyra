@@ -1,0 +1,60 @@
+.root-cause-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.root-cause-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(243, 199, 96, 0.28);
+  color: #f3c760;
+  background: rgba(243, 199, 96, 0.08);
+}
+
+.root-cause-subtitle {
+  margin: 0;
+  color: var(--muted, #8ea0b5);
+  font-size: 0.92rem;
+}
+
+.root-cause-notes {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.root-cause-note {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(142, 160, 181, 0.2);
+  background: rgba(16, 27, 39, 0.55);
+}
+
+.root-cause-note .eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8ea0b5;
+}
+
+.root-cause-note h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.root-cause-note p {
+  margin: 0.25rem 0 0;
+  color: #c9d6e4;
+}
+
+.control-pdf .control-action-icon,
+.control-pdf .control-action-status {
+  color: #d46b6b;
+}

@@ -87,14 +87,14 @@ treated as completed by Milestone 5 or Milestone 6.
 
 | Capability | Status | Direction |
 |---|---|---|
-| AI-assisted root-cause intelligence | 🚧 In progress | Sentinel AI is heuristic; it is not an LLM and must keep uncertainty labels |
-| Unified dashboard intelligence | 🚧 In progress | M7.2 advisory panel exists; remaining intelligence layers still have evidence gaps |
-| Discovery-aware release readiness | 🚧 In progress | M7.3 provenance panel exists; UX/UI, security and performance evidence is still thin |
-| GitHub Actions integration | 🚧 In progress | Typecheck and analyzer unit tests are required; live Nation/Skills Chromium runs upload artifacts and may flake |
+| AI-assisted root-cause intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches per failing test when `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` is set and fails open |
+| Unified dashboard intelligence | ✅ Done | One Control Center + quality dashboard consumes unified scoring, discovery provenance, both sites, advisory, remediation, human review and the executive PDF |
+| Discovery-aware release readiness | ✅ Done | After `qa:unattended` / `qa:sites`, M7.3 counters read discovery JSON + scan inventory, not only generated route tests |
+| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Full 18-project matrix is local `qa:unattended` |
 | Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` seeds a tiny stub; live JSON stays gitignored |
 | Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; many flows are still not-tested |
-| PDF executive reports | 🚧 Planned | Add distributable executive PDF output |
-| Multi-project dashboard | 🚧 Planned | Expand dashboard support across several products |
+| PDF executive reports | ✅ Done | `reports/executive-report.pdf` after reporter `onEnd` (verdict, counts, top issues, human queue) |
+| Multi-project dashboard | ✅ Done | `config/projects.json` — Nation and AI Skills as two projects in one dashboard (not multiple GitHub repos) |
 
 ## Ubuntu + VS Code workflow
 
@@ -109,6 +109,17 @@ npm run typecheck
 npm run test:unit
 npm run qa:unattended
 npm run dashboard
+```
+
+Executive PDF (written by the reporter `onEnd`, not a separate consultancy export):
+
+```bash
+npm run qa:sites
+# or: npm run qa:unattended
+ls -l reports/executive-report.pdf
+# with the dashboard running:
+# http://127.0.0.1:4173/reports/executive-report.pdf
+xdg-open reports/executive-report.pdf
 ```
 
 Daily everything (scan + 18-project matrix + analyzers + human pack):
@@ -144,7 +155,8 @@ and the human-review pack. It never prompts.
 `qa:sites` is the fast Chromium-only alias. `qa:matrix` is the 18-project
 matrix without a fresh scan.
 
-After each run the reporter writes `reports/human-review.html` (and `.md`):
+After each run the reporter writes `reports/human-review.html` (and `.md`)
+and `reports/executive-report.pdf`:
 
 - **GO / WARN / NO-GO** plus three bullets
 - **Do not touch** — machine-owned product/content/header/a11y/performance and analyzer findings
@@ -176,29 +188,30 @@ videos are retained. The dashboard Control Center links to the pack.
 | GitHub issue creation | Off unless `QA_CREATE_ISSUES=1` and `GH_TOKEN` / `GITHUB_TOKEN` |
 | LLM enrichment | `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY`; without a key heuristic still runs |
 | Auth member routes | Skip without `NATION_TEST_*` / `AI_SKILLS_TEST_*`; one human-queue item |
-| PDF executive reports | Not in the tree yet (planned) |
+| PDF executive reports | After each run: `reports/executive-report.pdf` (also `http://127.0.0.1:4173/reports/executive-report.pdf`) |
 
 `qa:full` (`scan:all` + default Playwright, then opens the dashboard) stays a
 separate helper. `npm run sentinel` is interactive Nation-headed, not unattended.
 
 ## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
 
-**Status: IN PROGRESS** (deliveries 7.1–7.3 are in the tree; 7.4–7.8 are not done)
+**Status: IN PROGRESS** (deliveries 7.1–7.3 and 7.7 are done; 7.4–7.6 and 7.8 remain partial)
 
 Earlier docs marked Milestone 7 as “not started”. That was stale. Commits on
 `main` already added operational npm commands, the advisory Autonomous QA
-dashboard panel, and discovery-aware release-readiness provenance.
+dashboard panel, discovery-aware release-readiness provenance, heuristic+LLM
+root-cause notes, the executive PDF, and a two-project overview.
 
 | Delivery | Status | What exists / what does not |
 |---|---|---|
 | 7.1 Operational Test Orchestration | ✅ Done | `qa:unattended` is scan + 18-project matrix; `qa:sites` is Chromium-fast; `qa:matrix` is matrix without scan |
-| 7.2 Unified Advisory Dashboard | ✅ Done | Autonomous QA panel binds `autonomousQaAssessment` and shows **disabled by policy**, not Coming Soon |
-| 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel and CSS are wired; still depends on current-run evidence |
+| 7.2 Unified Advisory Dashboard | ✅ Done | Control Center + Autonomous QA panel bind `autonomousQaAssessment`, human review, remediation, discovery, both sites and the PDF — no empty Coming Soon stubs |
+| 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel reads `discoveryReadiness` from discovery JSON + scan inventory; counters populate after `qa:unattended` / `qa:sites` |
 | 7.4 UX/UI Verification Coverage | 🚧 Partial | axe-core smoke runs in unattended Chromium; remaining UX areas can still be `not-verified` without evidence |
 | 7.5 Security Verification Coverage | 🚧 Partial | Header/cookie Playwright checks run; analyzer consumes `config/security-performance.json` |
 | 7.6 Performance Verification Coverage | 🚧 Partial | Page-load and first-party API timing specs run on Chromium daily |
-| 7.7 Evidence-grounded Root-cause Intelligence | 🚧 Partial | Heuristic Sentinel AI always runs; LLM is off without an API key |
-| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP lists activated vs policy-disabled; live matrix still depends on `qa:unattended` |
+| 7.7 Evidence-grounded Root-cause Intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches when a key is set and fails open |
+| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP lists activated vs policy-disabled; live 18-matrix still depends on local `qa:unattended` |
 
 ### Milestone 7 authority and safety contract
 
@@ -211,4 +224,4 @@ dashboard panel, and discovery-aware release-readiness provenance.
 - First-party evidence remains sanitized and source provenance remains visible.
 - Compatibility failures, promoted issues and uncertainty must not be hidden by positive evidence.
 
-**Milestone 7:** 🚧 IN PROGRESS — 7.1–7.3 in code; 7.4–7.8 open. See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md).
+**Milestone 7:** 🚧 IN PROGRESS — 7.1–7.3 and 7.7 done; 7.4–7.6 and 7.8 still partial. See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md).

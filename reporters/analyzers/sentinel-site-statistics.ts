@@ -18,6 +18,7 @@ export interface SiteStatistics {
 
   averageDuration: number;
   health: number;
+  passRate: number;
 }
 
 export type SiteStatisticsMap =
@@ -54,32 +55,18 @@ function calculateHealth(
         test.status === 'interrupted'
     ).length;
 
-  const warningCount =
-    tests.filter(
-      test =>
-        test.classification ===
-        'warning'
-    ).length;
-
-  const hardFailures =
+  const executed =
+    passed +
     failed +
     timedOut +
     interrupted;
 
-  const penalty =
-    hardFailures * 2 +
-    warningCount * 0.5;
+  if (executed === 0) {
+    return 0;
+  }
 
-  const rawScore =
-    ((passed / tests.length) * 100) -
-    penalty;
-
-  return Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(rawScore)
-    )
+  return Math.round(
+    (passed / executed) * 100
   );
 }
 
@@ -196,6 +183,11 @@ export function buildSiteStatistics(
         ),
 
       health:
+        calculateHealth(
+          siteTests
+        ),
+
+      passRate:
         calculateHealth(
           siteTests
         ),

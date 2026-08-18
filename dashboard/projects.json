@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "scope": "one-dashboard-two-sites",
+  "note": "Nation and AI Skills are two projects in this dashboard, not separate GitHub repos.",
+  "projects": [
+    {
+      "id": "nation",
+      "name": "Nation",
+      "host": "nation.dev",
+      "baseURL": "https://nation.dev/",
+      "site": "nation"
+    },
+    {
+      "id": "ai-skills",
+      "name": "AI Skills",
+      "host": "aiskills.nation.dev",
+      "baseURL": "https://aiskills.nation.dev/skills",
+      "site": "ai-skills"
+    }
+  ]
+}

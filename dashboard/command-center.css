@@ -541,6 +541,15 @@ button.control-action {
 }
 
 
+.control-pdf
+.control-action-icon,
+
+.control-pdf
+.control-action-status {
+  color: #d46b6b;
+}
+
+
 /* Human review */
 
 .control-human

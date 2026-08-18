@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="./autonomous-qa.css" />
 <link rel="stylesheet" href="./discovery-release-readiness.css" />
 <link rel="stylesheet" href="./site-health.css" />
+  <link rel="stylesheet" href="./root-cause-intelligence.css" />
   <link rel="stylesheet" href="./ux-ui.css" />
   <link rel="stylesheet" href="./security-performance.css" />
   <link rel="stylesheet" href="./compatibility.css" />
@@ -93,16 +94,16 @@
   <div class="section-heading">
     <div>
       <p class="eyebrow">
-        MULTI-SITE INTELLIGENCE
+        MULTI-PROJECT DASHBOARD
       </p>
 
       <h2>
-        Site Quality Score
+        Two-project overview
       </h2>
     </div>
 
     <span class="site-health-status">
-      2 SITES MONITORED
+      NATION VS AI SKILLS
     </span>
   </div>
 
@@ -118,9 +119,9 @@
             Nation
           </span>
 
-          <small>
-            nation.dev
-          </small>
+        <small>
+          nation.dev · project
+        </small>
         </div>
 
         <div
@@ -183,7 +184,7 @@
           </span>
 
           <small>
-            aiskills.nation.dev
+            aiskills.nation.dev · project
           </small>
         </div>
 
@@ -719,6 +720,48 @@
           class="control-action-status"
         >
           READY
+        </span>
+      </span>
+
+      <span class="control-action-arrow">
+        ↗
+      </span>
+    </a>
+
+
+    <!-- EXECUTIVE PDF -->
+    <a
+      class="control-action control-pdf"
+      href="/reports/executive-report.pdf"
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span class="control-action-icon">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M6 2h9l5 5v15H6z" />
+          <path d="M15 2v6h5" />
+          <path d="M8 12h8" />
+          <path d="M8 16h5" />
+        </svg>
+      </span>
+
+      <span class="control-action-content">
+        <strong>
+          Executive PDF
+        </strong>
+
+        <small>
+          Short verdict PDF after each run
+        </small>
+
+        <span
+          id="control-pdf-status"
+          class="control-action-status"
+        >
+          AFTER RUN
         </span>
       </span>
 
@@ -1378,6 +1421,37 @@
 <!-- =========================================================
      END SENTINEL AI
      ========================================================= -->
+
+<section
+  id="root-cause-panel"
+  class="card root-cause-panel"
+>
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">
+        ROOT CAUSE INTELLIGENCE
+      </p>
+      <h2>
+        Failing-test notes
+      </h2>
+    </div>
+    <span
+      id="root-cause-status"
+      class="root-cause-status"
+    >
+      HEURISTIC
+    </span>
+  </div>
+  <p class="root-cause-subtitle">
+    Heuristic notes always run (theme, copy, headers). LLM enrichment is opt-in and fail-open.
+  </p>
+  <div
+    id="root-cause-notes"
+    class="root-cause-notes"
+  >
+    No root-cause notes yet. Run <code>npm run qa:sites</code> or <code>npm run qa:unattended</code>.
+  </div>
+</section>
 
 <!-- =========================================================
      M7.2 UNIFIED ADVISORY DASHBOARD

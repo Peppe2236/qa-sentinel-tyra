@@ -43,7 +43,7 @@ Instead of stopping at **passed** or **failed**, QA Sentinel Tyra adds:
 - advisory risk-based test selection and execution planning
 - advisory failure reproduction and verification planning
 - advisory change-impact, quality-drift and investigation planning
-- live dashboard, HTML and Markdown reporting
+- live dashboard, HTML, Markdown and a short executive PDF
 
 The goal is simple:
 
@@ -91,13 +91,13 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Autonomous remediation and release updates | ✅ Local reports (`reports/remediation.md`, `reports/release-status.json`) — production writes stay off |
 | Captcha clicking | ✅ First-party cookie/consent + native checkboxes; iframe reCAPTCHA/hCaptcha queued unless `SENTINEL_CAPTCHA_SOLVER_KEY` |
 | LLM enrichment | 🔒 Off without `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` — heuristic Sentinel AI still runs |
-| AI-assisted root-cause intelligence | 🚧 In progress |
-| Unified dashboard intelligence | 🚧 In progress |
-| Discovery-aware release readiness | 🚧 In progress |
-| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🚧 In progress — 7.1–7.3 in code |
-| PDF executive reports | 🚧 Planned |
-| GitHub Actions integration | 🚧 In progress — typecheck + unit required; live E2E artifacts may flake |
-| Multi-project dashboard | 🚧 Planned |
+| AI-assisted root-cause intelligence | ✅ Heuristic always; LLM opt-in fail-open |
+| Unified dashboard intelligence | ✅ Control Center + quality dashboard |
+| Discovery-aware release readiness | ✅ Discovery JSON wired into M7.3 counters |
+| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🚧 7.1–7.3 and 7.7 done; 7.4–7.6 / 7.8 partial |
+| PDF executive reports | ✅ `reports/executive-report.pdf` after each run |
+| GitHub Actions integration | ✅ Typecheck + unit required; scheduled/`workflow_dispatch` `qa:sites` may flake |
+| Multi-project dashboard | ✅ Nation + AI Skills in `config/projects.json` |
 
 ---
 
@@ -178,6 +178,8 @@ npm run typecheck
 npm run test:unit
 ```
 
+GitHub Actions on push/PR is typecheck + unit. Nightly and **workflow_dispatch** run `qa:sites` (Chromium, both sites) with artifacts; `qa:unattended` is local/full.
+
 VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:unattended`, `qa:sites`, `qa:matrix`, `dashboard`.
 
 ### The command to run (both sites)
@@ -244,6 +246,13 @@ reports/human-review.html
 ```
 
 or, with the dashboard up, `http://127.0.0.1:4173/reports/human-review.html`.
+
+The short executive PDF is written by the same `onEnd` hook:
+
+```bash
+ls -l reports/executive-report.pdf
+xdg-open reports/executive-report.pdf
+```
 
 The pack is the manual-work minimizer:
 
@@ -641,7 +650,8 @@ The live dashboard exposes:
 
 - Unified Decision release readiness and evidence state
 - **Human review pack** (Control Center card + optional “Needs human” issue filter)
-- live Sentinel AI summary, root-cause, impact, recommendation and next action
+- **Executive PDF** (`reports/executive-report.pdf`)
+- live Sentinel AI summary, per-test root-cause notes (theme, copy, headers), impact, recommendation and next action
 - positive API/backend and compatibility evidence state
 - quality, health and pass/fail metrics
 - product, content and automation findings
@@ -681,12 +691,15 @@ QA Sentinel Tyra generates a styled executive report:
 ```text
 reports/latest-report.html
 reports/human-review.html
+reports/executive-report.pdf
 ```
 
 When the dashboard server is running:
 
 ```text
 http://127.0.0.1:4173/reports/latest-report.html
+http://127.0.0.1:4173/reports/human-review.html
+http://127.0.0.1:4173/reports/executive-report.pdf
 ```
 
 ### Markdown report
@@ -889,7 +902,7 @@ The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 
 ### Milestone 7 — Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
 
-Milestone 7 is defined in `ROADMAP.md`. Deliveries **7.1–7.3 are already in the tree** (site-specific npm commands, advisory Autonomous QA dashboard, discovery-aware release provenance). **7.4–7.8 are not done** (UX/UI, security, performance evidence, LLM-quality root cause, full-matrix validation).
+Milestone 7 is defined in `ROADMAP.md`. Deliveries **7.1–7.3 and 7.7 are done** (site-specific npm commands, advisory dashboard, discovery-aware provenance, heuristic+LLM root-cause notes). **7.4–7.6 and 7.8 remain partial** (UX/UI, security and performance evidence depth; live 18-matrix still local).
 
 The remaining work is tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
 
@@ -910,6 +923,8 @@ git diff --cached --stat
 git commit -m "Describe the change"
 git push origin main
 ```
+
+Required GitHub Actions on push/PR is typecheck + unit only. Live Chromium `qa:sites` (both sites) runs on the nightly schedule and on **Actions → Run workflow**; it continues on live-site flake and uploads `playwright-report/`, `reports/` (including the human pack and `executive-report.pdf`) and `dashboard/data/*.json`. The full 18-project matrix stays local: `npm run qa:unattended`.
 
 For Deep Discovery development:
 
@@ -982,8 +997,9 @@ Completed: 2026-08-17
 
 **Milestone 7 – Unified Dashboard Intelligence & Operationalization: 🚧 IN PROGRESS**
 
-- **7.1–7.3:** operational commands, advisory dashboard, discovery-aware provenance — in code
-- **7.4–7.8:** still open (see `ROADMAP.md` and `docs/QA-SYSTEM-BACKLOG.md`)
+- **7.1–7.3:** operational commands, advisory dashboard, discovery-aware provenance — done
+- **7.7:** heuristic root-cause notes always; LLM opt-in fail-open — done
+- **7.4–7.6 / 7.8:** still partial (see `ROADMAP.md` and `docs/QA-SYSTEM-BACKLOG.md`)
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry

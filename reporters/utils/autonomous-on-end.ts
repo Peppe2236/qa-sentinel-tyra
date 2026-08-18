@@ -126,5 +126,9 @@ export async function runAutonomousOnEndHooks(input: {
     };
   }
 
-  return run;
+  return {
+    ...run,
+    humanReview,
+    rootCauseNotes: humanReview?.rootCauseNotes ?? run.rootCauseNotes,
+  };
 }

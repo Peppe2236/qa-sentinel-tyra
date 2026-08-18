@@ -7,6 +7,9 @@ import {
   llmStatusFromEnv,
   type FetchLike,
 } from './llm';
+import {
+  maybeEnrichRootCauseNotes,
+} from './root-cause';
 
 export type ReportLanguage = 'en' | 'sv';
 
@@ -126,6 +129,7 @@ export async function maybeEnrichHumanReviewPack(
   const clusters = clusterHumanReviewIssues(pack);
   const heuristicLines = heuristicRemediationOneLiners(pack);
   const llm = llmStatusFromEnv(env);
+  const notes = pack.rootCauseNotes ?? [];
 
   const baseline: HumanReviewPack = {
     ...pack,
@@ -137,6 +141,7 @@ export async function maybeEnrichHumanReviewPack(
     },
     issueClusters: clusters,
     remediationOneLiners: heuristicLines,
+    rootCauseNotes: notes,
   };
 
   if (llm.status === 'off-no-key') {
@@ -158,11 +163,18 @@ export async function maybeEnrichHumanReviewPack(
       verdict: pack.verdict,
       bullets: pack.bullets,
       clusters,
+      rootCauseNotes: notes.map(note => ({
+        id: note.id,
+        theme: note.theme,
+        title: note.title,
+        summary: note.summary,
+      })),
       machineOwned: pack.machineOwned.map(item => ({
         classification: item.classification,
         title: item.title,
         site: item.site,
         file: item.file,
+        rootCause: item.rootCause,
       })),
       needsHuman: pack.needsHuman.map(item => item.title),
       untestedRoutes: pack.untestedRoutes.map(item => item.pathname),
@@ -172,9 +184,16 @@ export async function maybeEnrichHumanReviewPack(
     fetchImpl,
   });
 
+  const enrichedNotes = await maybeEnrichRootCauseNotes(
+    notes,
+    env,
+    fetchImpl
+  );
+
   if (!result.ok) {
     return {
       ...baseline,
+      rootCauseNotes: enrichedNotes,
       llm: {
         status: result.label === 'LLM off — no key' ? 'off-no-key' : 'error',
         label: result.label,
@@ -194,6 +213,7 @@ export async function maybeEnrichHumanReviewPack(
     ...baseline,
     bullets: bullets?.length === 3 ? bullets : pack.bullets,
     remediationOneLiners: oneLiners?.length ? oneLiners : heuristicLines,
+    rootCauseNotes: enrichedNotes,
     llm: {
       status: 'enriched',
       label: 'LLM enriched — heuristic still recorded',

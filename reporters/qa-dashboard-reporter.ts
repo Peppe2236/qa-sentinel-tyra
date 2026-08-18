@@ -190,6 +190,18 @@ import {
   fallbackHumanReviewPack,
 } from './utils/human-review';
 import {
+  heuristicRootCauseSummary,
+} from './utils/root-cause';
+import {
+  buildDiscoveryReadiness,
+} from './analyzers/sentinel-discovery-readiness';
+import {
+  buildProjectOverview,
+} from './utils/projects';
+import {
+  writeExecutivePdf,
+} from './utils/executive-pdf';
+import {
   writeHumanReviewReports,
 } from './utils/human-review-report';
 
@@ -434,53 +446,20 @@ function estimatedFixMinutes(
 function rootCauseFor(
   result: DashboardTestResult
 ): string | undefined {
-  switch (result.classification) {
-    case 'product-bug':
-      return (
-        'The application accepted the user interaction, but the expected ' +
-        'functional state or visible result was not produced.'
-      );
-
-    case 'content-bug':
-      return (
-        'Visible website copy contains malformed, duplicated or incorrect text.'
-      );
-
-    case 'automation-issue':
-      return (
-        'The Playwright expectation or locator no longer matches the current page.'
-      );
-
-    case 'accessibility-issue':
-      return (
-        'The page does not meet the expected accessibility requirement.'
-      );
-
-    case 'performance-issue':
-      return (
-        'The measured duration exceeded the configured performance expectation.'
-      );
-
-    case 'security-issue':
-      return (
-        'A security-related response, configuration or browser event was detected.'
-      );
-
-    case 'needs-investigation':
-      return (
-        'The automated evidence is not sufficient to confirm whether the cause ' +
-        'is in the product, test automation or environment.'
-      );
-
-    case 'warning':
-      return (
-        'A non-blocking condition was detected without confirmed user impact.'
-      );
-
-    case 'none':
-    default:
-      return undefined;
+  if (
+    result.status === 'passed' ||
+    result.status === 'skipped' ||
+    result.classification === 'none'
+  ) {
+    return undefined;
   }
+
+  return heuristicRootCauseSummary({
+    title: result.title,
+    classification: result.classification,
+    errorMessage: result.error?.message,
+    classificationReason: result.classificationReason,
+  });
 }
 
 function userImpactFor(
@@ -1276,119 +1255,14 @@ profile:
     this.results
   );
 
-const discoveryDirectory =
-  path.resolve(
-    process.cwd(),
-    'reports',
-    'discovery'
-  );
-
-const nationDiscoveryFile =
-  path.join(
-    discoveryDirectory,
-    'nation.json'
-  );
-
-const aiSkillsDiscoveryFile =
-  path.join(
-    discoveryDirectory,
-    'ai-skills.json'
-  );
-
-const hasDeepDiscoveryRun =
-  this.results.some(
-    test => {
-      const file =
-        test.file
-          .replace(/\\/g, '/')
-          .toLowerCase();
-      const title =
-        `${test.title} ${test.fullTitle}`
-          .toLowerCase();
-
-      return (
-        file.includes('/discovery/') ||
-        title.includes(
-          'discover configured site'
-        )
-      );
-    }
-  );
-
-const smartScanSites = [
-  ...new Set(
-    this.results.flatMap(
-      test => {
-      const file =
-        test.file
-          .replace(/\\/g, '/')
-          .toLowerCase();
-      const title =
-        `${test.title} ${test.fullTitle}`
-          .toLowerCase();
-
-      const isSmartScanRoute =
-        file.includes(
-          'generated/discovered-pages'
-        ) ||
-        title.includes(
-          'automatically discovered pages'
-        );
-
-      if (!isSmartScanRoute) {
-        return [];
-      }
-
-      const site =
-        test.site.toLowerCase();
-
-      if (
-        site === 'nation' ||
-        site === 'ai-skills'
-      ) {
-        return [site];
-      }
-
-      if (
-        file.includes('ai-skills') ||
-        title.includes('ai skills')
-      ) {
-        return ['ai-skills'];
-      }
-
-      if (
-        file.includes('nation') ||
-        title.includes('nation')
-      ) {
-        return ['nation'];
-      }
-
-      return [];
-      }
-    )
-  ),
-];
-
 const discoveryIssues =
   refineDiscoveryIssues([
-    ...(
-      hasDeepDiscoveryRun
-        ? loadDiscoveryIssues()
-        : []
-    ),
-    ...(
-      smartScanSites.length > 0
-        ? loadSmartScanDiscoveryIssues(
-            smartScanSites
-          )
-        : []
-    ),
+    ...loadDiscoveryIssues(),
+    ...loadSmartScanDiscoveryIssues(['nation', 'ai-skills']),
   ]);
 
 const apiBackendEvidence =
-  hasDeepDiscoveryRun
-    ? loadApiBackendEvidence()
-    : [];
+  loadApiBackendEvidence();
 
 const prioritizedIssues =
   sortIssues(this.results);
@@ -1785,6 +1659,14 @@ const run: DashboardRun = {
 
       prioritizedIssues,
       discoveryIssues,
+      discoveryReadiness: buildDiscoveryReadiness({
+        tests: this.results,
+        discoveryIssues,
+        apiEvidence: apiBackendEvidence,
+      }),
+      projects: buildProjectOverview({
+        siteStatistics,
+      }),
       policy,
       
       tests:
@@ -1793,6 +1675,7 @@ const run: DashboardRun = {
 
     try {
       run.humanReview = buildHumanReviewPack(run);
+      run.rootCauseNotes = run.humanReview.rootCauseNotes;
     } catch (error) {
       console.error(
         '[QA Sentinel] Human review pack failed; writing a gap instead.'
@@ -1821,6 +1704,10 @@ const run: DashboardRun = {
         ),
       })
     );
+
+    run.rootCauseNotes =
+      run.humanReview?.rootCauseNotes ??
+      run.rootCauseNotes;
 
 const sentinelAi =
   await maybeEnrichSentinelAi(
@@ -1936,6 +1823,48 @@ const htmlReportFile =
         pack,
         reportsDirectory
       ).html;
+    }
+
+    try {
+      const pdfPack =
+        run.humanReview ??
+        fallbackHumanReviewPack(
+          new Error('human review pack missing'),
+          run.runId
+        );
+      const pdfPath = await writeExecutivePdf({
+        pack: pdfPack,
+        run,
+        reportsDirectory,
+      });
+      run.executiveReport = {
+        status: 'written',
+        path: 'reports/executive-report.pdf',
+        generatedAt: new Date().toISOString(),
+      };
+      outputRun.executiveReport = run.executiveReport;
+      outputRun.humanReview = run.humanReview;
+      outputRun.rootCauseNotes = run.humanReview?.rootCauseNotes;
+      writeJson(latestRunFile, outputRun);
+      if (run.humanReview) {
+        writeJson(
+          path.join(dataDirectory, 'human-review.json'),
+          run.humanReview
+        );
+      }
+      console.log(`Executive PDF: ${pdfPath}`);
+    } catch (error) {
+      console.error(
+        '[QA Sentinel] Executive PDF failed; HTML pack still written.'
+      );
+      console.error(error);
+      run.executiveReport = {
+        status: 'error',
+        reason:
+          error instanceof Error ? error.message : String(error),
+      };
+      outputRun.executiveReport = run.executiveReport;
+      writeJson(latestRunFile, outputRun);
     }
 
     console.log('');
@@ -2055,6 +1984,12 @@ const htmlReportFile =
     if (humanReviewHtml) {
       console.log(
         `Human review pack: ${humanReviewHtml}`
+      );
+    }
+
+    if (run.executiveReport?.status === 'written') {
+      console.log(
+        `Executive PDF: ${path.join(reportsDirectory, 'executive-report.pdf')}`
       );
     }
 

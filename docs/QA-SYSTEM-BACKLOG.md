@@ -36,15 +36,15 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-01 | GitHub Actions workflow | Without CI, GitHub has no proof the suite still typechecks | **done** | Inspect `.github/workflows/qa-ci.yml` |
 | CI-02 | Typecheck as a required gate | Reporter TypeScript is the product | **done** | `npm run typecheck` |
 | CI-03 | Analyzer unit tests as a required gate | Catalog/config regressions should fail CI without hitting live sites | **done** | `npm run test:unit` |
-| CI-04 | Live Nation Chromium in CI | Catches homepage/auth smoke breakage | **partial** | `npm run test:nation:ci` (CI continues on failure; artifacts still upload). Local both-sites command: `npm run qa:sites` |
-| CI-05 | Live Skills Chromium in CI | Same for the catalog page | **partial** | `npm run test:skills:ci` |
-| CI-06 | Combined Chromium quality job | Split jobs overwrite `playwright-report/`; a single combined run would be a better release artifact | **partial** | `npm run qa:sites` locally (bounded scan + both Chromium projects, one `latest-run.json`). GitHub still splits jobs |
-| CI-07 | Do not fail the repo on live-site flake | nation.dev is third-party and flaky from GitHub runners | **done** | Live steps use `continue-on-error: true` |
-| CI-08 | Upload Playwright HTML + reports artifacts | GitHub otherwise looks empty because reports are gitignored | **done** | Workflow `qa-reports` artifact |
+| CI-04 | Live Nation Chromium in CI | Catches homepage/auth smoke breakage | **partial** | Scheduled / `workflow_dispatch` job runs `npm run qa:sites` (both sites, Chromium) with `continue-on-error`. Not a required gate |
+| CI-05 | Live Skills Chromium in CI | Same for the catalog page | **partial** | Covered by the same `qa:sites` job (not a split Nation-only / Skills-only overwrite) |
+| CI-06 | Combined Chromium quality job | Split jobs overwrite `playwright-report/`; a single combined run would be a better release artifact | **done** | GitHub `qa-sites` job runs `npm run qa:sites`. Local: `npm run qa:sites` |
+| CI-07 | Do not fail the repo on live-site flake | nation.dev is third-party and flaky from GitHub runners | **done** | Live `qa:sites` uses `continue-on-error: true`; required job is typecheck + unit |
+| CI-08 | Upload Playwright HTML + reports artifacts | GitHub otherwise looks empty because reports are gitignored | **done** | Workflow uploads `playwright-report/`, `reports/` (including `human-review.html` and `executive-report.pdf`) and `dashboard/data/*.json` |
 | CI-09 | Cache Playwright browsers | CI is slow without cache | **not done** | Add `actions/cache` on `~/.cache/ms-playwright` |
 | CI-10 | Branch protection | `main` can still be pushed without green required gates | **not done** | GitHub: require `quality` job typecheck/unit |
 | CI-11 | PR comment with summary | Artifacts are easy to miss | **not done** | Parse `test-results/playwright-results.json` |
-| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | Daily everything: `npm run qa:unattended` (scan + 18-project matrix). Fast Chromium: `npm run qa:sites`. Matrix without scan: `npm run qa:matrix` |
+| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | GitHub nightly is Chromium `qa:sites` only. Full 18-project matrix stays local: `npm run qa:unattended`. Fast Chromium: `npm run qa:sites`. Matrix without scan: `npm run qa:matrix` |
 | CI-13 | Fail CI on `test.only` | Already `forbidOnly` when `CI=true` | **done** | `CI=true npm run test:nation:ci` |
 
 ---
@@ -222,15 +222,14 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 |---|---|---|---|---|
 | A-01 | Keep Autonomous QA advisory-only | Safety contract | **done** | Do not set `executionEnabled: true` |
 | A-02 | Heuristic Sentinel AI documented as non-LLM | Avoid implying GPT in the dashboard | **partial** | README still says “Sentinel AI”; backlog is the honest source |
-| A-03 | Optional LLM explanations behind a flag | Only after evidence quality is real | **not done** | Do not add fake API keys |
+| A-03 | Optional LLM explanations behind a flag | Only after evidence quality is real | **done** | Heuristic always; `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` enrich fail-open. Do not add fake API keys |
 | A-04 | M7.2 / M7.3 dashboard panels | Already in `dashboard/index.html` | **done** | `npm run dashboard` |
 
 ---
 
 ## Out of scope until the above is solid
 
-- Multi-product dashboard for unrelated TYRA Labs apps
-- PDF executive reports
+- Multi-product dashboard for unrelated TYRA Labs apps (Nation + AI Skills in one dashboard is in scope)
 - Auto-filing GitHub issues from every P3
 - Replacing Playwright with another runner
 - Calling this “the best QA system in the world”

@@ -5,6 +5,7 @@ import type {
   HumanReviewPack,
   MachineOwnedItem,
   NeedsHumanItem,
+  RootCauseNote,
   UntestedRoute,
 } from '../models/types';
 
@@ -67,6 +68,7 @@ function machineRows(items: MachineOwnedItem[]): string {
           <th>Site</th>
           <th>File / route</th>
           <th>Title</th>
+          <th>Root cause</th>
         </tr>
       </thead>
       <tbody>
@@ -81,6 +83,7 @@ function machineRows(items: MachineOwnedItem[]): string {
                   <span class="muted">${escapeHtml(item.route)}</span>
                 </td>
                 <td>${escapeHtml(item.title)}</td>
+                <td>${escapeHtml(item.rootCause ?? 'Heuristic note in the Root cause block.')}</td>
               </tr>
             `
           )
@@ -137,6 +140,25 @@ function untestedList(items: UntestedRoute[]): string {
         .join('')}
     </ul>
   `;
+}
+
+function rootCauseCards(notes: RootCauseNote[] | undefined): string {
+  if (!notes?.length) {
+    return '<p class="muted">No failing-test root-cause notes. Heuristic Sentinel AI still ran.</p>';
+  }
+
+  return notes
+    .map(
+      note => `
+        <article class="root-cause-card">
+          <p class="eyebrow">${escapeHtml(note.theme)} · ${escapeHtml(note.engine)} · ${escapeHtml(note.site)}</p>
+          <h3>${escapeHtml(note.title)}</h3>
+          <p><strong>Root cause:</strong> ${escapeHtml(note.summary)}</p>
+          <p class="muted">${escapeHtml(note.recommendation)}</p>
+        </article>
+      `
+    )
+    .join('');
 }
 
 export function buildHumanReviewHtml(pack: HumanReviewPack): string {
@@ -227,6 +249,14 @@ export function buildHumanReviewHtml(pack: HumanReviewPack): string {
       background: var(--card);
     }
     .human-card h3 { margin: 0 0 0.4rem; }
+    .root-cause-card {
+      padding: 1rem 1.1rem;
+      margin: 0.8rem 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+    }
+    .root-cause-card h3 { margin: 0 0 0.4rem; }
     a { color: #8ec5ff; }
     .untested { padding-left: 1.1rem; }
     .untested li { margin: 0.35rem 0; }
@@ -244,6 +274,13 @@ export function buildHumanReviewHtml(pack: HumanReviewPack): string {
         ${pack.bullets.map(bullet => `<li>${escapeHtml(bullet)}</li>`).join('')}
       </ul>
     </header>
+
+    <section>
+      <p class="eyebrow">Root cause</p>
+      <h2>Heuristic notes for failing tests (LLM enriches when a key is set)</h2>
+      <p class="muted">Theme, copy and header failures stay machine-owned. This block exists even without an LLM key.</p>
+      ${rootCauseCards(pack.rootCauseNotes)}
+    </section>
 
     <section>
       <p class="eyebrow">Do not touch</p>
@@ -279,7 +316,7 @@ export function buildHumanReviewMarkdown(pack: HumanReviewPack): string {
     ? pack.machineOwned
         .map(
           item =>
-            `- **${classificationLabel(item.classification)}** · ${item.site} · \`${item.file}\` · ${item.route} · ${item.title}`
+            `- **${classificationLabel(item.classification)}** · ${item.site} · \`${item.file}\` · ${item.route} · ${item.title}${item.rootCause ? ` — ${item.rootCause}` : ''}`
         )
         .join('\n')
     : '_Nothing in this bucket._';
@@ -333,6 +370,17 @@ export function buildHumanReviewMarkdown(pack: HumanReviewPack): string {
     '## 30-second verdict',
     '',
     ...pack.bullets.map(bullet => `- ${bullet}`),
+    '',
+    '## Root cause',
+    '',
+    pack.rootCauseNotes?.length
+      ? pack.rootCauseNotes
+          .map(
+            note =>
+              `- **${note.theme}** · ${note.site} · ${note.title} — ${note.summary}`
+          )
+          .join('\n')
+      : '_No failing-test root-cause notes._',
     '',
     '## Do not touch',
     '',

@@ -77,5 +77,6 @@ console.log(
   '[QA Sentinel] One dashboard run was written to dashboard/data/latest-run.json.'
 );
 console.log('[QA Sentinel] Human review pack: reports/human-review.html');
+console.log('[QA Sentinel] Executive PDF: reports/executive-report.pdf');
 console.log('[QA Sentinel] Open it with: npm run dashboard');
 console.log('==================================================');

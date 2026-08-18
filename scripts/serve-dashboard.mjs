@@ -40,7 +40,7 @@ const mimeTypes = {
   '.svg': 'image/svg+xml',
   '.webm': 'video/webm',
   '.mp4': 'video/mp4',
-  '.zip': 'application/zip',
+  '.pdf': 'application/pdf',
 };
 
 function isInsideRoot(
@@ -250,6 +250,10 @@ server.listen(
 
     console.log(
       `Human review pack: http://127.0.0.1:${port}/reports/human-review.html`
+    );
+
+    console.log(
+      `Executive PDF: http://127.0.0.1:${port}/reports/executive-report.pdf`
     );
 
     console.log(

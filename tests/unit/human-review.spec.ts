@@ -193,9 +193,10 @@ test.describe('human review pack from fixture latest-run', () => {
     expect(
       pack.untestedRoutes.find(item => item.pathname === '/')
     ).toBeUndefined();
-    expect(
-      pack.untestedRoutes.find(item => item.pathname === '/home')
-    ).toBeUndefined();
+    expect(pack.rootCauseNotes?.some(note => note.theme === 'theme')).toBe(
+      true
+    );
+    expect(pack.machineOwned.some(item => item.rootCause)).toBe(true);
   });
 
   test('does not ask for a test account when both env pairs are present', () => {
@@ -231,6 +232,7 @@ test.describe('human review pack from fixture latest-run', () => {
     expect(html).toContain('NO-GO');
     expect(html).toContain('Do not touch');
     expect(html).toContain('Needs a human');
+    expect(html).toContain('Root cause');
     expect(html).toContain('theme toggle');
     expect(html).toContain('Add test account to unlock');
     expect(html).toContain('../test-results/sidebar/error-context.md');

@@ -71,5 +71,6 @@ console.log(
 console.log('[QA Sentinel] Human review pack:');
 console.log('  reports/human-review.html');
 console.log('  reports/human-review.md');
+console.log('  reports/executive-report.pdf');
 console.log('Open with the dashboard: http://127.0.0.1:4173/reports/human-review.html');
 console.log('==================================================');

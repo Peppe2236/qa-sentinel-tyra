@@ -16,6 +16,31 @@ export type IssueClassification =
 
 export type HumanReviewVerdict = 'GO' | 'WARN' | 'NO-GO';
 
+export type RootCauseTheme =
+  | 'theme'
+  | 'copy'
+  | 'headers'
+  | 'accessibility'
+  | 'performance'
+  | 'auth'
+  | 'other';
+
+export interface RootCauseNote {
+  id: string;
+  testId?: string;
+  title: string;
+  site: string;
+  file: string;
+  route: string;
+  theme: RootCauseTheme;
+  classification?: IssueClassification;
+  engine: 'heuristic' | 'openai';
+  summary: string;
+  evidence: string;
+  recommendation: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
 export interface MachineOwnedItem {
   id: string;
   classification: IssueClassification;
@@ -23,6 +48,8 @@ export interface MachineOwnedItem {
   site: string;
   file: string;
   route: string;
+  rootCause?: string;
+  rootCauseTheme?: RootCauseTheme;
 }
 
 export interface NeedsHumanItem {
@@ -92,6 +119,47 @@ export interface HumanReviewPack {
   issueClusters?: IssueCluster[];
   remediationOneLiners?: string[];
   captchaQueue?: CaptchaQueueItem[];
+  rootCauseNotes?: RootCauseNote[];
+}
+
+export type DiscoveryReadinessStatus =
+  | 'verified'
+  | 'verified-with-warnings'
+  | 'degraded'
+  | 'not-verified';
+
+export interface DiscoveryReadiness {
+  status: DiscoveryReadinessStatus;
+  sites: string[];
+  routePositive: number;
+  routeObserved: number;
+  apiPositive: number;
+  negativeCount: number;
+  warningCount: number;
+  findingCount: number;
+  sourceArtifacts: string[];
+  generatedAt?: string;
+}
+
+export interface DashboardProject {
+  id: string;
+  name: string;
+  host: string;
+  site: string;
+  baseURL: string;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  health: number;
+  passRate: number;
+}
+
+export interface ExecutiveReportArtifact {
+  status: 'written' | 'skipped' | 'error';
+  path?: string;
+  generatedAt?: string;
+  reason?: string;
 }
 
 export type RemediationKind =
@@ -2526,6 +2594,7 @@ export interface DashboardRun {
   warnings: number;
   averageDuration: number;
   health: number;
+  passRate?: number;
 }>;
 
   classificationSummary?: ClassificationSummary;
@@ -2596,6 +2665,18 @@ tests: DashboardTestResult[];
 
   humanReview?:
     HumanReviewPack;
+
+  rootCauseNotes?:
+    RootCauseNote[];
+
+  discoveryReadiness?:
+    DiscoveryReadiness;
+
+  projects?:
+    DashboardProject[];
+
+  executiveReport?:
+    ExecutiveReportArtifact;
 
   policy?:
     QaPolicySnapshot;

@@ -447,6 +447,7 @@ function renderDiscoveryReleaseReadiness(run) {
     return;
   }
 
+  const readiness = run?.discoveryReadiness ?? null;
   const tests = discoveryArray(run?.tests);
   const routeTests = tests.filter(isDiscoveredRouteTest);
   const routePassed = routeTests.filter(
@@ -542,6 +543,7 @@ function renderDiscoveryReleaseReadiness(run) {
 
   const sites = [
     ...new Set([
+      ...(readiness?.sites ?? []),
       ...routeTests.map(test => test.site),
       ...apiEvidence.map(evidence => evidence.site),
       ...findings.map(finding => finding.site),
@@ -576,32 +578,62 @@ function renderDiscoveryReleaseReadiness(run) {
     0
   );
 
-  let status = 'verified';
+  let status = readiness?.status ?? 'verified';
 
-  if (!hasEvidence) {
-    status = 'not-verified';
-  } else if (
-    routeFailed.length > 0 ||
-    negativeFindings.length > 0
+  if (!readiness) {
+    status = 'verified';
+    if (!hasEvidence) {
+      status = 'not-verified';
+    } else if (
+      routeFailed.length > 0 ||
+      negativeFindings.length > 0
+    ) {
+      status = 'degraded';
+    } else if (
+      warningFindings.length > 0 ||
+      apiGaps > 0 ||
+      backendGaps > 0
+    ) {
+      status = 'verified-with-warnings';
+    }
+  }
+
+  if (
+    positiveItems.length === 0 &&
+    Number(readiness?.routePositive ?? 0) > 0
   ) {
-    status = 'degraded';
-  } else if (
-    warningFindings.length > 0 ||
-    apiGaps > 0 ||
-    backendGaps > 0
-  ) {
-    status = 'verified-with-warnings';
+    positiveItems.push({
+      state: 'verified',
+      kind: 'DISCOVERY SCAN',
+      title: `${readiness.routePositive} crawled routes recorded`,
+      site: sites.join(' · ') || 'nation + ai-skills',
+      origin: 'discovery',
+      collector: 'discovery-json',
+      artifact: (readiness.sourceArtifacts ?? []).join(', ') || 'reports/discovery',
+      observedAt: readiness.generatedAt,
+      detail:
+        'Discovery JSON and scan inventory are wired into release-readiness counters even when generated route tests are not in this run.',
+    });
   }
 
   panel.dataset.status = status;
   setText('discovery-release-status', discoveryPanelStatus(status));
-  setText('discovery-route-positive', routePassed.length);
-  setText('discovery-api-positive', apiEvidence.length);
+  setText(
+    'discovery-route-positive',
+    readiness?.routePositive ?? routePassed.length
+  );
+  setText(
+    'discovery-api-positive',
+    readiness?.apiPositive ?? apiEvidence.length
+  );
   setText(
     'discovery-negative-count',
-    routeFailed.length + negativeFindings.length
+    readiness?.negativeCount ?? (routeFailed.length + negativeFindings.length)
   );
-  setText('discovery-warning-count', warningFindings.length);
+  setText(
+    'discovery-warning-count',
+    readiness?.warningCount ?? warningFindings.length
+  );
   setText('discovery-site-count', sites.length);
   setText(
     'discovery-sites',
@@ -7129,6 +7161,47 @@ function bindFilters() {
     );
   }
 }
+function renderRootCauseNotes(run) {
+  const container = byId('root-cause-notes');
+  const status = byId('root-cause-status');
+  const notes = Array.isArray(run?.rootCauseNotes)
+    ? run.rootCauseNotes
+    : Array.isArray(run?.humanReview?.rootCauseNotes)
+      ? run.humanReview.rootCauseNotes
+      : [];
+
+  if (status) {
+    const engine = notes.some(note => note.engine === 'openai')
+      ? 'LLM ENRICHED'
+      : 'HEURISTIC';
+    status.textContent = notes.length
+      ? `${notes.length} NOTES · ${engine}`
+      : 'HEURISTIC';
+  }
+
+  if (!container) {
+    return;
+  }
+
+  if (notes.length === 0) {
+    container.innerHTML =
+      'No failing-test root-cause notes for this run. Heuristic Sentinel AI still ran.';
+    return;
+  }
+
+  container.innerHTML = notes
+    .slice(0, 8)
+    .map(note => `
+      <article class="root-cause-note">
+        <p class="eyebrow">${escapeHtml(note.theme)} · ${escapeHtml(note.engine)} · ${escapeHtml(note.site)}</p>
+        <h3>${escapeHtml(note.title)}</h3>
+        <p><strong>Root cause:</strong> ${escapeHtml(note.summary)}</p>
+        <p>${escapeHtml(note.recommendation)}</p>
+      </article>
+    `)
+    .join('');
+}
+
 function renderControlCenter(
   run,
   history = []
@@ -7169,6 +7242,15 @@ function renderControlCenter(
     )
       .replaceAll('-', ' ')
       .toUpperCase()
+  );
+
+  setText(
+    'control-pdf-status',
+    run?.executiveReport?.status === 'written'
+      ? 'PDF READY'
+      : run?.executiveReport?.status === 'error'
+        ? 'PDF FAILED'
+        : 'AFTER RUN'
   );
 
   setText(
@@ -7272,6 +7354,12 @@ function deriveSiteStatistics(run, siteId) {
 }
 
 function renderSiteStatistics(run) {
+  const projectBySite = Object.fromEntries(
+    (Array.isArray(run?.projects) ? run.projects : []).map(project => [
+      project.site || project.id,
+      project,
+    ])
+  );
   const sites = {
     nation: {
       prefix: 'nation-site',
@@ -7287,8 +7375,18 @@ function renderSiteStatistics(run) {
   };
 
   for (const [siteId, config] of Object.entries(sites)) {
-    const stats =
-      deriveSiteStatistics(run, siteId);
+    const derived = deriveSiteStatistics(run, siteId);
+    const project = projectBySite[siteId];
+    const stats = project
+      ? {
+          ...derived,
+          ...project,
+          health: project.passRate ?? project.health ?? derived?.health,
+          passRate: project.passRate ?? derived?.passRate ?? derived?.health,
+          warnings: derived?.warnings ?? 0,
+          averageDuration: derived?.averageDuration ?? 0,
+        }
+      : derived;
 
     const card =
       document.querySelector(
@@ -7349,7 +7447,7 @@ function renderSiteStatistics(run) {
         0,
         Math.min(
           100,
-          Number(stats.health) || 0
+          Number(stats.passRate ?? stats.health) || 0
         )
       );
 
@@ -7451,6 +7549,7 @@ async function render() {
   renderDiscoveryReleaseReadiness(run);
   renderMetrics(run);
   renderSentinelAi(run);
+  renderRootCauseNotes(run);
   renderAutonomousQa(run);
 
   renderSiteStatistics(run);
