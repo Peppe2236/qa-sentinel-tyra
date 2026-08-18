@@ -1,144 +1,65 @@
-import { spawnSync } from 'node:child_process';
 import process from 'node:process';
+
+import {
+  DAILY_CHROMIUM_PROJECTS,
+  ensureScanLimit,
+  fail,
+  projectArgs,
+  runPlaywright,
+  scanNation,
+  scanSkills,
+} from './qa-cli.mjs';
 
 const nationOnly = process.argv.includes('--nation-only');
 const skillsOnly = process.argv.includes('--skills-only');
 
-if (!process.env.QA_MAX_PAGES) {
-  process.env.QA_MAX_PAGES = '20';
-}
+ensureScanLimit();
 
-function runNode(script, args = []) {
-  if (process.platform === 'win32') {
-    const command = process.env.ComSpec ?? 'cmd.exe';
-
-    return spawnSync(
-      command,
-      ['/d', '/s', '/c', `node ${script} ${args.join(' ')}`.trim()],
-      {
-        stdio: 'inherit',
-        shell: false,
-        env: process.env,
-      }
-    );
-  }
-
-  return spawnSync(process.execPath, [script, ...args], {
-    stdio: 'inherit',
-    shell: false,
-    env: process.env,
-  });
-}
-
-function runPlaywright(args) {
-  if (process.platform === 'win32') {
-    const command = process.env.ComSpec ?? 'cmd.exe';
-
-    return spawnSync(
-      command,
-      ['/d', '/s', '/c', `npx playwright test ${args.join(' ')}`],
-      {
-        stdio: 'inherit',
-        shell: false,
-        env: process.env,
-      }
-    );
-  }
-
-  return spawnSync('npx', ['playwright', 'test', ...args], {
-    stdio: 'inherit',
-    shell: false,
-    env: process.env,
-  });
-}
-
-function fail(label, result) {
-  if (result.error) {
-    console.error(`[QA Sentinel] ${label} could not be started.`);
-    console.error(`[QA Sentinel] ${result.error.message}`);
-    process.exitCode = 1;
-    return true;
-  }
-
-  if ((result.status ?? 1) !== 0) {
-    console.error(
-      `[QA Sentinel] ${label} finished with exit code ${result.status ?? 1}.`
-    );
-    process.exitCode = result.status ?? 1;
-    return true;
-  }
-
-  return false;
-}
-
-const scanNation = !skillsOnly;
-const scanSkills = !nationOnly;
+const scanNationSite = !skillsOnly;
+const scanSkillsSite = !nationOnly;
+const projects = nationOnly
+  ? ['nation-chromium']
+  : skillsOnly
+    ? ['ai-skills-chromium']
+    : [...DAILY_CHROMIUM_PROJECTS];
 
 console.log('');
 console.log('==================================================');
-console.log('  QA Sentinel Tyra — bounded site scan + tests');
+console.log('  QA Sentinel Tyra — Chromium-only fast run');
 console.log('==================================================');
 console.log(`QA_MAX_PAGES=${process.env.QA_MAX_PAGES}`);
 console.log(
-  scanNation && scanSkills
+  scanNationSite && scanSkillsSite
     ? 'Sites: nation.dev + aiskills.nation.dev'
-    : scanNation
+    : scanNationSite
       ? 'Sites: nation.dev'
       : 'Sites: aiskills.nation.dev'
 );
+console.log(
+  'Fast alias. Compatibility Firefox/Safari/tablet/mobile stay not-in-this-run.'
+);
+console.log('For every browser and device: npm run qa:unattended');
 console.log('==================================================');
 
-if (scanNation) {
-  console.log('[QA Sentinel] Scanning https://nation.dev/ (bounded)...');
-  const scan = runNode('scripts/scan-site.mjs', [
-    'https://nation.dev/',
-    'nation',
-  ]);
-
-  if (fail('Nation scan', scan)) {
+if (scanNationSite) {
+  if (fail('Nation scan', scanNation())) {
     process.exit(process.exitCode ?? 1);
   }
 }
 
-if (scanSkills) {
-  console.log(
-    '[QA Sentinel] Scanning https://aiskills.nation.dev/skills (bounded)...'
-  );
-  const scan = runNode('scripts/scan-site.mjs', [
-    'https://aiskills.nation.dev/skills',
-    'ai-skills',
-  ]);
-
-  if (fail('AI Skills scan', scan)) {
+if (scanSkillsSite) {
+  if (fail('AI Skills scan', scanSkills())) {
     process.exit(process.exitCode ?? 1);
   }
 }
 
-const playwrightArgs = nationOnly
-  ? [
-      'tests/nation',
-      'tests/auth/nation.setup.ts',
-      'tests/generated/discovered-pages-nation.spec.ts',
-      '--project=nation-chromium',
-    ]
-  : skillsOnly
-    ? [
-        'tests/skills',
-        'tests/auth/ai-skills.setup.ts',
-        'tests/generated/discovered-pages-ai-skills.spec.ts',
-        '--project=ai-skills-chromium',
-      ]
-    : [
-        'tests/nation',
-        'tests/skills',
-        'tests/auth',
-        'tests/generated',
-        '--project=nation-chromium',
-        '--project=ai-skills-chromium',
-      ];
+const playwrightArgs = projectArgs(projects);
 
 console.log(
-  `[QA Sentinel] Running Playwright: ${playwrightArgs.join(' ')}`
+  `[QA Sentinel] Running Playwright Chromium: ${playwrightArgs.join(' ')}`
+);
+console.log(
+  '[QA Sentinel] No file-path filter: daily Chromium testMatch includes handwritten, discovery, diagnostics and generated smoke.'
 );
 
 const tests = runPlaywright(playwrightArgs);
@@ -155,8 +76,6 @@ console.log('');
 console.log(
   '[QA Sentinel] One dashboard run was written to dashboard/data/latest-run.json.'
 );
-console.log(
-  '[QA Sentinel] Human review pack: reports/human-review.html'
-);
+console.log('[QA Sentinel] Human review pack: reports/human-review.html');
 console.log('[QA Sentinel] Open it with: npm run dashboard');
 console.log('==================================================');

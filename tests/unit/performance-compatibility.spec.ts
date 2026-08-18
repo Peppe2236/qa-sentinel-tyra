@@ -317,6 +317,7 @@ test.describe('compatibility not-in-this-run', () => {
     expect(assessment.status).toBe('healthy');
     expect(assessment.status).not.toBe('poor');
     expect(firefox?.notes?.join(' ')).toMatch(/not in this run/i);
+    expect(firefox?.notes?.join(' ')).toMatch(/qa:unattended/);
     expect(tablet?.notes?.join(' ')).toMatch(/not in this run/i);
   });
 

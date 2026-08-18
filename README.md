@@ -87,8 +87,10 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Sentinel AI live dashboard binding | ✅ Post-M6 |
 | Positive first-party API/backend verification evidence | ✅ Post-M6 |
 | Full configured compatibility-matrix verification | ✅ Post-M6 |
-| Autonomous test execution | 🔒 Intentionally disabled — advisory-only |
-| Autonomous remediation and release updates | 🔒 Intentionally disabled — advisory-only |
+| Autonomous test execution | 🔒 Disabled by policy (`QA_AUTONOMOUS_EXECUTION`) |
+| Autonomous remediation and release updates | 🔒 Disabled by policy — production writes stay off |
+| Captcha clicking | 🔒 Disabled by policy |
+| LLM enrichment | 🔒 Off without `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` — heuristic Sentinel AI still runs |
 | AI-assisted root-cause intelligence | 🚧 In progress |
 | Unified dashboard intelligence | 🚧 In progress |
 | Discovery-aware release readiness | 🚧 In progress |
@@ -171,7 +173,7 @@ cp .env.example .env
 
 ```bash
 npm install
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm run typecheck
 npm run test:unit
 ```
@@ -180,18 +182,29 @@ VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:un
 
 ### The command to run (both sites)
 
-`test:nation:ci` is Nation-only and does not scan. To check **nation.dev and aiskills.nation.dev together** (bounded scan + Chromium tests, one `latest-run.json`):
+`test:nation:ci` is Nation-only and does not scan. To check **nation.dev and aiskills.nation.dev together** on Chromium only (bounded scan + daily Chromium tests, one `latest-run.json`):
 
 ```bash
 cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 npm run qa:sites
 ```
 
-That is the Ubuntu command to use. It:
+That is the **fast Chromium alias**. Firefox, Safari, tablet and mobile stay **not in this run**.
+
+For **everything measured on all browsers and devices**:
+
+```bash
+cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
+npx playwright install chromium firefox webkit
+npm run qa:unattended
+```
+
+`qa:unattended` then:
 
 1. Scans both sites with `QA_MAX_PAGES` default **20** (the live apps have ~12–13 public routes each).
-2. Runs Nation + AI Skills Chromium tests, including generated discovered-page smoke tests.
-3. Writes one dashboard run covering both sites.
+2. Runs hand-written tests across Chromium, Firefox and WebKit × desktop, tablet and mobile (18 projects).
+3. Keeps generated discovered-page smoke, Deep Discovery crawl and diagnostics on daily Chromium only.
+4. Writes one dashboard run covering both sites, all analyzers, and the human-review pack.
 
 `qa:sites` now also measures document security headers (CSP / HSTS / X-Content-Type-Options / clickjacking) and anonymous Set-Cookie flags on both homepages and sign-in, plus axe-core smoke on the Nation homepage and Skills catalog, plus page-load / first-party API timing on the Nation homepage, Nation sign-in, and Skills catalog. Missing headers fail honestly. No cookies or no first-party XHR/fetch is recorded as not-observed, not poor. Settings in the dashboard is a read-only catalog view, not an editor.
 
@@ -205,15 +218,22 @@ Open `http://127.0.0.1:4173/`.
 
 ### Unattended run + human review pack
 
-The daily command that needs no human at the keyboard is:
+The daily command that measures **everything** (scan + full 18-project matrix + all analyzers + human-review pack) is:
 
 ```bash
-git pull && npm i && npm run qa:unattended
+git pull && npm i && npx playwright install chromium firefox webkit && npm run qa:unattended
 ```
 
-That is `qa:sites` (both sites, Chromium, bounded scan + tests + reporter) with a human-review pack at the end. No prompts, no captcha clicking, no production writes, no LLM.
+That is slower than Chromium-only. It:
 
-`qa:matrix` is extra: still unattended, but slower (18 browser × device projects).
+1. Bounded-scans both sites (`QA_MAX_PAGES` default 20).
+2. Runs hand-written tests across **both sites × Chromium / Firefox / WebKit × desktop / tablet / mobile** (18 Playwright projects).
+3. Keeps generated discovery smoke, Deep Discovery crawl and diagnostics on daily Chromium only so they are not multiplied by 18.
+4. Runs every reporter analyzer onEnd and writes the human-review pack.
+
+No prompts, no captcha clicking, no production writes. Heuristic Sentinel AI always runs. LLM stays **LLM off — no key** unless `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY` is set.
+
+`qa:sites` is the fast Chromium-only alias. `qa:matrix` is the 18-project matrix **without** a fresh scan.
 
 If `.env` contains `NATION_TEST_EMAIL`/`PASSWORD` and/or `AI_SKILLS_TEST_*`, the run logs in once, writes `playwright/.auth/*.json` (`storageState`), and hits member routes (`/home`, `/jobs`, `/profile`, `/assessment`). If those variables are missing, the tests skip and the pack lists **one** human item: *Add test account to unlock /home /jobs /profile /assessment*.
 
@@ -234,22 +254,21 @@ The pack is the manual-work minimizer:
 
 CSP analytics stays a warning, not a human fire drill. Failed traces use Playwright `retain-on-failure` (plus video on fail).
 
-Daily Ubuntu loop (Chromium, both sites, including generated page smoke):
+Daily Ubuntu loop (everything: scan + all browsers and devices):
 
 ```bash
-git pull && npm i && npm run qa:unattended && npm run dashboard
+git pull && npm i && npx playwright install chromium firefox webkit && npm run qa:unattended && npm run dashboard
 ```
 
-Full browser × device matrix (hand-written tests only — homepage, auth, catalog, security, a11y, perf, and product-bug specs). Generated discovered-page smoke stays on `qa:sites` Chromium so it is not multiplied across 18 projects:
+Fast Chromium-only (Firefox/Safari/tablet/mobile stay not-in-this-run):
 
 ```bash
-npx playwright install chromium firefox webkit
-npm run qa:matrix
+npm run qa:sites
 ```
 
-`qa:matrix` is 2 sites × Chromium / Firefox / WebKit (Safari) × Desktop / Tablet / Mobile = **18 Playwright projects**. Microsoft Edge is not a separate project; Chromium covers the Edge Blink engine. `qa:browsers` and `qa:compat` are aliases of `qa:matrix`. No `NATION_TEST_*` credentials are required.
+`qa:matrix` is 2 sites × Chromium / Firefox / WebKit (Safari) × Desktop / Tablet / Mobile = **18 Playwright projects** without a new scan. Microsoft Edge is not a separate project; Chromium covers the Edge Blink engine. `qa:browsers` and `qa:compat` are aliases of `qa:matrix`. No `NATION_TEST_*` credentials are required.
 
-Browsers and form factors that did not execute in a run are **not in this run**, not poor. After `qa:sites`, Chrome/Chromium and Desktop are measured; Firefox, Safari, Tablet, and Mobile stay not in this run. After `qa:matrix`, Chrome, Firefox, Safari and Desktop, Tablet, Mobile cards show measured pass/fail. `qa:sites` stays Chromium-fast.
+Browsers and form factors that did not execute in a run are **not in this run**, not poor. After `qa:sites`, Chrome/Chromium and Desktop are measured; Firefox, Safari, Tablet, and Mobile stay not in this run until you run `qa:unattended`. After `qa:unattended`, Chrome, Firefox, Safari and Desktop, Tablet, Mobile cards show measured pass/fail.
 
 Nation-only or Skills-only (still scans first):
 
@@ -289,18 +308,24 @@ npx playwright install
 npm run typecheck
 ```
 
-### 5. Run both sites (preferred)
+### 5. Run both sites (preferred: everything)
+
+```bash
+npx playwright install chromium firefox webkit
+npm run qa:unattended
+```
+
+This bounded-scans nation.dev and aiskills.nation.dev, then runs the full 18-project browser × device matrix into one dashboard run. Do not use `npm run test:nation:ci` if you want Skills coverage or Deep Discovery inventory — that script is Nation tests only and skips the scan.
+
+Fast Chromium-only:
 
 ```bash
 npm run qa:sites
 ```
 
-This bounded-scans nation.dev and aiskills.nation.dev, then runs Chromium tests for both into one dashboard run. Do not use `npm run test:nation:ci` if you want Skills coverage or Deep Discovery inventory — that script is Nation tests only and skips the scan.
-
-Full matrix (Firefox, Safari/WebKit, tablet, mobile) after installing those browsers:
+Matrix without a fresh scan:
 
 ```bash
-npx playwright install chromium firefox webkit
 npm run qa:matrix
 ```
 
@@ -948,6 +973,7 @@ Completed: 2026-08-17
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry
 - **Autonomous QA:** advisory-only
-- **Autonomous execution:** Intentionally disabled — advisory-only
-- **Remediation authorization:** Intentionally disabled — advisory-only
-- **Automatic release-decision updates:** Intentionally disabled — advisory-only
+- **Autonomous execution:** Disabled by policy (`QA_AUTONOMOUS_EXECUTION`) — not Coming Soon
+- **Remediation authorization:** Disabled by policy — production writes stay off
+- **Automatic release-decision updates:** Disabled by policy
+- **LLM:** Heuristic Sentinel AI always runs; LLM off — no key unless `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY`

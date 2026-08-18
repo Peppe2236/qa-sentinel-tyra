@@ -31,6 +31,7 @@ function classificationLabel(value: string): string {
     'content-bug': 'Content bug',
     'security-issue': 'Security header',
     'accessibility-issue': 'Accessibility',
+    'performance-issue': 'Performance',
   };
 
   return labels[value] ?? value;

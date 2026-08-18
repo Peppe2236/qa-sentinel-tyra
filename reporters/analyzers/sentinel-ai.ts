@@ -54,6 +54,12 @@ export interface SentinelAiSignals {
   nonBlockingIssues: number;
 }
 
+export interface SentinelAiLlm {
+  status: 'off-no-key' | 'key-present' | 'enriched' | 'error';
+  label: string;
+  engine: 'heuristic' | 'openai';
+}
+
 export interface SentinelAiSummary {
   generatedAt: string;
 
@@ -75,6 +81,8 @@ export interface SentinelAiSummary {
   findings: SentinelAiFinding[];
 
   signals: SentinelAiSignals;
+
+  llm?: SentinelAiLlm;
 }
 
 const PRIORITY_WEIGHT: Record<

@@ -124,6 +124,15 @@ import {
   analyzeSentinelAi,
 } from './analyzers/sentinel-ai';
 
+import {
+  autonomousPolicySummary,
+  snapshotQaPolicy,
+} from '../config/policy';
+
+import {
+  maybeEnrichSentinelAi,
+} from './utils/llm';
+
 import type {
   SentinelOutput,
 } from './models/sentinel-output';
@@ -1682,14 +1691,21 @@ const autonomousQaHistory =
   );
 
 
-const autonomousQaAssessment =
-  analyzeAutonomousQaInvestigationPlanning(
+const policy = snapshotQaPolicy();
+
+const autonomousQaAssessment = {
+  ...analyzeAutonomousQaInvestigationPlanning(
     unifiedDecisionAssessment,
     'unified-v5',
     this.results,
     unifiedIssues,
     autonomousQaHistory
-  );
+  ),
+  executionEnabled: false as const,
+  policyDisabled: true,
+  policyFlag: 'QA_AUTONOMOUS_EXECUTION',
+  policySummary: autonomousPolicySummary(policy),
+};
 
 
 const run: DashboardRun = {
@@ -1766,6 +1782,7 @@ const run: DashboardRun = {
 
       prioritizedIssues,
       discoveryIssues,
+      policy,
       
       tests:
         this.results,
@@ -1782,7 +1799,9 @@ const run: DashboardRun = {
     }
 
 const sentinelAi =
-  analyzeSentinelAi(run);
+  await maybeEnrichSentinelAi(
+    analyzeSentinelAi(run)
+  );
 
 const outputRun: SentinelOutput = {
   ...run,
@@ -1837,14 +1856,9 @@ const outputRun: SentinelOutput = {
     );
 
     writeJson(
-  unifiedIssuesFile,
-  unifiedIssues
-);
-
-    writeJson(
-  unifiedIssuesFile,
-  unifiedIssues
-);
+      unifiedIssuesFile,
+      unifiedIssues
+    );
 
     const history =
       [...autonomousQaHistory];

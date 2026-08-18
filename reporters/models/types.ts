@@ -1,3 +1,4 @@
+import type { QaPolicySnapshot } from '../../config/policy';
 import type {
   DashboardDiscoveryIssue,
 } from '../utils/discovery-issues';
@@ -1275,6 +1276,15 @@ export interface AutonomousQaAssessment {
   executionEnabled:
     false;
 
+  policyDisabled?:
+    boolean;
+
+  policyFlag?:
+    string;
+
+  policySummary?:
+    string;
+
   releaseDecisionSource:
     ReleaseDecisionSource | null;
 
@@ -2458,5 +2468,8 @@ tests: DashboardTestResult[];
 
   humanReview?:
     HumanReviewPack;
+
+  policy?:
+    QaPolicySnapshot;
 
 }

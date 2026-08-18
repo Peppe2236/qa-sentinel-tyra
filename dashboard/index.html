@@ -1020,14 +1020,14 @@
         </strong>
 
         <small>
-          Read-only sites, scan limit and catalogs
+          Read-only sites, scan limit, catalogs and policy
         </small>
 
         <span
           id="control-settings-status"
           class="control-action-status"
         >
-          READ ONLY
+          ACTIVE · READ ONLY
         </span>
       </span>
 
@@ -1280,7 +1280,14 @@
     <span>
       Engine
       <strong>
-        Sentinel AI v1
+        Sentinel AI heuristic
+      </strong>
+    </span>
+
+    <span>
+      LLM
+      <strong id="sentinel-ai-llm-status">
+        LLM off — no key
       </strong>
     </span>
 
@@ -1338,8 +1345,8 @@
       </strong>
 
       <p id="autonomous-qa-safety-text">
-        Autonomous execution, remediation and release updates
-        are intentionally disabled.
+        Disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes
+        and captcha clicks stay off.
       </p>
     </div>
   </div>
@@ -1380,8 +1387,8 @@
       class="autonomous-qa-stat autonomous-qa-execution-safe"
     >
       <span>Autonomous execution</span>
-      <strong id="autonomous-qa-execution">DISABLED</strong>
-      <small>Intentionally advisory-only</small>
+      <strong id="autonomous-qa-execution">DISABLED BY POLICY</strong>
+      <small>Flag: QA_AUTONOMOUS_EXECUTION — production writes stay off</small>
     </article>
   </div>
 
@@ -2181,7 +2188,7 @@
           </div>
 
           <small>
-            Chrome · Firefox · Safari
+            Chrome · Firefox · Safari — after qa:unattended all three are measured. After qa:sites only Chromium is measured; others say run qa:unattended.
           </small>
 
         </div>

@@ -1,53 +1,75 @@
-import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 
-function runNode(script) {
-  if (process.platform === 'win32') {
-    const command = process.env.ComSpec ?? 'cmd.exe';
+import {
+  DAILY_CHROMIUM_PROJECTS,
+  ensureScanLimit,
+  fail,
+  MATRIX_PROJECTS,
+  projectArgs,
+  runPlaywright,
+  scanNation,
+  scanSkills,
+} from './qa-cli.mjs';
 
-    return spawnSync(
-      command,
-      ['/d', '/s', '/c', `node ${script}`],
-      {
-        stdio: 'inherit',
-        shell: false,
-        env: process.env,
-      }
-    );
-  }
-
-  return spawnSync(process.execPath, [script], {
-    stdio: 'inherit',
-    shell: false,
-    env: process.env,
-  });
-}
+ensureScanLimit();
 
 console.log('');
 console.log('==================================================');
-console.log('  QA Sentinel Tyra — unattended run');
+console.log('  QA Sentinel Tyra — unattended everything run');
 console.log('==================================================');
 console.log('No prompts. No captcha clicking. No production writes.');
-console.log('Same work as qa:sites: bounded scan + Chromium + reporter.');
+console.log('Scan both sites + full 18-project browser × device matrix.');
+console.log(
+  'Hand-written tests: both sites × Chromium/Firefox/WebKit × desktop/tablet/mobile.'
+);
+console.log(
+  'Generated discovery smoke, Deep Discovery crawl and diagnostics stay on daily Chromium only.'
+);
+console.log(
+  `Projects: ${MATRIX_PROJECTS.length} (${DAILY_CHROMIUM_PROJECTS.join(', ')} plus 16 matrix projects).`
+);
+console.log('Needs: npx playwright install chromium firefox webkit');
 console.log('If NATION_TEST_* / AI_SKILLS_TEST_* exist, member routes run via storageState.');
 console.log('If they are missing, they are skipped and listed once in the human pack.');
-console.log('qa:matrix is extra (18 projects), still unattended, slower.');
+console.log('qa:sites remains the fast Chromium-only alias.');
 console.log('==================================================');
 
-const result = runNode('scripts/qa-sites.mjs');
+if (fail('Nation scan', scanNation())) {
+  process.exit(process.exitCode ?? 1);
+}
 
-if (result.error) {
-  console.error('[QA Sentinel] Unattended run could not start.');
-  console.error(result.error.message);
+if (fail('AI Skills scan', scanSkills())) {
+  process.exit(process.exitCode ?? 1);
+}
+
+const playwrightArgs = [
+  '--timeout=45000',
+  ...projectArgs(MATRIX_PROJECTS),
+];
+
+console.log(
+  `[QA Sentinel] Running Playwright matrix: ${playwrightArgs.join(' ')}`
+);
+
+const tests = runPlaywright(playwrightArgs);
+
+if (tests.error) {
+  console.error('[QA Sentinel] Playwright could not be started.');
+  console.error(tests.error.message);
+  console.error(
+    '[QA Sentinel] Install browsers with: npx playwright install chromium firefox webkit'
+  );
   process.exitCode = 1;
 } else {
-  process.exitCode = result.status ?? 1;
+  process.exitCode = tests.status ?? 1;
 }
 
 console.log('');
+console.log(
+  '[QA Sentinel] One dashboard run was written to dashboard/data/latest-run.json.'
+);
 console.log('[QA Sentinel] Human review pack:');
 console.log('  reports/human-review.html');
 console.log('  reports/human-review.md');
 console.log('Open with the dashboard: http://127.0.0.1:4173/reports/human-review.html');
-console.log('Or from the repo: reports/human-review.html');
 console.log('==================================================');

@@ -36,9 +36,20 @@
         <code id="settings-max-pages-env">QA_MAX_PAGES</code>
       </p>
       <p>
-        Default used by <code>npm run qa:sites</code>:
+        Default used by <code>npm run qa:sites</code> (Chromium-only) and
+        <code>npm run qa:unattended</code> (full matrix):
         <strong id="settings-max-pages">20</strong>
       </p>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">POLICY</p>
+      <h2>Safety flags — not Coming Soon</h2>
+      <p class="muted">
+        Read-only analysis is on by default. Unsafe actions stay
+        <strong>disabled by policy</strong>.
+      </p>
+      <div id="settings-policy" class="settings-list"></div>
     </section>
 
     <section class="card">

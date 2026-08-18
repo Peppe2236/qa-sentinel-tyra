@@ -874,7 +874,7 @@ function buildEnvironmentAssessments(
           'not-in-this-run';
 
         notes = [
-          'Not in this run. This is not a failed check.',
+          'Not in this run. Run `npm run qa:unattended` to measure this browser and form factor. This is not a failed check.',
         ];
       }
 

@@ -36,7 +36,18 @@
     1px solid rgba(28,185,120,.3);
 }
 
-.sentinel-ai-state-dot {
+.sentinel-ai-panel[data-llm="off-no-key"] .sentinel-ai-state,
+.sentinel-ai-panel[data-llm="error"] .sentinel-ai-state {
+  color: #f1b94e;
+  background: rgba(241, 185, 78, 0.12);
+  border-color: rgba(241, 185, 78, 0.35);
+}
+
+.sentinel-ai-panel[data-llm="off-no-key"] .sentinel-ai-state-dot,
+.sentinel-ai-panel[data-llm="error"] .sentinel-ai-state-dot {
+  background: #f1b94e;
+  box-shadow: 0 0 12px #f1b94e;
+}
 
   width:10px;
   height:10px;

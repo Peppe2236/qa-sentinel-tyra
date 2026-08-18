@@ -873,6 +873,10 @@ function renderSentinelAi(run) {
       'sentinel-ai-generated',
       '--'
     );
+    setText(
+      'sentinel-ai-llm-status',
+      'LLM off — no key'
+    );
 
     if (panel) {
       panel.dataset.status =
@@ -974,13 +978,25 @@ function renderSentinelAi(run) {
         intelligence.overallPriority ??
         'none'
       );
+    panel.dataset.llm =
+      String(intelligence.llm?.status ?? 'off-no-key');
   }
 
   if (state) {
+    const llmLabel =
+      intelligence.llm?.label ??
+      'Heuristic Sentinel AI';
     state.innerHTML = `
       <span class="sentinel-ai-state-dot"></span>
-      INTELLIGENCE ACTIVE
+      ${escapeHtml(llmLabel === 'LLM off — no key' ? 'LLM OFF — NO KEY' : 'INTELLIGENCE ACTIVE')}
     `;
+  }
+
+  const llmStatus = byId('sentinel-ai-llm-status');
+
+  if (llmStatus) {
+    llmStatus.textContent =
+      intelligence.llm?.label ?? 'Heuristic Sentinel AI';
   }
 }
 
@@ -1623,7 +1639,7 @@ function renderAutonomousQa(run) {
     setText('autonomous-qa-linked-units', 0);
     setText('autonomous-qa-action-count', 0);
     setText('autonomous-qa-release-source', '—');
-    setText('autonomous-qa-execution', 'DISABLED');
+    setText('autonomous-qa-execution', 'DISABLED BY POLICY');
     setText(
       'autonomous-qa-reason',
       'Autonomous QA assessment is not available for this run.'
@@ -1665,7 +1681,7 @@ function renderAutonomousQa(run) {
     'autonomous-qa-execution',
     executionEnabled
       ? 'UNEXPECTEDLY ENABLED'
-      : 'INTENTIONALLY DISABLED'
+      : 'DISABLED BY POLICY'
   );
   setText(
     'autonomous-qa-reason',
@@ -1692,7 +1708,10 @@ function renderAutonomousQa(run) {
     'autonomous-qa-safety-text',
     executionEnabled
       ? 'Safety contract violation: autonomous execution was reported as enabled. This dashboard still performs no execution and requires immediate human review.'
-      : 'Autonomous execution, remediation and release updates are intentionally disabled. Every item below is advisory and requires explicit human action.'
+      : (
+          assessment.policySummary ??
+          'Disabled by policy (QA_AUTONOMOUS_EXECUTION). Production writes and captcha clicks stay off. Every item below is advisory and requires explicit human action.'
+        )
   );
 
   const provenance = byId('autonomous-qa-provenance');
@@ -3361,13 +3380,22 @@ function renderCompatibility(run) {
 
               <p>
                 ${escapeHtml(
-                  Array.isArray(environment.notes) &&
-                  environment.notes.length > 0
-                    ? environment.notes.join(' ')
-                    : `Sources: ${listText(
-                        environment.evidenceSources,
-                        'None'
-                      )}`
+                  status === 'not-in-this-run'
+                    ? (
+                        Array.isArray(environment.notes) &&
+                        environment.notes.length > 0
+                          ? environment.notes.join(' ')
+                          : 'Not in this run. Run npm run qa:unattended to measure this browser and form factor.'
+                      )
+                    : (
+                        Array.isArray(environment.notes) &&
+                        environment.notes.length > 0
+                          ? environment.notes.join(' ')
+                          : `Sources: ${listText(
+                              environment.evidenceSources,
+                              'None'
+                            )}`
+                      )
                 )}
               </p>
 
@@ -7102,6 +7130,11 @@ function renderControlCenter(
     `${history.length} RUN${
       history.length === 1 ? '' : 'S'
     } STORED`
+  );
+
+  setText(
+    'control-settings-status',
+    'ACTIVE · READ ONLY'
   );
 }
 

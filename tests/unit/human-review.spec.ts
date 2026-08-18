@@ -246,4 +246,56 @@ test.describe('human review pack from fixture latest-run', () => {
       'Human review pack — NO-GO'
     );
   });
+
+  test('includes discovery and API analyzer findings in the machine-owned pack', () => {
+    const pack = buildHumanReviewPack(
+      {
+        runId: 'analyzer-findings',
+        tests: [],
+        discoveryIssues: [
+          {
+            source: 'discovery',
+            site: 'nation',
+            route: '/jobs',
+            category: 'security',
+            severity: 'high',
+            title: 'Missing Content-Security-Policy on /jobs',
+            description: 'Scan recorded a missing CSP header.',
+            userImpact: 'Clickjacking or mixed-content risk.',
+            recommendation: 'Add CSP.',
+            classification: 'security-issue',
+            priorityScore: 80,
+            priority: 'P1',
+            occurrences: 1,
+            affectedRoutes: ['/jobs'],
+            fingerprint: 'disc-csp-jobs',
+          },
+        ],
+        apiIssues: [
+          {
+            source: 'api',
+            fingerprint: 'api-500',
+            title: 'First-party API returned 500',
+            site: 'nation',
+            category: 'api',
+            severity: 'high',
+            classification: 'product-bug',
+            qualityDimensions: ['api-backend'],
+            priority: 'P1',
+            endpoint: '/api/profile',
+            method: 'GET',
+            occurrences: 1,
+          },
+        ],
+      },
+      {
+        credentials: { nation: true, aiSkills: true },
+        discoveredRoutes: [],
+      }
+    );
+
+    const titles = pack.machineOwned.map(item => item.title);
+    expect(titles).toContain('Missing Content-Security-Policy on /jobs');
+    expect(titles).toContain('First-party API returned 500');
+  });
 });

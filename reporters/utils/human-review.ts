@@ -7,6 +7,8 @@ import {
   normalizeRoutePath,
 } from '../../config/handwritten-coverage';
 import type {
+  ApiIntelligenceIssue,
+  BackendIntelligenceIssue,
   DashboardAttachment,
   DashboardTestResult,
   HumanReviewCredentials,
@@ -17,6 +19,7 @@ import type {
   NeedsHumanItem,
   UntestedRoute,
 } from '../models/types';
+import type { DashboardDiscoveryIssue } from './discovery-issues';
 
 export type HumanReviewBucket =
   | 'machine-owned'
@@ -51,6 +54,7 @@ const MACHINE_OWNED_CLASSIFICATIONS = new Set<IssueClassification>([
   'content-bug',
   'security-issue',
   'accessibility-issue',
+  'performance-issue',
 ]);
 
 const CREDENTIAL_SKIP_RE =
@@ -79,16 +83,12 @@ export function detectCredentialsFromEnv(
   };
 }
 
-export function bucketTestResult(
-  test: DashboardTestResult
+export function bucketClassification(
+  classification: IssueClassification | undefined
 ): HumanReviewBucket {
-  if (test.status === 'passed' || test.status === 'skipped') {
-    return 'ignore';
-  }
+  const value = classification ?? 'needs-investigation';
 
-  const classification = test.classification ?? 'needs-investigation';
-
-  if (MACHINE_OWNED_CLASSIFICATIONS.has(classification)) {
+  if (MACHINE_OWNED_CLASSIFICATIONS.has(value)) {
     return 'machine-owned';
   }
 
@@ -97,6 +97,54 @@ export function bucketTestResult(
   }
 
   return 'ignore';
+}
+
+export function bucketTestResult(
+  test: DashboardTestResult
+): HumanReviewBucket {
+  if (test.status === 'passed' || test.status === 'skipped') {
+    return 'ignore';
+  }
+
+  return bucketClassification(test.classification);
+}
+
+function inferFindingClassification(
+  item: {
+    classification?: IssueClassification;
+    category?: string;
+    severity?: string;
+  }
+): IssueClassification {
+  if (item.classification) {
+    return item.classification;
+  }
+
+  const category = String(item.category ?? '').toLowerCase();
+
+  if (category.includes('accessib')) {
+    return 'accessibility-issue';
+  }
+
+  if (category.includes('security')) {
+    return 'security-issue';
+  }
+
+  if (category.includes('content')) {
+    return 'content-bug';
+  }
+
+  if (category.includes('performance')) {
+    return 'performance-issue';
+  }
+
+  const severity = String(item.severity ?? '').toLowerCase();
+
+  if (severity === 'critical' || severity === 'high') {
+    return 'product-bug';
+  }
+
+  return 'needs-investigation';
 }
 
 export function inferRoute(test: DashboardTestResult): string {
@@ -262,6 +310,81 @@ function toNeedsHuman(test: DashboardTestResult): NeedsHumanItem {
   };
 }
 
+function analyzerMachineItem(input: {
+  id: string;
+  classification: IssueClassification;
+  title: string;
+  site: string;
+  file: string;
+  route: string;
+}): MachineOwnedItem {
+  return input;
+}
+
+function analyzerHumanItem(input: {
+  id: string;
+  site: string;
+  url: string;
+  title: string;
+  whyHuman: string;
+}): NeedsHumanItem {
+  return {
+    ...input,
+    suggestedCheck:
+      'Open the linked URL, confirm the machine evidence, and decide whether this is a product defect or an analyzer gap.',
+  };
+}
+
+function absorbAnalyzerFinding(
+  uniqueMachine: Map<string, MachineOwnedItem>,
+  uniqueHuman: Map<string, NeedsHumanItem>,
+  finding: {
+    id: string;
+    classification?: IssueClassification;
+    category?: string;
+    severity?: string;
+    title: string;
+    site: string;
+    file: string;
+    route: string;
+    url?: string;
+    whyHuman?: string;
+  }
+): void {
+  const classification = inferFindingClassification(finding);
+  const bucket = bucketClassification(classification);
+  const key = `${finding.site}|${finding.file}|${finding.title}|${classification}`;
+
+  if (bucket === 'machine-owned' && !uniqueMachine.has(key)) {
+    uniqueMachine.set(
+      key,
+      analyzerMachineItem({
+        id: finding.id,
+        classification,
+        title: finding.title,
+        site: finding.site,
+        file: finding.file,
+        route: finding.route || '—',
+      })
+    );
+  }
+
+  if (bucket === 'needs-human' && !uniqueHuman.has(key)) {
+    uniqueHuman.set(
+      key,
+      analyzerHumanItem({
+        id: finding.id,
+        site: finding.site,
+        url: finding.url || siteUrl(finding.site, finding.route),
+        title: finding.title,
+        whyHuman:
+          finding.whyHuman ||
+          'Analyzer finding could not be classified automatically.',
+      })
+    );
+  }
+}
+
 function credentialGapItem(): NeedsHumanItem {
   return {
     id: 'gap-test-account',
@@ -405,6 +528,16 @@ function threeBullets(input: {
     );
   }
 
+  const performance = input.machineOwned.filter(
+    item => item.classification === 'performance-issue'
+  );
+
+  if (performance.length) {
+    bullets.push(
+      `${performance.length} performance finding${performance.length === 1 ? '' : 's'} already classified.`
+    );
+  }
+
   if (!input.credentials.nation || !input.credentials.aiSkills) {
     bullets.push(MEMBER_UNLOCK_TEXT);
   }
@@ -478,6 +611,9 @@ export function buildHumanReviewPack(
     releaseAssessment?: {
       status?: string;
     };
+    discoveryIssues?: DashboardDiscoveryIssue[];
+    apiIssues?: ApiIntelligenceIssue[];
+    backendIssues?: BackendIntelligenceIssue[];
   },
   options: BuildHumanReviewOptions = {}
 ): HumanReviewPack {
@@ -510,6 +646,49 @@ export function buildHumanReviewPack(
         uniqueHuman.set(key, toNeedsHuman(test));
       }
     }
+  }
+
+  for (const issue of run.discoveryIssues ?? []) {
+    absorbAnalyzerFinding(uniqueMachine, uniqueHuman, {
+      id: issue.fingerprint,
+      classification: issue.classification,
+      category: issue.category,
+      severity: issue.severity,
+      title: issue.title,
+      site: issue.site,
+      file: issue.sourceArtifact || 'discovery',
+      route: issue.route,
+      url: issue.requestedUrl,
+      whyHuman: issue.description,
+    });
+  }
+
+  for (const issue of run.apiIssues ?? []) {
+    absorbAnalyzerFinding(uniqueMachine, uniqueHuman, {
+      id: issue.fingerprint,
+      classification: issue.classification,
+      category: issue.category,
+      severity: issue.severity,
+      title: issue.title,
+      site: issue.site,
+      file: issue.endpoint,
+      route: issue.endpoint,
+      whyHuman: `API finding ${issue.method ?? ''} ${issue.endpoint}`.trim(),
+    });
+  }
+
+  for (const issue of run.backendIssues ?? []) {
+    absorbAnalyzerFinding(uniqueMachine, uniqueHuman, {
+      id: issue.fingerprint,
+      classification: issue.classification,
+      category: issue.category,
+      severity: issue.severity,
+      title: issue.title,
+      site: issue.site,
+      file: issue.service || 'backend',
+      route: issue.operation || issue.service || '—',
+      whyHuman: issue.title,
+    });
   }
 
   const machineOwned = [...uniqueMachine.values()].sort((left, right) =>

@@ -100,6 +100,58 @@ async function renderSettings() {
           .join('')
       : '<p class="muted">No catalogs listed.</p>';
   }
+
+  const policyContainer = byId('settings-policy');
+
+  if (policyContainer) {
+    const policy = run?.policy ?? {
+      analysis: 'enabled',
+      autonomousExecution: 'disabled-by-policy',
+      productionWrites: 'disabled-by-policy',
+      captchaClick: 'disabled-by-policy',
+      llm: 'off-no-key',
+      notes: [
+        'Read-only analyzers default ON.',
+        'Autonomous execution is disabled by policy (QA_AUTONOMOUS_EXECUTION).',
+        'LLM off — no key. Heuristic Sentinel AI still runs.',
+      ],
+    };
+
+    const rows = [
+      ['Read-only analysis', policy.analysis ?? 'enabled'],
+      ['Autonomous execution', policy.autonomousExecution ?? 'disabled-by-policy'],
+      ['Production writes', policy.productionWrites ?? 'disabled-by-policy'],
+      ['Captcha clicking', policy.captchaClick ?? 'disabled-by-policy'],
+      ['LLM', policy.llm === 'off-no-key' ? 'LLM off — no key' : String(policy.llm ?? 'off-no-key')],
+      [
+        'Daily everything command',
+        'npm run qa:unattended (scan + 18-project matrix)',
+      ],
+      ['Fast Chromium alias', 'npm run qa:sites'],
+    ];
+
+    policyContainer.innerHTML = `
+      ${rows
+        .map(
+          ([name, value]) => `
+            <article class="settings-item">
+              <strong>${escapeHtml(name)}</strong>
+              <span>${escapeHtml(value)}</span>
+            </article>
+          `
+        )
+        .join('')}
+      ${(Array.isArray(policy.notes) ? policy.notes : [])
+        .map(
+          note => `
+            <article class="settings-item">
+              <small>${escapeHtml(note)}</small>
+            </article>
+          `
+        )
+        .join('')}
+    `;
+  }
 }
 
 renderSettings();

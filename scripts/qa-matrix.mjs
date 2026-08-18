@@ -1,45 +1,11 @@
-import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 
-const SITES = ['nation', 'ai-skills'];
-const BROWSERS = ['chromium', 'firefox', 'webkit'];
-const FORM_FACTORS = ['desktop', 'tablet', 'mobile'];
-
-function projectName(site, browser, formFactor) {
-  if (browser === 'chromium' && formFactor === 'desktop') {
-    return `${site}-chromium`;
-  }
-
-  return `${site}-${browser}-${formFactor}`;
-}
-
-const PROJECTS = SITES.flatMap(site =>
-  BROWSERS.flatMap(browser =>
-    FORM_FACTORS.map(formFactor => projectName(site, browser, formFactor))
-  )
-);
-
-function runPlaywright(args) {
-  if (process.platform === 'win32') {
-    const command = process.env.ComSpec ?? 'cmd.exe';
-
-    return spawnSync(
-      command,
-      ['/d', '/s', '/c', `npx playwright test ${args.join(' ')}`],
-      {
-        stdio: 'inherit',
-        shell: false,
-        env: process.env,
-      }
-    );
-  }
-
-  return spawnSync('npx', ['playwright', 'test', ...args], {
-    stdio: 'inherit',
-    shell: false,
-    env: process.env,
-  });
-}
+import {
+  fail,
+  MATRIX_PROJECTS,
+  projectArgs,
+  runPlaywright,
+} from './qa-cli.mjs';
 
 console.log('');
 console.log('==================================================');
@@ -50,25 +16,26 @@ console.log(
   'Engines: Chromium (Chrome/Edge), Firefox, WebKit (Safari)'
 );
 console.log('Form factors: Desktop, Tablet, Mobile');
-console.log(`Projects: ${PROJECTS.length} (${SITES.length} sites × ${BROWSERS.length} browsers × ${FORM_FACTORS.length} form factors)`);
 console.log(
-  'Hand-written Nation + Skills tests only. Generated page smoke stays on qa:sites Chromium.'
+  `Projects: ${MATRIX_PROJECTS.length} (2 sites × 3 browsers × 3 form factors)`
 );
 console.log(
-  'Still unattended. Slower than qa:unattended / qa:sites. Auth setup runs once per site when credentials exist.'
+  'No scan. For scan + matrix + human pack use npm run qa:unattended.'
+);
+console.log(
+  'Generated page smoke, Deep Discovery crawl and diagnostics stay on daily Chromium via testMatch.'
+);
+console.log(
+  'Still unattended. Slower than qa:sites. Auth setup runs once per site when credentials exist.'
 );
 console.log('Does not require NATION_TEST_* or AI_SKILLS_TEST_*.');
-console.log('Product-bug tests are kept.');
 console.log('This overwrites dashboard/data/latest-run.json.');
 console.log('Install browsers: npx playwright install chromium firefox webkit');
 console.log('==================================================');
 
 const playwrightArgs = [
-  'tests/nation',
-  'tests/skills',
-  'tests/auth',
   '--timeout=45000',
-  ...PROJECTS.map(project => `--project=${project}`),
+  ...projectArgs(MATRIX_PROJECTS),
 ];
 
 console.log(
@@ -77,15 +44,10 @@ console.log(
 
 const tests = runPlaywright(playwrightArgs);
 
-if (tests.error) {
-  console.error('[QA Sentinel] Playwright could not be started.');
-  console.error(`[QA Sentinel] ${tests.error.message}`);
+if (fail('Playwright matrix', tests) && tests.error) {
   console.error(
     '[QA Sentinel] Install browsers with: npx playwright install chromium firefox webkit'
   );
-  process.exitCode = 1;
-} else {
-  process.exitCode = tests.status ?? 1;
 }
 
 console.log('');

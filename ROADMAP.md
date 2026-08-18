@@ -104,23 +104,29 @@ Default development is **Ubuntu on WSL** plus **VS Code** (Remote - WSL).
 cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 cp .env.example .env
 npm install
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm run typecheck
 npm run test:unit
-npm run qa:sites
+npm run qa:unattended
 npm run dashboard
 ```
 
-Daily Chromium (both sites, generated page smoke included):
+Daily everything (scan + 18-project matrix + analyzers + human pack):
+
+```bash
+npx playwright install chromium firefox webkit
+npm run qa:unattended
+```
+
+Fast Chromium-only alias (Firefox/Safari/tablet/mobile stay not-in-this-run):
 
 ```bash
 npm run qa:sites
 ```
 
-Full browser × device matrix (18 Playwright projects: both sites × Chromium/Firefox/WebKit × desktop/tablet/mobile). Generated discovered-page smoke stays on `qa:sites` only:
+Matrix without a fresh scan:
 
 ```bash
-npx playwright install chromium firefox webkit
 npm run qa:matrix
 ```
 
@@ -131,20 +137,46 @@ tasks). Details: README “Ubuntu / WSL and VS Code”.
 
 ## Unattended run + human review pack
 
-The default unattended command is `npm run qa:unattended` (alias of `qa:sites`:
-both sites, Chromium, scan + tests + reporter). It never prompts.
+The default unattended command is `npm run qa:unattended`: bounded scan of both
+sites, the full 18-project browser × device matrix, every reporter analyzer,
+and the human-review pack. It never prompts.
 
-`qa:matrix` remains extra: still unattended, 18 projects, slower.
+`qa:sites` is the fast Chromium-only alias. `qa:matrix` is the 18-project
+matrix without a fresh scan.
 
 After each run the reporter writes `reports/human-review.html` (and `.md`):
 
 - **GO / WARN / NO-GO** plus three bullets
-- **Do not touch** — machine-owned product/content/header/a11y failures
+- **Do not touch** — machine-owned product/content/header/a11y/performance and analyzer findings
 - **Needs a human (max ~7)** — credentials or ambiguous investigation only
 - **Untested routes** — discovery vs hand-written E2E
 
 Missing test accounts become one queue item, not a crash. Traces and failure
 videos are retained. The dashboard Control Center links to the pack.
+
+## Activated vs still policy-disabled (2026-08-18)
+
+| Previously inactive / optional | Now |
+|---|---|
+| `qa:unattended` was Chromium-only (`qa:sites`) | **Runs** scan + full 18-project matrix |
+| Firefox / WebKit / tablet / mobile compatibility cards | **Measured** after `qa:unattended`; Chromium-only runs say run `qa:unattended` |
+| Deep Discovery crawl + diagnostics excluded by file-path filters | **Run** on daily Chromium via testMatch |
+| Human review pack test-failures only | **Includes** discovery / API / backend analyzer findings |
+| Settings Control Center looked unused | **Active** read-only page with policy flags |
+| Sentinel AI looked like a closed LLM product | Heuristic **always runs**; UI says **LLM off — no key** when no key |
+| Autonomous QA “intentionally disabled” copy | UI says **disabled by policy** (`QA_AUTONOMOUS_EXECUTION`) |
+
+| Still off by policy (not Coming Soon) | Flag / reason |
+|---|---|
+| Autonomous execution / Playwright launched by the advisor | `QA_AUTONOMOUS_EXECUTION` — even if set, production writes are not implemented |
+| Production mutation / nation.dev writes | Never enabled |
+| Captcha clicking | Never enabled |
+| LLM enrichment | `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY`; without a key heuristic still runs |
+| Auth member routes | Skip without `NATION_TEST_*` / `AI_SKILLS_TEST_*`; one human-queue item |
+| PDF executive reports | Not in the tree yet (planned) |
+
+`qa:full` (`scan:all` + default Playwright, then opens the dashboard) stays a
+separate helper. `npm run sentinel` is interactive Nation-headed, not unattended.
 
 ## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
 
@@ -156,21 +188,21 @@ dashboard panel, and discovery-aware release-readiness provenance.
 
 | Delivery | Status | What exists / what does not |
 |---|---|---|
-| 7.1 Operational Test Orchestration | ✅ Done | `test:nation`, `test:skills`, `scan:nation`, `scan:skills`, `qa:full`, `qa:sites` (daily Chromium), `qa:matrix` (18-project browser × device matrix) keep site output separate |
-| 7.2 Unified Advisory Dashboard | ✅ Done | `dashboard/index.html` Autonomous QA panel binds `autonomousQaAssessment` without execution authority |
+| 7.1 Operational Test Orchestration | ✅ Done | `qa:unattended` is scan + 18-project matrix; `qa:sites` is Chromium-fast; `qa:matrix` is matrix without scan |
+| 7.2 Unified Advisory Dashboard | ✅ Done | Autonomous QA panel binds `autonomousQaAssessment` and shows **disabled by policy**, not Coming Soon |
 | 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel and CSS are wired; still depends on current-run evidence |
-| 7.4 UX/UI Verification Coverage | 🧭 Not started | Analyzer areas remain largely `not-verified`; no a11y axe/lighthouse suite |
-| 7.5 Security Verification Coverage | 🚧 Partial | Analyzer consumes `requiredChecks` from `config/security-performance.json`; dashboard security cards follow the catalog. Dedicated header/cookie/session Playwright checks are still missing |
-| 7.6 Performance Verification Coverage | 🚧 Partial | Duration thresholds are configured; page-load and API/backend latency are still not observed as metrics |
-| 7.7 Evidence-grounded Root-cause Intelligence | 🚧 Partial | Sentinel AI is heuristic pattern matching, not an LLM |
-| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP/README/backlog aligned; full-matrix regression and a safety audit are still due |
+| 7.4 UX/UI Verification Coverage | 🚧 Partial | axe-core smoke runs in unattended Chromium; remaining UX areas can still be `not-verified` without evidence |
+| 7.5 Security Verification Coverage | 🚧 Partial | Header/cookie Playwright checks run; analyzer consumes `config/security-performance.json` |
+| 7.6 Performance Verification Coverage | 🚧 Partial | Page-load and first-party API timing specs run on Chromium daily |
+| 7.7 Evidence-grounded Root-cause Intelligence | 🚧 Partial | Heuristic Sentinel AI always runs; LLM is off without an API key |
+| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP lists activated vs policy-disabled; live matrix still depends on `qa:unattended` |
 
 ### Milestone 7 authority and safety contract
 
 - Unified Decisioning v5 remains the only canonical release authority.
 - Milestone 7 introduces no competing weighted score.
-- Autonomous test execution remains intentionally disabled and advisory-only.
-- Remediation authorization and automatic release-decision updates remain intentionally disabled.
+- Autonomous test execution remains disabled by policy and advisory-only.
+- Remediation authorization and automatic release-decision updates remain disabled by policy.
 - Test commands are launched only by an explicit developer or CI action.
 - Positive health requires current, relevant evidence; absence of findings is never sufficient.
 - First-party evidence remains sanitized and source provenance remains visible.
