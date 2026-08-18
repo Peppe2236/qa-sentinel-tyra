@@ -9,7 +9,9 @@
       "critical": true,
       "requirementIds": [
         "REQ-NATION-HOME-001",
-        "REQ-NATION-HOME-002"
+        "REQ-NATION-HOME-002",
+        "REQ-NATION-SEC-001",
+        "REQ-NATION-A11Y-001"
       ],
       "scenarios": [
         {
@@ -38,6 +40,24 @@
           "requirementIds": [
             "REQ-NATION-HOME-002"
           ]
+        },
+        {
+          "id": "SCN-NATION-HOME-SECURITY",
+          "title": "Homepage document security headers and cookie flags are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-SEC-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-HOME-A11Y",
+          "title": "Homepage axe-core smoke records serious and critical findings",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-A11Y-001"
+          ]
         }
       ]
     },
@@ -49,7 +69,8 @@
       "critical": true,
       "requirementIds": [
         "REQ-NATION-AUTH-001",
-        "REQ-NATION-AUTH-004"
+        "REQ-NATION-AUTH-004",
+        "REQ-NATION-SEC-001"
       ],
       "scenarios": [
         {
@@ -96,6 +117,15 @@
           "requirementIds": [
             "REQ-NATION-AUTH-001",
             "REQ-NATION-AUTH-004"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-SECURITY",
+          "title": "Sign-in document security headers and cookie flags are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-SEC-001"
           ]
         }
       ]
@@ -189,7 +219,9 @@
       "site": "ai-skills",
       "critical": true,
       "requirementIds": [
-        "REQ-SKILLS-HOME-001"
+        "REQ-SKILLS-HOME-001",
+        "REQ-SKILLS-SEC-001",
+        "REQ-SKILLS-A11Y-001"
       ],
       "scenarios": [
         {
@@ -208,6 +240,24 @@
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-HOME-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-CATALOG-SECURITY",
+          "title": "Catalog document security headers and cookie flags are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-SEC-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-CATALOG-A11Y",
+          "title": "Catalog axe-core smoke records serious and critical findings",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-A11Y-001"
           ]
         }
       ]
@@ -279,7 +329,8 @@
       "site": "ai-skills",
       "critical": false,
       "requirementIds": [
-        "REQ-SKILLS-AUTH-001"
+        "REQ-SKILLS-AUTH-001",
+        "REQ-SKILLS-SEC-001"
       ],
       "scenarios": [
         {
@@ -298,6 +349,15 @@
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-AUTH-SECURITY",
+          "title": "Sign-in document security headers and cookie flags are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-SEC-001"
           ]
         }
       ]

@@ -118,12 +118,12 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | Q-01 | `config/security-performance.json` thresholds | Empty thresholds left performance `not-verified` | **done** | `npm run test:unit` |
 | Q-02 | `requiredChecks` list | Documents intended security areas | **done** | Inspect `config/security-performance.json` |
 | Q-03 | Wire `requiredChecks` into `analyzeSecurity` | Config is otherwise unused | **done** | `npm run test:unit` |
-| Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **not done** | `expect(page.url()).toMatch(/^https:/)` |
-| Q-05 | Security-header checks | HSTS, CSP, X-Frame-Options | **not done** | Read response headers on `/` and `/signin` |
-| Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **not done** | After N-04 |
+| Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **done** | Nation homepage and Skills catalog assert `https:` |
+| Q-05 | Security-header checks | HSTS, CSP, X-Frame-Options | **done** | Homepages + sign-in document headers; missing headers fail honestly |
+| Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **partial** | Anonymous Set-Cookie flags are measured; no cookies = not-observed, not POOR. Login cookies still need N-04 |
 | Q-07 | Page-load metric collection | Threshold `pageLoadMs` exists; observer only fills test-duration p95 | **not done** | Navigation timing or Playwright `page.goto` duration |
 | Q-08 | API/backend latency observation | Thresholds exist; values stay `not-verified` | **not done** | Record first-party resource timing |
-| Q-09 | axe-core accessibility scan | UX/UI areas are mostly `not-verified` | **not done** | `@axe-core/playwright` on homepage + sign-in + catalog |
+| Q-09 | axe-core accessibility scan | UX/UI areas are mostly `not-verified` | **done** | `@axe-core/playwright` on Nation homepage + Skills catalog; serious/critical fail, moderate and color-contrast log as warnings |
 | Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **not done** | `page.keyboard` tab order |
 | Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **not done** | Optional Playwright screenshots + axe contrast |
 | Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **not done** | Separate scheduled job, not every PR |

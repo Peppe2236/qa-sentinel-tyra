@@ -176,6 +176,37 @@ function notMeasuredCopy() {
   return 'Not measured this run. This is a coverage gap, not a failed check.';
 }
 
+function isSampleRun(run) {
+  const kind = String(run?.metadata?.dataKind ?? '').toLowerCase();
+
+  if (kind === 'live') {
+    return false;
+  }
+
+  if (kind === 'sample') {
+    return true;
+  }
+
+  if (String(run?.environment ?? '').toLowerCase() === 'sample') {
+    return true;
+  }
+
+  return String(run?.runId ?? '').startsWith('sample-run');
+}
+
+function renderDataSourceBanner(run) {
+  const banner = byId('sample-data-banner');
+
+  if (!banner) {
+    return;
+  }
+
+  const sample = isSampleRun(run);
+
+  banner.hidden = !sample;
+  document.body.classList.toggle('sample-data', sample);
+}
+
 function renderMetadata(run) {
   const metadata = run.metadata ?? {};
 
@@ -2203,6 +2234,9 @@ function renderSecurityPerformance(run) {
 
     'not-verified':
       'NOT VERIFIED',
+
+    'not-observed':
+      'NOT OBSERVED',
   };
 
 
@@ -2855,7 +2889,10 @@ function renderSecurityPerformance(run) {
 
                 <p>
                   ${escapeHtml(
-                    severityText
+                    Array.isArray(area.notes) &&
+                    area.notes.length > 0
+                      ? area.notes.join(' ')
+                      : severityText
                   )}
                 </p>
 
@@ -6937,9 +6974,20 @@ function renderControlCenter(
   const assessment =
     run?.releaseAssessment ?? {};
 
+  const sample = isSampleRun(run);
+
+  setText(
+    'control-center-status',
+    sample
+      ? 'SAMPLE DATA'
+      : `${health}% HEALTH`
+  );
+
   setText(
     'control-dashboard-status',
-    `${health}% HEALTH`
+    sample
+      ? 'SAMPLE DATA'
+      : `${health}% HEALTH`
   );
 
   setText(
@@ -6984,7 +7032,53 @@ function renderControlCenter(
   );
 }
 
-function renderSiteStatistics(siteStatistics) {
+function deriveSiteStatistics(run, siteId) {
+  const existing = run?.siteStatistics?.[siteId];
+
+  if (existing && Number(existing.total) > 0) {
+    return existing;
+  }
+
+  const tests = (run?.tests ?? []).filter(
+    test => test.site === siteId
+  );
+
+  if (tests.length === 0) {
+    return existing ?? null;
+  }
+
+  const passed = tests.filter(test => test.status === 'passed').length;
+  const failed = tests.filter(test => test.status === 'failed').length;
+  const skipped = tests.filter(test => test.status === 'skipped').length;
+  const timedOut = tests.filter(test => test.status === 'timedOut').length;
+  const interrupted = tests.filter(test => test.status === 'interrupted').length;
+  const warnings = tests.filter(test => test.classification === 'warning').length;
+  const durationTotal = tests.reduce(
+    (sum, test) => sum + (Number(test.duration) || 0),
+    0
+  );
+
+  return {
+    site: siteId,
+    total: tests.length,
+    passed,
+    failed,
+    skipped,
+    timedOut,
+    interrupted,
+    warnings,
+    averageDuration: Math.round(durationTotal / tests.length),
+    health: Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round((passed / tests.length) * 100)
+      )
+    ),
+  };
+}
+
+function renderSiteStatistics(run) {
   const sites = {
     nation: {
       prefix: 'nation-site',
@@ -7001,7 +7095,7 @@ function renderSiteStatistics(siteStatistics) {
 
   for (const [siteId, config] of Object.entries(sites)) {
     const stats =
-      siteStatistics?.[siteId];
+      deriveSiteStatistics(run, siteId);
 
     const card =
       document.querySelector(
@@ -7158,6 +7252,7 @@ async function render() {
 
   populateIssueFilters();
 
+  renderDataSourceBanner(run);
   renderMetadata(run);
   renderReleaseAssessment(run);
   renderDiscoveryReleaseReadiness(run);
@@ -7165,9 +7260,7 @@ async function render() {
   renderSentinelAi(run);
   renderAutonomousQa(run);
 
-  renderSiteStatistics(
-  run.siteStatistics ?? {}
-);
+  renderSiteStatistics(run);
   renderControlCenter(
   run,
   history

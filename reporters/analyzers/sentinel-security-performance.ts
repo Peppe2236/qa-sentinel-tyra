@@ -123,6 +123,47 @@ function issueText(
 }
 
 
+function testHasObservation(
+  test:
+    DashboardTestResult,
+  value:
+    string
+): boolean {
+  const wanted =
+    value.toLowerCase();
+
+  return (
+    test.annotations ??
+    []
+  ).some(
+    annotation =>
+      String(
+        annotation.type ??
+        ''
+      ).toLowerCase() ===
+        'security-observation' &&
+      String(
+        annotation.description ??
+        ''
+      ).toLowerCase() ===
+        wanted
+  );
+}
+
+
+function securityAreaIsSatisfied(
+  status:
+    SecurityPerformanceStatus
+): boolean {
+  return (
+    status ===
+      'healthy' ||
+    status ===
+      'not-observed'
+  );
+}
+
+
 function classificationIsUncertain(
   classification:
     string | undefined
@@ -323,6 +364,12 @@ export function securityAreasForIssue(
       'x-frame-options'
     ) ||
     text.includes(
+      'x-content-type-options'
+    ) ||
+    text.includes(
+      'frame-ancestors'
+    ) ||
+    text.includes(
       'strict-transport-security'
     )
   ) {
@@ -375,12 +422,6 @@ export function securityAreasForIssue(
     ) ||
     text.includes(
       'mixed content'
-    ) ||
-    text.includes(
-      'strict-transport-security'
-    ) ||
-    /\bhsts\b/.test(
-      text
     ) ||
     text.includes(
       'insecure http'
@@ -942,6 +983,39 @@ function analyzeSecurity(
           }
 
 
+          const allCookieNotObserved =
+            area ===
+              'session-cookies' &&
+            areaIssues.length ===
+              0 &&
+            areaTests.length >
+              0 &&
+            areaTests.every(
+              test =>
+                testHasObservation(
+                  test,
+                  'not-observed'
+                )
+            );
+
+
+          if (
+            allCookieNotObserved
+          ) {
+            areaStatus =
+              'not-observed';
+          }
+
+
+          const notes =
+            areaStatus ===
+              'not-observed'
+              ? [
+                  'No Set-Cookie was observed on the anonymous pages checked. Cookie flags were not scored as poor.',
+                ]
+              : undefined;
+
+
           return {
             area,
 
@@ -985,6 +1059,8 @@ function analyzeSecurity(
 
             evidenceSources:
               sources,
+
+            notes,
           };
         }
       );
@@ -1710,8 +1786,9 @@ export function applySecurityPerformanceReleaseGate(
       area =>
         area.required !==
           false &&
-        area.status !==
-          'healthy'
+        !securityAreaIsSatisfied(
+          area.status
+        )
     ).length;
 
 

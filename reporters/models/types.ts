@@ -1724,7 +1724,8 @@ export type SecurityPerformanceStatus =
   | 'degraded'
   | 'poor'
   | 'critical'
-  | 'not-verified';
+  | 'not-verified'
+  | 'not-observed';
 
 
 export type SecurityArea =
@@ -1777,6 +1778,9 @@ export interface SecurityAreaAssessment {
 
   evidenceSources:
     IntelligenceSource[];
+
+  notes?:
+    string[];
 }
 
 
@@ -2262,6 +2266,8 @@ export interface RunMetadata {
   branch?: string;
   commit?: string;
   runNumber?: string;
+  dataKind?:
+    'live' | 'sample';
 }
 
 export interface DashboardRun {
@@ -2292,6 +2298,10 @@ export interface DashboardRun {
   highBugs: number;
   mediumBugs: number;
   lowBugs: number;
+
+  blockingIssues?: number;
+  nonBlockingIssues?: number;
+  actionableIssues?: number;
 
   performance: PerformanceStats;
 

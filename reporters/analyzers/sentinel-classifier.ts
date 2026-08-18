@@ -153,6 +153,10 @@ export function classifyIssue(
       'content security policy',
       'google analytics',
       'clarity',
+    ]) &&
+    !includesAny(`${title} ${message}`, [
+      'was not present',
+      'header was not invented',
     ])
   ) {
     return {
@@ -161,6 +165,45 @@ export function classifyIssue(
         'A third-party service was blocked without confirmed user impact.',
       recommendation:
         'Review the CSP configuration and third-party integration.',
+    };
+  }
+
+  if (
+    result.category === 'accessibility' ||
+    title.includes('axe-core') ||
+    title.includes('axe ') ||
+    includesAny(message, [
+      'axe findings',
+      'serious/critical axe',
+    ])
+  ) {
+    return {
+      classification: 'accessibility-issue',
+      reason:
+        'axe-core reported serious or critical accessibility findings.',
+      recommendation:
+        'Fix the listed axe violations. Moderate and color-contrast noise is logged as a warning, not a suite failure.',
+    };
+  }
+
+  if (
+    result.category === 'security' ||
+    includesAny(`${title} ${message}`, [
+      'content-security-policy',
+      'strict-transport-security',
+      'x-content-type-options',
+      'x-frame-options',
+      'frame-ancestors',
+      'set-cookie',
+      'security header',
+    ])
+  ) {
+    return {
+      classification: 'security-issue',
+      reason:
+        'A measured security header or cookie-flag check failed.',
+      recommendation:
+        'Record the missing or weak header honestly and fix it on the site. Do not treat absence as a pass.',
     };
   }
 

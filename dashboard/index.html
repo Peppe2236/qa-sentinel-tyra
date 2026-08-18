@@ -30,6 +30,18 @@
 </head>
 
 <body>
+  <div
+    id="sample-data-banner"
+    class="sample-data-banner"
+    hidden
+  >
+    <strong>Sample dashboard data</strong>
+    <span>
+      This is the committed stub, not a live <code>qa:sites</code> run.
+      Run <code>npm run qa:sites</code> to replace it with honest measurements.
+    </span>
+  </div>
+
   <header class="topbar">
     <div>
       <p class="eyebrow">
@@ -600,7 +612,10 @@
       </h2>
     </div>
 
-    <span class="control-center-status">
+    <span
+      id="control-center-status"
+      class="control-center-status"
+    >
       SENTINEL ONLINE
     </span>
   </div>
@@ -931,11 +946,9 @@
 
 
     <!-- SETTINGS -->
-    <button
+    <a
       class="control-action control-settings"
-      type="button"
-      disabled
-      title="Coming soon"
+      href="./settings.html"
     >
       <span class="control-action-icon">
         <svg
@@ -964,18 +977,21 @@
         </strong>
 
         <small>
-          Sentinel configuration
+          Read-only sites, scan limit and catalogs
         </small>
 
-        <span class="control-action-status">
-          COMING SOON
+        <span
+          id="control-settings-status"
+          class="control-action-status"
+        >
+          READ ONLY
         </span>
       </span>
 
       <span class="control-action-arrow">
-        —
+        →
       </span>
-    </button>
+    </a>
 
   </div>
 </section>

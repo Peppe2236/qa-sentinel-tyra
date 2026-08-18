@@ -118,4 +118,20 @@ test.describe('AI Skills page', () => {
       ).toEqual([]);
     }
   );
+
+  test(
+    'catalog is served over HTTPS',
+    qualityMeta({
+      requirement: 'REQ-SKILLS-HOME-001',
+      criteria: 'AC-SKILLS-HOME-001-HTTPS',
+      flow: 'FLOW-SKILLS-CATALOG',
+      scenario: 'SCN-SKILLS-CATALOG-LOAD',
+      category: 'security',
+      dimensions: 'security-performance',
+      securityCheck: 'transport',
+    }),
+    async ({ page }) => {
+      expect(page.url()).toMatch(/^https:/);
+    }
+  );
 });

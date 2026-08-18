@@ -2,6 +2,10 @@
   "schemaVersion": 5,
   "runId": "sample-run-not-a-real-execution",
   "environment": "sample",
+  "metadata": {
+    "dataKind": "sample",
+    "branch": "sample"
+  },
   "baseURL": "https://nation.dev/home",
   "startedAt": "2026-08-18T00:00:00.000Z",
   "finishedAt": "2026-08-18T00:00:12.000Z",

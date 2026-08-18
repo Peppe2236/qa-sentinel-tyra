@@ -603,7 +603,12 @@ button.control-action {
 
 .control-settings
 .control-action-status {
-  color: #738196;
+  color: #9aaac1;
+}
+
+.control-settings:hover {
+  border-color:
+    rgba(154, 170, 193, 0.48);
 }
 
 

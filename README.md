@@ -193,6 +193,8 @@ That is the Ubuntu command to use. It:
 2. Runs Nation + AI Skills Chromium tests, including generated discovered-page smoke tests.
 3. Writes one dashboard run covering both sites.
 
+`qa:sites` now also measures document security headers (CSP / HSTS / X-Content-Type-Options / clickjacking) and anonymous Set-Cookie flags on both homepages and sign-in, plus axe-core smoke on the Nation homepage and Skills catalog. Missing headers fail honestly. No cookies is recorded as not-observed, not poor. Settings in the dashboard is a read-only catalog view, not an editor.
+
 Then:
 
 ```bash

@@ -1,0 +1,33 @@
+{
+  "readOnly": true,
+  "title": "QA Sentinel Tyra settings",
+  "summary": "Read-only view of repo configuration. There is no settings product and nothing here can be saved.",
+  "maxPagesEnv": "QA_MAX_PAGES",
+  "maxPagesDefault": 20,
+  "sites": [
+    {
+      "id": "nation",
+      "name": "Nation",
+      "url": "https://nation.dev/"
+    },
+    {
+      "id": "ai-skills",
+      "name": "AI Skills",
+      "url": "https://aiskills.nation.dev/skills"
+    }
+  ],
+  "catalogs": [
+    {
+      "name": "Requirements",
+      "path": "requirements/requirements.json"
+    },
+    {
+      "name": "Critical flows",
+      "path": "flows/critical-flows.json"
+    },
+    {
+      "name": "Security / performance",
+      "path": "config/security-performance.json"
+    }
+  ]
+}

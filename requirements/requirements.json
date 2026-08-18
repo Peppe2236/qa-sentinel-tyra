@@ -486,6 +486,94 @@
       ]
     },
     {
+      "id": "REQ-NATION-SEC-001",
+      "title": "Public Nation pages expose measured security headers and cookie flags",
+      "description": "Anonymous homepage and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, and Set-Cookie flags. Missing headers are recorded as failures. No Set-Cookie is not-observed, not poor. This does not require NATION_TEST_* login.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-SEC-001-CSP",
+          "title": "Document Content-Security-Policy is present or recorded as absent",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-SEC-001-HEADERS",
+          "title": "HSTS, X-Content-Type-Options and X-Frame-Options or CSP frame-ancestors are measured",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-SEC-001-COOKIES",
+          "title": "Set-Cookie flags are checked when cookies are observed",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-SEC-001",
+      "title": "Public AI Skills pages expose measured security headers and cookie flags",
+      "description": "Anonymous catalog and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, and Set-Cookie flags without AI_SKILLS_TEST_* login.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "security-performance"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-SEC-001-CSP",
+          "title": "Document Content-Security-Policy is present or recorded as absent",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-SEC-001-HEADERS",
+          "title": "HSTS, X-Content-Type-Options and X-Frame-Options or CSP frame-ancestors are measured",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-SEC-001-COOKIES",
+          "title": "Set-Cookie flags are checked when cookies are observed",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-A11Y-001",
+      "title": "Nation homepage has an axe-core accessibility smoke check",
+      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings so the suite is not blocked on contrast-only noise.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-A11Y-001-AXE",
+          "title": "Homepage has no serious or critical axe-core violations excluding noisy color-contrast",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-A11Y-001",
+      "title": "AI Skills catalog has an axe-core accessibility smoke check",
+      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-A11Y-001-AXE",
+          "title": "Catalog has no serious or critical axe-core violations excluding noisy color-contrast",
+          "critical": false
+        }
+      ]
+    },
+    {
       "id": "REQ-PLATFORM-DISCOVERY-001",
       "title": "Deep Discovery can crawl each configured site",
       "description": "tests/discovery/sentinel-discovery.spec.ts crawls nation.dev and aiskills.nation.dev and writes reports/discovery/<site>.json.",

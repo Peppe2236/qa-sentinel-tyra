@@ -34,6 +34,7 @@ export function qualityMeta(input: {
   category?: string;
   dimensions?: string | string[];
   securityCheck?: string | string[];
+  severity?: string;
 }): Pick<TestDetails, 'annotation'> {
   const annotation: Annotation[] = [];
 
@@ -44,6 +45,7 @@ export function qualityMeta(input: {
   pushValues(annotation, 'category', input.category);
   pushValues(annotation, 'quality-dimension', input.dimensions);
   pushValues(annotation, 'security-area', input.securityCheck);
+  pushValues(annotation, 'severity', input.severity);
 
   return { annotation };
 }

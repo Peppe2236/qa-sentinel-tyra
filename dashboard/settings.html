@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — QA Sentinel Tyra</title>
+  <link rel="stylesheet" href="./dashboard.css" />
+  <link rel="stylesheet" href="./settings.css" />
+</head>
+<body class="settings-page">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">QA SENTINEL TYRA</p>
+      <h1>Settings</h1>
+      <p class="muted">
+        Read-only configuration. This is not a settings product.
+      </p>
+    </div>
+    <a class="settings-back" href="./index.html">← Dashboard</a>
+  </header>
+
+  <main class="settings-main">
+    <p id="settings-summary" class="settings-summary"></p>
+
+    <section class="card">
+      <p class="eyebrow">SITES</p>
+      <h2>Monitored sites</h2>
+      <div id="settings-sites" class="settings-list"></div>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">SCAN LIMIT</p>
+      <h2>Max pages</h2>
+      <p>
+        Environment variable
+        <code id="settings-max-pages-env">QA_MAX_PAGES</code>
+      </p>
+      <p>
+        Default used by <code>npm run qa:sites</code>:
+        <strong id="settings-max-pages">20</strong>
+      </p>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">CATALOGS</p>
+      <h2>Quality catalogs</h2>
+      <div id="settings-catalogs" class="settings-list"></div>
+    </section>
+  </main>
+
+  <script src="./settings.js"></script>
+</body>
+</html>

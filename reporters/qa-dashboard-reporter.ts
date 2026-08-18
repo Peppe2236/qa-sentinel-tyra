@@ -1020,6 +1020,9 @@ function buildMetadata(): RunMetadata {
 
     runNumber:
       process.env.GITHUB_RUN_NUMBER,
+
+    dataKind:
+      'live',
   };
 }
 
@@ -1788,6 +1791,12 @@ const run: DashboardRun = {
         this.results.length,
 
       ...health,
+
+      blockingIssues:
+        releaseAssessment.blockingIssues,
+
+      nonBlockingIssues:
+        releaseAssessment.nonBlockingIssues,
 
       performance,
       browserStatistics,
