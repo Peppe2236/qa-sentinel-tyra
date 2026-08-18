@@ -1,9 +1,17 @@
 import { test, expect } from '@playwright/test';
+
 import { readOptionalCredentials } from '../helpers/env';
 import { NATION_AUTH_STATE } from '../helpers/auth-state';
 import { qualityMeta } from '../helpers/quality';
 import { NATION_ORIGIN } from '../pages/nation-auth.page';
 import { dismissFirstPartyChallenges } from '../helpers/first-party-challenges';
+import {
+  accountMenuControl,
+  clearBrowserSession,
+  expectAuthenticatedMemberPage,
+  logoutControl,
+} from '../helpers/member-smoke';
+import { assessStoredSessionCookies } from '../../reporters/utils/http-security';
 
 const SKIP_LOGIN =
   'Set NATION_TEST_EMAIL and NATION_TEST_PASSWORD in .env to enable real login.';
@@ -24,6 +32,7 @@ const PROTECTED_ROUTES = [
 ] as const;
 
 test.use({ storageState: NATION_AUTH_STATE });
+test.describe.configure({ timeout: 90_000 });
 
 test.describe('Nation authenticated session', () => {
   test(
@@ -49,6 +58,42 @@ test.describe('Nation authenticated session', () => {
     }
   );
 
+  test(
+    'session cookies set Secure, HttpOnly and SameSite after login',
+    qualityMeta({
+      requirement: ['REQ-NATION-AUTH-005', 'REQ-NATION-SEC-001'],
+      criteria: ['AC-NATION-AUTH-005-COOKIES', 'AC-NATION-SEC-001-COOKIES'],
+      flow: 'FLOW-NATION-AUTHENTICATED-SESSION',
+      scenario: 'SCN-NATION-SESSION-LOGIN',
+      category: 'security',
+      dimensions: 'security-performance',
+      securityCheck: 'session-cookies',
+    }),
+    async ({ page }) => {
+      const credentials = readOptionalCredentials('nation');
+
+      test.skip(!credentials, SKIP_LOGIN);
+
+      await page.goto(`${NATION_ORIGIN}/home`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await dismissFirstPartyChallenges(page);
+      await expect(page).not.toHaveURL(/\/signin/i, { timeout: 15_000 });
+
+      const cookies = (await page.context().cookies(NATION_ORIGIN)).map(
+        cookie => ({
+          name: cookie.name,
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+          sameSite: cookie.sameSite,
+        })
+      );
+      const finding = assessStoredSessionCookies('Nation session', cookies);
+
+      expect(finding.passed, finding.message).toBe(true);
+    }
+  );
+
   for (const route of PROTECTED_ROUTES) {
     test(
       `authenticated session can open ${route.path}`,
@@ -67,19 +112,85 @@ test.describe('Nation authenticated session', () => {
         const response = await page.goto(`${NATION_ORIGIN}${route.path}`, {
           waitUntil: 'domcontentloaded',
         });
-        await dismissFirstPartyChallenges(page);
 
-        expect(
-          response,
-          `${route.path} returned no main response`
-        ).not.toBeNull();
-        expect(
-          response?.status(),
-          `${route.path} returned HTTP ${response?.status()}`
-        ).toBeLessThan(400);
-        await expect(page).not.toHaveURL(/\/signin/i);
-        await expect(page.locator('body')).toBeVisible();
+        await expectAuthenticatedMemberPage(page, response, route.path);
       }
     );
   }
+
+  test(
+    'cleared session returns /home to sign-in',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-005',
+      criteria: 'AC-NATION-AUTH-005-RECOVERY',
+      flow: 'FLOW-NATION-AUTHENTICATED-SESSION',
+      scenario: 'SCN-NATION-SESSION-RECOVERY',
+      category: 'authentication',
+      securityCheck: 'authentication',
+    }),
+    async ({ page }) => {
+      const credentials = readOptionalCredentials('nation');
+
+      test.skip(!credentials, SKIP_LOGIN);
+
+      await page.goto(`${NATION_ORIGIN}/home`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await dismissFirstPartyChallenges(page);
+      await expect(page).not.toHaveURL(/\/signin/i, { timeout: 15_000 });
+
+      await clearBrowserSession(page);
+
+      await page.goto(`${NATION_ORIGIN}/home`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await dismissFirstPartyChallenges(page);
+      await expect(page).toHaveURL(/\/signin/i, { timeout: 15_000 });
+    }
+  );
+
+  test(
+    'logout control returns to sign-in when visible',
+    qualityMeta({
+      requirement: 'REQ-NATION-AUTH-005',
+      criteria: 'AC-NATION-AUTH-005-RECOVERY',
+      flow: 'FLOW-NATION-AUTHENTICATED-SESSION',
+      scenario: 'SCN-NATION-SESSION-RECOVERY',
+      category: 'authentication',
+      securityCheck: 'authentication',
+    }),
+    async ({ page }) => {
+      const credentials = readOptionalCredentials('nation');
+
+      test.skip(!credentials, SKIP_LOGIN);
+
+      await page.goto(`${NATION_ORIGIN}/home`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await dismissFirstPartyChallenges(page);
+      await expect(page).not.toHaveURL(/\/signin/i, { timeout: 15_000 });
+
+      const logout = logoutControl(page);
+
+      if (!(await logout.isVisible().catch(() => false))) {
+        const menu = accountMenuControl(page);
+
+        if (await menu.isVisible().catch(() => false)) {
+          await menu.click();
+        }
+      }
+
+      if (!(await logout.isVisible().catch(() => false))) {
+        test.info().annotations.push({
+          type: 'note',
+          description:
+            'No visible logout control; recovery is covered by the cleared-session test.',
+        });
+        return;
+      }
+
+      await logout.click();
+      await expect(page).toHaveURL(/\/signin/i, { timeout: 15_000 });
+    }
+  );
 });

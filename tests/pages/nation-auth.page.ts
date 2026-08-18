@@ -65,7 +65,11 @@ export class NationAuthPage {
   }
 
   passwordField(): Locator {
-    return this.page.locator('input[type="password"]').first();
+    return this.page
+      .locator(
+        'input[name="Passwd"], input[type="password"]:not([aria-hidden="true"]):not([name="hiddenPassword"]):not([tabindex="-1"])'
+      )
+      .first();
   }
 
   signInSubmit(): Locator {

@@ -6,38 +6,24 @@ import {
   writeEmptyAuthState,
 } from '../helpers/auth-state';
 import { SkillsCatalogPage } from '../pages/skills-catalog.page';
-import { handleFirstPartyCaptcha } from '../helpers/first-party-challenges';
+import { completeConfiguredLogin } from '../helpers/complete-login';
+
+setup.setTimeout(120_000);
 
 setup('prepare AI Skills storageState', async ({ page }) => {
+  writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
+
   const credentials = readOptionalCredentials('ai-skills');
 
   if (!credentials) {
-    writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
     return;
   }
 
   const catalog = new SkillsCatalogPage(page);
 
   await catalog.gotoPath('/signin');
-
-  const captcha = await handleFirstPartyCaptcha(page);
-
-  if (captcha.blocked) {
-    writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
-    return;
-  }
-
-  await catalog.emailField().fill(credentials.email);
-  await catalog.passwordField().fill(credentials.password);
-  await catalog.signInSubmit().click();
-
-  const afterSubmit = await handleFirstPartyCaptcha(page);
-
-  if (afterSubmit.blocked) {
-    writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
-    return;
-  }
-
-  await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
+  await completeConfiguredLogin(page, credentials, 'AI Skills');
+  await expect(page).toHaveURL(/aiskills\.nation\.dev/i, { timeout: 20_000 });
+  await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 20_000 });
   await page.context().storageState({ path: AI_SKILLS_AUTH_STATE });
 });

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readOptionalCredentials } from '../helpers/env';
 import { qualityMeta } from '../helpers/quality';
 import { SkillsCatalogPage } from '../pages/skills-catalog.page';
+import { completeConfiguredLogin } from '../helpers/complete-login';
 
 test.describe('AI Skills authentication', () => {
   test(
@@ -58,13 +59,14 @@ test.describe('AI Skills authentication', () => {
         'Set AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD in .env to enable real Skills login.'
       );
 
+      test.setTimeout(90_000);
+
       const catalog = new SkillsCatalogPage(page);
 
       await catalog.gotoPath('/signin');
-      await catalog.emailField().fill(credentials!.email);
-      await catalog.passwordField().fill(credentials!.password);
-      await catalog.signInSubmit().click();
-      await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 15_000 });
+      await completeConfiguredLogin(page, credentials!, 'AI Skills');
+      await expect(page).toHaveURL(/aiskills\.nation\.dev/i, { timeout: 20_000 });
+      await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 20_000 });
       await expect(page.locator('body')).toBeVisible();
     }
   );

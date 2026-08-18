@@ -205,7 +205,7 @@
     {
       "id": "REQ-NATION-AUTH-005",
       "title": "A test account can establish an authenticated Nation session",
-      "description": "Not covered by the current suite unless NATION_TEST_EMAIL and NATION_TEST_PASSWORD are set. Successful login, session cookie and redirect away from /signin remain a gap.",
+      "description": "Covered when NATION_TEST_EMAIL and NATION_TEST_PASSWORD are set: setup stores a storageState, member tests reuse it, session cookie flags are checked, and a cleared session must bounce /home back to /signin. Completing production-side writes is out of scope.",
       "site": "nation",
       "critical": false,
       "qualityDimensions": [
@@ -223,13 +223,23 @@
           "id": "AC-NATION-AUTH-005-SESSION",
           "title": "An authenticated storageState can be reused across tests",
           "critical": false
+        },
+        {
+          "id": "AC-NATION-AUTH-005-COOKIES",
+          "title": "Session cookies observed after login include Secure, HttpOnly and SameSite",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-AUTH-005-RECOVERY",
+          "title": "Clearing the session returns protected Nation routes to /signin",
+          "critical": false
         }
       ]
     },
     {
       "id": "REQ-NATION-PROTECTED-001",
       "title": "Authenticated Nation routes remain available after login",
-      "description": "Deep Discovery currently sees /home, /jobs and /profile redirect anonymous users to /signin. There is no logged-in test that proves those routes work for a member.",
+      "description": "Anonymous users are redirected to /signin. With NATION_TEST_* credentials the suite opens /home, /jobs and /profile as a member and asserts landmarks plus no HTTP 500.",
       "site": "nation",
       "critical": false,
       "qualityDimensions": [
@@ -464,7 +474,7 @@
     {
       "id": "REQ-SKILLS-AUTH-001",
       "title": "AI Skills sign-in is usable",
-      "description": "https://aiskills.nation.dev/signin exposes a login form for anonymous visitors. Successful Skills login stays skipped unless AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD are set.",
+      "description": "https://aiskills.nation.dev/signin exposes a login form for anonymous visitors. With AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD the suite establishes a session, smokes /skills and /assessment without submitting answers, and checks session cookie flags.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -481,6 +491,21 @@
         {
           "id": "AC-SKILLS-AUTH-001-LOGIN",
           "title": "Optional AI_SKILLS_TEST_* credentials can establish a session",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-AUTH-001-CATALOG",
+          "title": "Authenticated session can open the Skills catalog without HTTP 500",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-AUTH-001-COOKIES",
+          "title": "Session cookies observed after Skills login include Secure, HttpOnly and SameSite",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-AUTH-001-RECOVERY",
+          "title": "Clearing the Skills session removes auth cookies and gated routes return to /signin when they are not public",
           "critical": false
         }
       ]

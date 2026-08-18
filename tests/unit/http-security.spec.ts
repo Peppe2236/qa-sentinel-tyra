@@ -5,6 +5,7 @@ import { analyzeSecurityPerformance } from '../../reporters/analyzers/sentinel-s
 import type { DashboardTestResult } from '../../reporters/models/types';
 import {
   assessDocumentSecurity,
+  assessStoredSessionCookies,
   findingFor,
   headerFindings,
   parseSetCookie,
@@ -120,6 +121,48 @@ test.describe('HTTP security header classification', () => {
 
     expect(parsed.missingFlags).toEqual([]);
     expect(finding.passed).toBe(true);
+  });
+
+  test('stored session cookies missing flags fail without printing values', () => {
+    const finding = assessStoredSessionCookies('Nation session', [
+      {
+        name: 'sid',
+        secure: false,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    expect(finding.passed).toBe(false);
+    expect(finding.message).toMatch(/sid missing Secure/i);
+    expect(finding.message).not.toMatch(/=/);
+  });
+
+  test('stored session cookies with complete flags pass', () => {
+    const finding = assessStoredSessionCookies('Nation session', [
+      {
+        name: 'sid',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    expect(finding.passed).toBe(true);
+  });
+
+  test('analytics cookies are not treated as the only session evidence', () => {
+    const finding = assessStoredSessionCookies('Nation session', [
+      {
+        name: '_ga',
+        secure: true,
+        httpOnly: false,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    expect(finding.passed).toBe(false);
+    expect(finding.message).toMatch(/no session cookie was observed/i);
   });
 
   test('session-cookies without Set-Cookie stay not-observed, not poor', () => {

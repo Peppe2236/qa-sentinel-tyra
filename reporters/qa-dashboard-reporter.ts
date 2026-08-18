@@ -131,6 +131,7 @@ import {
 
 import {
   maybeEnrichSentinelAi,
+  redactSecrets,
 } from './utils/llm';
 import {
   runAutonomousOnEndHooks,
@@ -1168,14 +1169,13 @@ profile:
 
       error: result.error
         ? {
-            message:
-              result.error.message,
-
-            stack:
-              result.error.stack,
-
-            snippet:
-              result.error.snippet,
+            message: redactSecrets(result.error.message ?? ''),
+            stack: result.error.stack
+              ? redactSecrets(result.error.stack)
+              : result.error.stack,
+            snippet: result.error.snippet
+              ? redactSecrets(result.error.snippet)
+              : result.error.snippet,
           }
         : undefined,
 

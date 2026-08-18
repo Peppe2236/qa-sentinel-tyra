@@ -56,6 +56,10 @@ export function llmKey(env: NodeJS.ProcessEnv = process.env): string {
 export function redactSecrets(text: string): string {
   return text
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[redacted-email]')
+    .replace(/\bfill\("(?:[^"\\]|\\.)*"\)/g, 'fill("[redacted]")')
+    .replace(/\bfill\('(?:[^'\\]|\\.)*'\)/g, "fill('[redacted]')")
+    .replace(/\bpressSequentially\("(?:[^"\\]|\\.)*"\)/g, 'pressSequentially("[redacted]")')
+    .replace(/\bpressSequentially\('(?:[^'\\]|\\.)*'\)/g, "pressSequentially('[redacted]')")
     .replace(/(password|passwd|pwd|secret)\s*[=:]\s*\S+/gi, '$1=[redacted]')
     .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [redacted]')
     .replace(/\bsk-[A-Za-z0-9]{10,}\b/g, '[redacted-key]')

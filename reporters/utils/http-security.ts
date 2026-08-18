@@ -89,6 +89,84 @@ function presence(
       };
 }
 
+export interface StoredCookieFlags {
+  name: string;
+  secure: boolean;
+  httpOnly: boolean;
+  sameSite?: string;
+}
+
+const SESSION_COOKIE_NAME =
+  /(^|[-_.])(session|sess|sid|auth|jwt|login)([-_.]|$)|sb-.+-auth/i;
+
+export function isLikelySessionCookie(
+  cookie: StoredCookieFlags
+): boolean {
+  return cookie.httpOnly || SESSION_COOKIE_NAME.test(cookie.name);
+}
+
+export function assessStoredSessionCookies(
+  pageLabel: string,
+  cookies: StoredCookieFlags[]
+): HeaderFinding {
+  const sessionCookies = cookies.filter(isLikelySessionCookie);
+
+  if (sessionCookies.length === 0) {
+    return {
+      id: 'cookies',
+      passed: false,
+      severity: 'medium',
+      securityAreas: ['session-cookies'],
+      message: `${pageLabel}: no session cookie was observed after login. Cookie flags cannot be confirmed.`,
+    };
+  }
+
+  const incomplete = sessionCookies
+    .map(cookie => {
+      const missingFlags: CookieFlagName[] = [];
+
+      if (!cookie.secure) {
+        missingFlags.push('Secure');
+      }
+
+      if (!cookie.httpOnly) {
+        missingFlags.push('HttpOnly');
+      }
+
+      if (!String(cookie.sameSite ?? '').trim()) {
+        missingFlags.push('SameSite');
+      }
+
+      return {
+        name: cookie.name || '(unnamed)',
+        missingFlags,
+      };
+    })
+    .filter(cookie => cookie.missingFlags.length > 0);
+
+  if (incomplete.length === 0) {
+    return {
+      id: 'cookies',
+      passed: true,
+      severity: 'info',
+      securityAreas: ['session-cookies'],
+      message: `${pageLabel}: session cookies include Secure, HttpOnly and SameSite.`,
+    };
+  }
+
+  const details = incomplete
+    .map(cookie => `${cookie.name} missing ${cookie.missingFlags.join(', ')}`)
+    .join('; ');
+
+  return {
+    id: 'cookies',
+    passed: false,
+    severity: 'medium',
+    securityAreas: ['session-cookies'],
+    message: `${pageLabel}: session cookie flags are incomplete (${details}).`,
+  };
+}
+
 export function parseSetCookie(
   raw: string
 ): ParsedSetCookie {

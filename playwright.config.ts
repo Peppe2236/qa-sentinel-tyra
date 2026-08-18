@@ -184,6 +184,33 @@ function buildMatrixProjects(): Project[] {
   return projects;
 }
 
+function chromeAuthUse(
+  device: ReturnType<typeof deviceFor>,
+  baseURL: string
+) {
+  const canUseChrome =
+    process.platform === 'win32' ||
+    fs.existsSync('/usr/bin/google-chrome') ||
+    fs.existsSync('/usr/bin/google-chrome-stable');
+
+  if (!canUseChrome) {
+    return {
+      ...device,
+      baseURL,
+    };
+  }
+
+  return {
+    ...device,
+    baseURL,
+    channel: 'chrome' as const,
+    launchOptions: {
+      args: ['--disable-blink-features=AutomationControlled'],
+      ignoreDefaultArgs: ['--enable-automation'],
+    },
+  };
+}
+
 export default defineConfig({
   testDir: './tests',
 
@@ -248,18 +275,12 @@ export default defineConfig({
     {
       name: 'nation-auth-setup',
       testMatch: 'auth/nation.setup.ts',
-      use: {
-        ...deviceFor('chromium', 'desktop'),
-        baseURL: nation.baseURL,
-      },
+      use: chromeAuthUse(deviceFor('chromium', 'desktop'), nation.baseURL),
     },
     {
       name: 'ai-skills-auth-setup',
       testMatch: 'auth/ai-skills.setup.ts',
-      use: {
-        ...deviceFor('chromium', 'desktop'),
-        baseURL: aiSkills.baseURL,
-      },
+      use: chromeAuthUse(deviceFor('chromium', 'desktop'), aiSkills.baseURL),
     },
     ...buildMatrixProjects(),
   ],

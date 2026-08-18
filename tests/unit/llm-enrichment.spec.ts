@@ -50,6 +50,24 @@ test.describe('LLM enrichment', () => {
     expect(redacted).toContain('[redacted]');
   });
 
+  test('redacts Playwright fill() call-log values', () => {
+    const redacted = redactSecrets(
+      'locator.fill: Timeout\n- fill("not-a-real-secret")'
+    );
+
+    expect(redacted).not.toContain('not-a-real-secret');
+    expect(redacted).toContain('fill("[redacted]")');
+  });
+
+  test('redacts Playwright pressSequentially call-log values', () => {
+    const redacted = redactSecrets(
+      'locator.pressSequentially("not-a-real-secret")'
+    );
+
+    expect(redacted).not.toContain('not-a-real-secret');
+    expect(redacted).toContain('pressSequentially("[redacted]")');
+  });
+
   test('fails open to heuristic when no key is set', async () => {
     let called = false;
     const enriched = await maybeEnrichHumanReviewPack(

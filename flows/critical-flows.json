@@ -224,7 +224,7 @@
     {
       "id": "FLOW-NATION-AUTHENTICATED-SESSION",
       "title": "Member signs in and reaches protected Nation routes",
-      "description": "Requires NATION_TEST_* credentials. Currently skipped when env is empty. Discovery shows /home, /jobs and /profile bounce anonymous users to /signin.",
+      "description": "Requires NATION_TEST_* credentials. When they are set, setup stores a session and the suite opens /home, /jobs and /profile. Discovery still shows anonymous users bounce to /signin.",
       "site": "nation",
       "critical": false,
       "requirementIds": [
@@ -252,7 +252,7 @@
         },
         {
           "id": "SCN-NATION-SESSION-RECOVERY",
-          "title": "Expired session returns the user to sign-in (not implemented)",
+          "title": "Cleared or logged-out session returns /home to sign-in",
           "type": "recovery",
           "critical": false,
           "requirementIds": [
@@ -403,7 +403,7 @@
     {
       "id": "FLOW-SKILLS-AUTH",
       "title": "Anonymous visitor uses the AI Skills sign-in page",
-      "description": "Form presence only. Successful Skills login is skipped unless AI_SKILLS_TEST_* is set.",
+      "description": "Form presence for anonymous visitors. Successful Skills login, catalog/assessment smoke and session recovery run when AI_SKILLS_TEST_* is set. Completing an assessment is out of scope.",
       "site": "ai-skills",
       "critical": false,
       "requirementIds": [
@@ -425,6 +425,15 @@
           "id": "SCN-SKILLS-AUTH-LOGIN",
           "title": "Optional AI_SKILLS_TEST_* credentials can establish a session",
           "type": "happy-path",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-AUTH-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-AUTH-RECOVERY",
+          "title": "Cleared or logged-out Skills session drops auth cookies",
+          "type": "recovery",
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-AUTH-001"
