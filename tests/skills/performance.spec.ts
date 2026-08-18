@@ -9,12 +9,12 @@ test.describe('AI Skills public page load and API timing', () => {
     'catalog page load and first-party API timing stay within catalog thresholds',
     qualityMeta({
       requirement: 'REQ-SKILLS-PERF-001',
-      criteria: 'AC-SKILLS-PERF-001-LOAD',
+      criteria: ['AC-SKILLS-PERF-001-LOAD', 'AC-SKILLS-PERF-001-LCP'],
       flow: 'FLOW-SKILLS-CATALOG',
       scenario: 'SCN-SKILLS-CATALOG-PERF',
       category: 'performance',
       dimensions: 'security-performance',
-      performanceCheck: ['page-load', 'api-latency'],
+      performanceCheck: ['page-load', 'api-latency', 'largest-contentful-paint'],
       severity: 'medium',
     }),
     async ({ page }, testInfo) => {

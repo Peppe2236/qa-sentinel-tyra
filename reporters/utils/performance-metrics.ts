@@ -14,7 +14,8 @@ export const PERFORMANCE_AREA_ANNOTATION_TYPES = [
 
 export type PerformanceObservationArea =
   | 'page-load'
-  | 'api-latency';
+  | 'api-latency'
+  | 'largest-contentful-paint';
 
 export interface PerformanceObservationPayload {
   area:
@@ -40,6 +41,9 @@ export interface PerformanceObservationPayload {
 
   source?:
     string;
+
+  fcpMs?:
+    number;
 }
 
 export function percentile(
@@ -138,7 +142,11 @@ export function parsePerformanceObservation(
     const parsed = JSON.parse(raw) as PerformanceObservationPayload;
     const area = String(parsed.area ?? '').toLowerCase();
 
-    if (area !== 'page-load' && area !== 'api-latency') {
+    if (
+      area !== 'page-load' &&
+      area !== 'api-latency' &&
+      area !== 'largest-contentful-paint'
+    ) {
       return undefined;
     }
 
@@ -187,6 +195,7 @@ export function isPerformanceArea(
     'backend-latency',
     'timeout-resilience',
     'regression',
+    'largest-contentful-paint',
   ].includes(value);
 }
 

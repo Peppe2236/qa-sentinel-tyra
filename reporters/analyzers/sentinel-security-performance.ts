@@ -99,6 +99,7 @@ export const PERFORMANCE_AREAS:
     'backend-latency',
     'timeout-resilience',
     'regression',
+    'largest-contentful-paint',
   ];
 
 
@@ -512,6 +513,24 @@ export function performanceAreasForIssue(
   ) {
     areas.push(
       'page-load'
+    );
+  }
+
+
+  if (
+    text.includes(
+      'largest-contentful-paint'
+    ) ||
+    text.includes(
+      ' lcp '
+    ) ||
+    text.startsWith('lcp ') ||
+    text.includes(
+      'lcp was'
+    )
+  ) {
+    areas.push(
+      'largest-contentful-paint'
     );
   }
 
@@ -1284,6 +1303,10 @@ function thresholdForArea(
       return thresholds
         .pageLoadMs;
 
+    case 'largest-contentful-paint':
+      return thresholds
+        .pageLoadMs;
+
     case 'api-latency':
       return thresholds
         .apiLatencyMs;
@@ -1442,9 +1465,41 @@ function analyzePerformance(
     );
 
 
+  const lcpSamples =
+    observations
+      .filter(
+        observation =>
+          observation.area ===
+            'largest-contentful-paint' &&
+          observation.observation !==
+            'not-observed' &&
+          typeof observation.durationMs ===
+            'number'
+      )
+      .map(
+        observation =>
+          observation.durationMs as number
+      );
+
+
+  const lcpLooked =
+    observations.some(
+      observation =>
+        observation.area ===
+          'largest-contentful-paint'
+    );
+
+
   const pageLoad =
     classifyLatencySamples(
       pageLoadSamples,
+      config.performance.thresholds.pageLoadMs
+    );
+
+
+  const lcp =
+    classifyLatencySamples(
+      lcpSamples,
       config.performance.thresholds.pageLoadMs
     );
 
@@ -1529,6 +1584,11 @@ function analyzePerformance(
             ) ||
             (
               area ===
+                'largest-contentful-paint' &&
+              lcpLooked
+            ) ||
+            (
+              area ===
                 'api-latency' &&
               apiLooked
             )
@@ -1603,6 +1663,64 @@ function analyzePerformance(
             else {
               status =
                 pageLoad.status;
+            }
+          }
+
+          else if (
+            area ===
+              'largest-contentful-paint'
+          ) {
+            observed =
+              lcp.p95;
+
+            if (
+              !lcpLooked
+            ) {
+              status =
+                'not-verified';
+            }
+
+            else if (
+              lcp.status ===
+                'not-observed'
+            ) {
+              status =
+                'not-observed';
+
+              notes = [
+                'Largest Contentful Paint was not exposed by this browser. FCP/LCP absence is not-observed, not poor. Navigation timing remains the page-load bar.',
+              ];
+            }
+
+            else {
+              status =
+                lcp.status;
+
+              const fcpValues =
+                observations
+                  .filter(
+                    observation =>
+                      observation.area ===
+                        'largest-contentful-paint' &&
+                      typeof observation.fcpMs ===
+                        'number'
+                  )
+                  .map(
+                    observation =>
+                      observation.fcpMs as number
+                  );
+
+              notes = [
+                fcpValues.length > 0
+                  ? `FCP observed at ${Math.round(
+                      fcpValues.reduce(
+                        (total, value) =>
+                          total + value,
+                        0
+                      ) / fcpValues.length
+                    )} ms average. LCP uses the pageLoadMs threshold.`
+                  : 'LCP was measured. FCP was not exposed on every sample.',
+              ];
             }
           }
 
@@ -1741,6 +1859,13 @@ function analyzePerformance(
               area ===
                 'api-latency' &&
               apiLooked
+                ? 1
+                : 0
+            ) +
+            (
+              area ===
+                'largest-contentful-paint' &&
+              lcpLooked
                 ? 1
                 : 0
             ) +
@@ -1979,6 +2104,12 @@ function analyzePerformance(
 
       apiLatencyP95:
         apiLatency.p95,
+
+      lcpP50:
+        lcp.p50,
+
+      lcpP95:
+        lcp.p95,
     },
 
     verifiedAreas,

@@ -2,7 +2,7 @@
 
 ## Current state
 
-QA Sentinel Tyra has completed both the **Milestone 5 Quality Intelligence Framework** and the **Milestone 6 Advisory Autonomous QA Framework**.
+QA Sentinel Tyra has completed the **Milestone 5 Quality Intelligence Framework**, the **Milestone 6 Advisory Autonomous QA Framework**, and **Milestone 7 Unified Dashboard Intelligence & Operationalization**.
 
 Earlier foundations — Playwright reporting, Deep Discovery, actionable issue consolidation and the Quality Command Center — provide the evidence consumed by these frameworks.
 
@@ -80,17 +80,18 @@ Unified Decisioning is the canonical schema-v5 release authority. Legacy release
 
 ## Remaining planned work
 
-The long-term product still needs real E2E depth, CI quality gates, persistence,
-observability and (optionally) an LLM. Those items live in
+The long-term product still needs real authenticated E2E depth, optional GitHub
+Pages, in-CI full-matrix runtime, keyboard a11y, a scheduled Lighthouse job,
+persistence beyond gitignored artifacts and (optionally) an LLM. Those items live in
 [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). They are not silently
-treated as completed by Milestone 5 or Milestone 6.
+treated as completed by Milestone 5, 6 or 7.
 
 | Capability | Status | Direction |
 |---|---|---|
 | AI-assisted root-cause intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches per failing test when `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` is set and fails open |
 | Unified dashboard intelligence | ✅ Done | One Control Center + quality dashboard consumes unified scoring, discovery provenance, both sites, advisory, remediation, human review and the executive PDF |
 | Discovery-aware release readiness | ✅ Done | After `qa:unattended` / `qa:sites`, M7.3 counters read discovery JSON + scan inventory, not only generated route tests |
-| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Full 18-project matrix is local `qa:unattended` |
+| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Playwright browser cache is enabled. Full 18-project matrix is local `qa:unattended` |
 | Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` seeds a tiny stub; live JSON stays gitignored |
 | Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; many flows are still not-tested |
 | PDF executive reports | ✅ Done | `reports/executive-report.pdf` after reporter `onEnd` (verdict, counts, top issues, human queue) |
@@ -193,25 +194,22 @@ videos are retained. The dashboard Control Center links to the pack.
 `qa:full` (`scan:all` + default Playwright, then opens the dashboard) stays a
 separate helper. `npm run sentinel` is interactive Nation-headed, not unattended.
 
-## Milestone 7 – Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
+## Milestone 7 – Unified Dashboard Intelligence & Operationalization ✅ COMPLETE
 
-**Status: IN PROGRESS** (deliveries 7.1–7.3 and 7.7 are done; 7.4–7.6 and 7.8 remain partial)
+**Completed: 2026-08-18**
 
-Earlier docs marked Milestone 7 as “not started”. That was stale. Commits on
-`main` already added operational npm commands, the advisory Autonomous QA
-dashboard panel, discovery-aware release-readiness provenance, heuristic+LLM
-root-cause notes, the executive PDF, and a two-project overview.
+Earlier docs marked Milestone 7 as “not started”, then “in progress”. Deliveries 7.1–7.8 are implemented: operational npm commands, the advisory Autonomous QA dashboard, discovery-aware release-readiness provenance, measured UX/security/performance evidence, heuristic+LLM root-cause notes, the executive PDF, two-project overview, and documented operationalization.
 
-| Delivery | Status | What exists / what does not |
+| Delivery | Status | Completed capability |
 |---|---|---|
 | 7.1 Operational Test Orchestration | ✅ Done | `qa:unattended` is scan + 18-project matrix; `qa:sites` is Chromium-fast; `qa:matrix` is matrix without scan |
 | 7.2 Unified Advisory Dashboard | ✅ Done | Control Center + Autonomous QA panel bind `autonomousQaAssessment`, human review, remediation, discovery, both sites and the PDF — no empty Coming Soon stubs |
 | 7.3 Discovery-aware Release Readiness | ✅ Done | Discovery provenance panel reads `discoveryReadiness` from discovery JSON + scan inventory; counters populate after `qa:unattended` / `qa:sites` |
-| 7.4 UX/UI Verification Coverage | 🚧 Partial | axe-core smoke runs in unattended Chromium; remaining UX areas can still be `not-verified` without evidence |
-| 7.5 Security Verification Coverage | 🚧 Partial | Header/cookie Playwright checks run; analyzer consumes `config/security-performance.json` |
-| 7.6 Performance Verification Coverage | 🚧 Partial | Page-load and first-party API timing specs run on Chromium daily |
+| 7.4 UX/UI Verification Coverage | ✅ Done | axe-core smoke plus measured nav, forms, reduced-motion, layout-shift observation and current-matrix viewport chrome, annotated `ux-ui` and bound to the UX panel. Absence of layout-shift APIs is not-observed, not poor |
+| 7.5 Security Verification Coverage | ✅ Done | Header/cookie Playwright checks, mixed-content http: requests, HTTPS-only homepage/catalog links; analyzer consumes `config/security-performance.json`. Anonymous Set-Cookie flags remain not-observed when none are set |
+| 7.6 Performance Verification Coverage | ✅ Done | Page-load and first-party API timing plus LCP/FCP from PerformanceObserver when the browser exposes them; LCP uses `pageLoadMs`. Not-observed LCP is not poor. Navigation timing remains the page-load bar |
 | 7.7 Evidence-grounded Root-cause Intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches when a key is set and fails open |
-| 7.8 Milestone Validation & Documentation | 🚧 Partial | ROADMAP lists activated vs policy-disabled; live 18-matrix still depends on local `qa:unattended` |
+| 7.8 Milestone Validation & Documentation | ✅ Done | ROADMAP lists activated vs policy-disabled; nightly GitHub `qa:sites` (Chromium); local `qa:unattended` is the full 18-matrix. GitHub Pages dashboard publish and in-CI 18-matrix stay post-M7 |
 
 ### Milestone 7 authority and safety contract
 
@@ -224,4 +222,4 @@ root-cause notes, the executive PDF, and a two-project overview.
 - First-party evidence remains sanitized and source provenance remains visible.
 - Compatibility failures, promoted issues and uncertainty must not be hidden by positive evidence.
 
-**Milestone 7:** 🚧 IN PROGRESS — 7.1–7.3 and 7.7 done; 7.4–7.6 and 7.8 still partial. See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md).
+**Milestone 7:** ✅ COMPLETE — leftovers that need credentials, repo admin, or a scheduled Lighthouse job live in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md) as post-M7 work, not silent gaps inside 7.1–7.8.

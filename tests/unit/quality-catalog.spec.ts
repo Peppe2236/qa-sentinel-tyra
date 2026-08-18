@@ -86,6 +86,8 @@ test.describe('requirements catalog', () => {
     expect(ids).toContain('REQ-NATION-AUTH-001');
     expect(ids).toContain('REQ-SKILLS-HOME-001');
     expect(ids).toContain('REQ-NATION-AUTH-005');
+    expect(ids).toContain('REQ-NATION-UX-001');
+    expect(ids).toContain('REQ-SKILLS-UX-001');
 
     const auth = requirements.find(
       requirement => requirement.id === 'REQ-NATION-AUTH-001'

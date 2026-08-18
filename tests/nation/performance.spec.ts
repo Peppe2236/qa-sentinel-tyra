@@ -12,7 +12,7 @@ const PAGES = [
     requirement: 'REQ-NATION-PERF-001',
     flow: 'FLOW-NATION-PUBLIC-HOME',
     scenario: 'SCN-NATION-HOME-PERF',
-    criterion: 'AC-NATION-PERF-001-LOAD',
+    criteria: ['AC-NATION-PERF-001-LOAD', 'AC-NATION-PERF-001-LCP'],
   },
   {
     name: 'sign-in',
@@ -20,9 +20,9 @@ const PAGES = [
     requirement: 'REQ-NATION-PERF-001',
     flow: 'FLOW-NATION-SIGNIN',
     scenario: 'SCN-NATION-SIGNIN-PERF',
-    criterion: 'AC-NATION-PERF-001-LOAD',
+    criteria: ['AC-NATION-PERF-001-LOAD', 'AC-NATION-PERF-001-LCP'],
   },
-] as const;
+];
 
 test.describe('Nation public page load and API timing', () => {
   for (const target of PAGES) {
@@ -30,12 +30,12 @@ test.describe('Nation public page load and API timing', () => {
       `${target.name} page load and first-party API timing stay within catalog thresholds`,
       qualityMeta({
         requirement: target.requirement,
-        criteria: target.criterion,
+        criteria: target.criteria,
         flow: target.flow,
         scenario: target.scenario,
         category: 'performance',
         dimensions: 'security-performance',
-        performanceCheck: ['page-load', 'api-latency'],
+        performanceCheck: ['page-load', 'api-latency', 'largest-contentful-paint'],
         severity: 'medium',
       }),
       async ({ page }, testInfo) => {

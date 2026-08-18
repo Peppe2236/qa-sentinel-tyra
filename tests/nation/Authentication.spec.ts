@@ -11,6 +11,7 @@ test.describe('Nation.dev authentication pages', () => {
       flow: 'FLOW-NATION-SIGNIN',
       scenario: 'SCN-NATION-SIGNIN-FORM',
       category: 'authentication',
+      dimensions: 'ux-ui',
       tag: '@compat',
     }),
     async ({ page }) => {

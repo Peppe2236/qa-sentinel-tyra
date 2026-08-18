@@ -2400,6 +2400,9 @@ function renderSecurityPerformance(run) {
     'page-load':
       'Page Load',
 
+    'largest-contentful-paint':
+      'Largest Contentful Paint',
+
     'api-latency':
       'API Latency',
 
@@ -2429,6 +2432,7 @@ function renderSecurityPerformance(run) {
   const PERFORMANCE_ORDER = [
     'test-duration',
     'page-load',
+    'largest-contentful-paint',
     'api-latency',
     'backend-latency',
     'timeout-resilience',

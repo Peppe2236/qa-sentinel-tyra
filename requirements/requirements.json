@@ -488,7 +488,7 @@
     {
       "id": "REQ-NATION-SEC-001",
       "title": "Public Nation pages expose measured security headers and cookie flags",
-      "description": "Anonymous homepage and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, and Set-Cookie flags. Missing headers are recorded as failures. No Set-Cookie is not-observed, not poor. This does not require NATION_TEST_* login.",
+      "description": "Anonymous homepage and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, Set-Cookie flags, mixed content, and HTTPS-only homepage links. Missing headers are recorded as failures. No Set-Cookie is not-observed, not poor. This does not require NATION_TEST_* login.",
       "site": "nation",
       "critical": false,
       "qualityDimensions": [
@@ -509,13 +509,23 @@
           "id": "AC-NATION-SEC-001-COOKIES",
           "title": "Set-Cookie flags are checked when cookies are observed",
           "critical": false
+        },
+        {
+          "id": "AC-NATION-SEC-001-MIXED",
+          "title": "HTTPS pages do not load http: subresources (mixed content)",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-SEC-001-LINKS",
+          "title": "Homepage hrefs are relative, https, or non-web; http: links fail",
+          "critical": false
         }
       ]
     },
     {
       "id": "REQ-SKILLS-SEC-001",
       "title": "Public AI Skills pages expose measured security headers and cookie flags",
-      "description": "Anonymous catalog and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, and Set-Cookie flags without AI_SKILLS_TEST_* login.",
+      "description": "Anonymous catalog and sign-in document responses are checked for CSP presence, HSTS, X-Content-Type-Options, clickjacking headers, Set-Cookie flags, mixed content, and HTTPS-only catalog links without AI_SKILLS_TEST_* login.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -535,6 +545,16 @@
         {
           "id": "AC-SKILLS-SEC-001-COOKIES",
           "title": "Set-Cookie flags are checked when cookies are observed",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-SEC-001-MIXED",
+          "title": "HTTPS pages do not load http: subresources (mixed content)",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-SEC-001-LINKS",
+          "title": "Catalog hrefs are relative, https, or non-web; http: links fail",
           "critical": false
         }
       ]
@@ -576,7 +596,7 @@
     {
       "id": "REQ-NATION-PERF-001",
       "title": "Public Nation pages have measured page-load and first-party API timing",
-      "description": "Homepage and sign-in navigation timing (or Playwright load duration) are compared to config/security-performance.json pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Does not require NATION_TEST_* login and does not invent APM data.",
+      "description": "Homepage and sign-in navigation timing (or Playwright load duration) are compared to config/security-performance.json pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Largest Contentful Paint is recorded from PerformanceObserver when the browser exposes it. Does not require NATION_TEST_* login and does not invent APM data.",
       "site": "nation",
       "critical": false,
       "qualityDimensions": [
@@ -587,13 +607,18 @@
           "id": "AC-NATION-PERF-001-LOAD",
           "title": "Homepage and sign-in page-load duration stay within the catalog threshold",
           "critical": false
+        },
+        {
+          "id": "AC-NATION-PERF-001-LCP",
+          "title": "Largest Contentful Paint is recorded when the browser exposes it; absence is not-observed, not poor",
+          "critical": false
         }
       ]
     },
     {
       "id": "REQ-SKILLS-PERF-001",
       "title": "AI Skills catalog has measured page-load and first-party API timing",
-      "description": "Catalog navigation timing (or Playwright load duration) is compared to pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Does not require AI_SKILLS_TEST_* login.",
+      "description": "Catalog navigation timing (or Playwright load duration) is compared to pageLoadMs. First-party XHR/fetch is recorded when present; none is not-observed, not poor. Largest Contentful Paint is recorded from PerformanceObserver when the browser exposes it. Does not require AI_SKILLS_TEST_* login.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -603,6 +628,85 @@
         {
           "id": "AC-SKILLS-PERF-001-LOAD",
           "title": "Catalog page-load duration stays within the catalog threshold",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-PERF-001-LCP",
+          "title": "Largest Contentful Paint is recorded when the browser exposes it; absence is not-observed, not poor",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-NATION-UX-001",
+      "title": "Public Nation pages expose measured UX/UI signals",
+      "description": "Anonymous homepage and sign-in are checked for visible navigation chrome, form controls, prefers-reduced-motion usability, layout-shift observation, and chrome at the current matrix viewport. Layout-shift absence is not-observed, not poor. Keyboard tab-order and Lighthouse contrast budgets remain post-M7.",
+      "site": "nation",
+      "critical": false,
+      "qualityDimensions": [
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-NATION-UX-001-NAV",
+          "title": "Homepage has a visible navigation landmark or links",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-UX-001-FORMS",
+          "title": "Sign-in exposes visible email, password and submit controls",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-UX-001-MOTION",
+          "title": "Homepage remains usable with prefers-reduced-motion: reduce",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-UX-001-SHIFT",
+          "title": "Layout-shift is observed when the browser exposes it; absence is not scored as poor",
+          "critical": false
+        },
+        {
+          "id": "AC-NATION-UX-001-VIEWPORT",
+          "title": "Homepage chrome stays usable at the current Playwright matrix viewport",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "REQ-SKILLS-UX-001",
+      "title": "Public AI Skills pages expose measured UX/UI signals",
+      "description": "Anonymous catalog and sign-in are checked for visible navigation, form controls, reduced-motion usability, layout-shift observation, and chrome at the current matrix viewport without AI_SKILLS_TEST_* login.",
+      "site": "ai-skills",
+      "critical": false,
+      "qualityDimensions": [
+        "ux-ui"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-SKILLS-UX-001-NAV",
+          "title": "Catalog has a visible navigation landmark or links",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-UX-001-FORMS",
+          "title": "Sign-in exposes visible email, password and submit controls",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-UX-001-MOTION",
+          "title": "Catalog remains usable with prefers-reduced-motion: reduce",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-UX-001-SHIFT",
+          "title": "Layout-shift is observed when the browser exposes it; absence is not scored as poor",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-UX-001-VIEWPORT",
+          "title": "Catalog chrome stays usable at the current Playwright matrix viewport",
           "critical": false
         }
       ]

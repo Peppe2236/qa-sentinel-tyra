@@ -56,6 +56,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
@@ -95,4 +103,5 @@ jobs:
           echo "qa:sites is Chromium-only for both sites. It is not the required gate."
           echo "Typecheck and unit tests are required. Live E2E may flake against nation.dev."
           echo "The full 18-project matrix is local: npm run qa:unattended"
+          echo "GitHub Pages dashboard publish is post-M7 (needs repo Pages enablement)."
           echo "sites step outcome: ${{ steps.sites.outcome }}"

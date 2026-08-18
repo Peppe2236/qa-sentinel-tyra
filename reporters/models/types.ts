@@ -2002,7 +2002,8 @@ export type PerformanceArea =
   | 'api-latency'
   | 'backend-latency'
   | 'timeout-resilience'
-  | 'regression';
+  | 'regression'
+  | 'largest-contentful-paint';
 
 
 export interface SecurityAreaAssessment {
@@ -2094,6 +2095,15 @@ export interface PerformanceObservedMetrics {
     number;
 
   apiLatencyP95?:
+    number;
+
+  lcpP50?:
+    number;
+
+  lcpP95?:
+    number;
+
+  fcpP50?:
     number;
 }
 

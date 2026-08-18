@@ -22,6 +22,8 @@ export interface ObservedPagePerformance {
   durationMs: number;
   source: 'navigation-timing' | 'playwright-load';
   apiSamplesMs: number[];
+  fcpMs: number | null;
+  lcpMs: number | null;
 }
 
 function sameOrigin(left: string, right: string): boolean {
@@ -74,6 +76,50 @@ export async function observePagePerformance(
     }
   };
 
+  await page.addInitScript(() => {
+    const state = {
+      fcp: null as number | null,
+      lcp: null as number | null,
+    };
+
+    (globalThis as { __qaWebVitals?: typeof state }).__qaWebVitals = state;
+
+    try {
+      const paintObserver = new PerformanceObserver(list => {
+        for (const entry of list.getEntries()) {
+          if (entry.name === 'first-contentful-paint') {
+            state.fcp = entry.startTime;
+          }
+        }
+      });
+
+      paintObserver.observe({
+        type: 'paint',
+        buffered: true,
+      });
+    } catch {
+      // Paint timing is optional.
+    }
+
+    try {
+      const lcpObserver = new PerformanceObserver(list => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+
+        if (last) {
+          state.lcp = last.startTime;
+        }
+      });
+
+      lcpObserver.observe({
+        type: 'largest-contentful-paint',
+        buffered: true,
+      });
+    } catch {
+      // LCP is Chromium-first. Absence is not-observed, not poor.
+    }
+  });
+
   page.on('requestfinished', onRequestFinished);
 
   const started = Date.now();
@@ -87,6 +133,8 @@ export async function observePagePerformance(
     await page.waitForLoadState('networkidle', {
       timeout: 2_000,
     }).catch(() => undefined);
+
+    await page.waitForTimeout(400);
   } finally {
     page.off('requestfinished', onRequestFinished);
   }
@@ -149,6 +197,34 @@ export async function observePagePerformance(
       ? Math.round(navigation.durationMs)
       : null;
 
+  const vitals = await page.evaluate(() => {
+    const state = (globalThis as {
+      __qaWebVitals?: {
+        fcp: number | null;
+        lcp: number | null;
+      };
+    }).__qaWebVitals;
+
+    const paints = performance.getEntriesByType('paint');
+    const fcpEntry = paints.find(
+      entry => entry.name === 'first-contentful-paint'
+    );
+
+    const fcpMs =
+      fcpEntry && fcpEntry.startTime > 0
+        ? Math.round(fcpEntry.startTime)
+        : state?.fcp != null && state.fcp > 0
+          ? Math.round(state.fcp)
+          : null;
+
+    const lcpMs =
+      state?.lcp != null && state.lcp > 0
+        ? Math.round(state.lcp)
+        : null;
+
+    return { fcpMs, lcpMs };
+  });
+
   return {
     url: page.url(),
     status: response.status(),
@@ -160,6 +236,8 @@ export async function observePagePerformance(
         ? 'navigation-timing'
         : 'playwright-load',
     apiSamplesMs,
+    fcpMs: vitals.fcpMs,
+    lcpMs: vitals.lcpMs,
   };
 }
 
@@ -214,6 +292,26 @@ export function assertMeasuredPagePerformance(
     });
   }
 
+  if (observed.lcpMs == null) {
+    pushObservation(info, {
+      area: 'largest-contentful-paint',
+      page: pageLabel,
+      observation: 'not-observed',
+      sampleCount: 0,
+      source: 'performance-observer',
+      fcpMs: observed.fcpMs ?? undefined,
+    });
+  } else {
+    pushObservation(info, {
+      area: 'largest-contentful-paint',
+      page: pageLabel,
+      durationMs: observed.lcpMs,
+      sampleCount: 1,
+      source: 'performance-observer',
+      fcpMs: observed.fcpMs ?? undefined,
+    });
+  }
+
   expect(
     observed.status,
     `${pageLabel} returned HTTP ${observed.status}`
@@ -235,5 +333,15 @@ export function assertMeasuredPagePerformance(
       apiClassification.p95,
       `${pageLabel} first-party XHR/fetch p95 was ${apiClassification.p95} ms across ${apiClassification.sampleCount} sample(s); threshold is ${apiThreshold} ms`
     ).toBeLessThanOrEqual(apiThreshold);
+  }
+
+  if (
+    typeof observed.lcpMs === 'number' &&
+    typeof pageLoadThreshold === 'number'
+  ) {
+    expect(
+      observed.lcpMs,
+      `${pageLabel} LCP was ${observed.lcpMs} ms (FCP ${observed.fcpMs ?? 'not-observed'}); threshold is ${pageLoadThreshold} ms. Not-observed LCP is not scored as poor.`
+    ).toBeLessThanOrEqual(pageLoadThreshold);
   }
 }

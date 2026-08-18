@@ -12,7 +12,8 @@
         "REQ-NATION-HOME-002",
         "REQ-NATION-SEC-001",
         "REQ-NATION-A11Y-001",
-        "REQ-NATION-PERF-001"
+        "REQ-NATION-PERF-001",
+        "REQ-NATION-UX-001"
       ],
       "scenarios": [
         {
@@ -62,11 +63,20 @@
         },
         {
           "id": "SCN-NATION-HOME-PERF",
-          "title": "Homepage page-load and first-party API timing are measured",
+          "title": "Homepage page-load, first-party API timing and LCP are measured",
           "type": "edge-case",
           "critical": false,
           "requirementIds": [
             "REQ-NATION-PERF-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-HOME-UX",
+          "title": "Homepage navigation, reduced-motion, layout-shift and viewport chrome are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-UX-001"
           ]
         }
       ]
@@ -81,7 +91,8 @@
         "REQ-NATION-AUTH-001",
         "REQ-NATION-AUTH-004",
         "REQ-NATION-SEC-001",
-        "REQ-NATION-PERF-001"
+        "REQ-NATION-PERF-001",
+        "REQ-NATION-UX-001"
       ],
       "scenarios": [
         {
@@ -141,11 +152,20 @@
         },
         {
           "id": "SCN-NATION-SIGNIN-PERF",
-          "title": "Sign-in page-load and first-party API timing are measured",
+          "title": "Sign-in page-load, first-party API timing and LCP are measured",
           "type": "edge-case",
           "critical": false,
           "requirementIds": [
             "REQ-NATION-PERF-001"
+          ]
+        },
+        {
+          "id": "SCN-NATION-SIGNIN-UX",
+          "title": "Sign-in form controls are measured as a UX/UI signal",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-UX-001"
           ]
         }
       ]
@@ -242,7 +262,8 @@
         "REQ-SKILLS-HOME-001",
         "REQ-SKILLS-SEC-001",
         "REQ-SKILLS-A11Y-001",
-        "REQ-SKILLS-PERF-001"
+        "REQ-SKILLS-PERF-001",
+        "REQ-SKILLS-UX-001"
       ],
       "scenarios": [
         {
@@ -283,11 +304,20 @@
         },
         {
           "id": "SCN-SKILLS-CATALOG-PERF",
-          "title": "Catalog page-load and first-party API timing are measured",
+          "title": "Catalog page-load, first-party API timing and LCP are measured",
           "type": "edge-case",
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-PERF-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-CATALOG-UX",
+          "title": "Catalog navigation, reduced-motion, layout-shift and viewport chrome are measured",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-UX-001"
           ]
         }
       ]
@@ -360,7 +390,8 @@
       "critical": false,
       "requirementIds": [
         "REQ-SKILLS-AUTH-001",
-        "REQ-SKILLS-SEC-001"
+        "REQ-SKILLS-SEC-001",
+        "REQ-SKILLS-UX-001"
       ],
       "scenarios": [
         {
@@ -383,11 +414,20 @@
         },
         {
           "id": "SCN-SKILLS-AUTH-SECURITY",
-          "title": "Sign-in document security headers and cookie flags are measured",
+          "title": "Sign-in document security headers, cookie flags and mixed content are measured",
           "type": "edge-case",
           "critical": false,
           "requirementIds": [
             "REQ-SKILLS-SEC-001"
+          ]
+        },
+        {
+          "id": "SCN-SKILLS-AUTH-UX",
+          "title": "Sign-in form controls are measured as a UX/UI signal",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-UX-001"
           ]
         }
       ]

@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/Deep%20Discovery-Active-success" alt="Deep Discovery" />
   <img src="https://img.shields.io/badge/Unified%20Decision-v5-00A6A6" alt="Unified Decision v5" />
   <img src="https://img.shields.io/badge/Milestone%206-Advisory%20QA-success" alt="Milestone 6 complete" />
-  <img src="https://img.shields.io/badge/Milestone%207-In%20progress-yellow" alt="Milestone 7 in progress" />
+  <img src="https://img.shields.io/badge/Milestone%207-Complete-success" alt="Milestone 7 complete" />
   <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
 </p>
 
@@ -94,7 +94,7 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | AI-assisted root-cause intelligence | ✅ Heuristic always; LLM opt-in fail-open |
 | Unified dashboard intelligence | ✅ Control Center + quality dashboard |
 | Discovery-aware release readiness | ✅ Discovery JSON wired into M7.3 counters |
-| Milestone 7 — Unified Dashboard Intelligence & Operationalization | 🚧 7.1–7.3 and 7.7 done; 7.4–7.6 / 7.8 partial |
+| Milestone 7 — Unified Dashboard Intelligence & Operationalization | ✅ Complete |
 | PDF executive reports | ✅ `reports/executive-report.pdf` after each run |
 | GitHub Actions integration | ✅ Typecheck + unit required; scheduled/`workflow_dispatch` `qa:sites` may flake |
 | Multi-project dashboard | ✅ Nation + AI Skills in `config/projects.json` |
@@ -119,7 +119,7 @@ The latest full configured Playwright matrix was manually executed on **2026-08-
 | Compatibility release gaps | 0 |
 | Remaining verification gaps | UX/UI, security and performance |
 
-Positive API/backend evidence is **verified first-party responses**, not a vulnerability count. The live dashboard always follows `dashboard/data/latest-run.json` from the latest Playwright run. This table is a dated snapshot, not a permanent GO.
+Positive API/backend evidence is **verified first-party responses**, not a vulnerability count. The live dashboard always follows `dashboard/data/latest-run.json` from the latest Playwright run. This table is a dated snapshot, not a permanent GO. Milestone 7 later added measured UX/security/performance signals; it did not rewrite this 2026-08-17 matrix snapshot.
 
 This is a dated validation snapshot, not a permanent guarantee of current application health. Compatibility remained `degraded` because real failures were retained even though configured matrix coverage was complete.
 
@@ -900,11 +900,11 @@ The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 - pairwise quality-drift comparison
 - advisory investigation cases and unconfirmed hypotheses
 
-### Milestone 7 — Unified Dashboard Intelligence & Operationalization 🚧 IN PROGRESS
+### Milestone 7 — Unified Dashboard Intelligence & Operationalization ✅
 
-Milestone 7 is defined in `ROADMAP.md`. Deliveries **7.1–7.3 and 7.7 are done** (site-specific npm commands, advisory dashboard, discovery-aware provenance, heuristic+LLM root-cause notes). **7.4–7.6 and 7.8 remain partial** (UX/UI, security and performance evidence depth; live 18-matrix still local).
+Milestone 7 is defined in `ROADMAP.md`. All deliveries **7.1–7.8 are done**: site-specific npm commands, advisory dashboard, discovery-aware provenance, measured UX/security/performance evidence (nav, forms, reduced-motion, layout-shift observation, mixed content, HTTPS links, LCP/FCP), heuristic+LLM root-cause notes, and documented operationalization (`qa:unattended` locally; nightly Chromium `qa:sites` on GitHub).
 
-The remaining work is tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
+Post-M7 leftovers (GitHub Pages, in-CI 18-matrix, keyboard a11y, scheduled Lighthouse, login cookies) are tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
 
 ---
 
@@ -979,7 +979,7 @@ That is the direction of QA Sentinel Tyra.
   Built as part of the TYRA Labs ecosystem.
 </p>
 
-## Project status — Milestones 5 and 6 complete; Milestone 7 in progress
+## Project status — Milestones 5, 6 and 7 complete
 
 **Milestone 5 – Quality Intelligence Framework: ✅ COMPLETE**
 
@@ -995,11 +995,17 @@ Completed: 2026-08-17
 - Positive first-party API/backend evidence participates in release readiness.
 - The full configured compatibility matrix and API/backend evidence path were manually validated.
 
-**Milestone 7 – Unified Dashboard Intelligence & Operationalization: 🚧 IN PROGRESS**
+**Milestone 7 – Unified Dashboard Intelligence & Operationalization: ✅ COMPLETE**
+
+Completed: 2026-08-18
 
 - **7.1–7.3:** operational commands, advisory dashboard, discovery-aware provenance — done
+- **7.4:** UX/UI signals (nav, forms, reduced-motion, layout-shift observation, matrix viewport) — done
+- **7.5:** security depth (headers, cookies, mixed content, HTTPS links) — done
+- **7.6:** page-load, API timing, LCP/FCP when the browser exposes them — done
 - **7.7:** heuristic root-cause notes always; LLM opt-in fail-open — done
-- **7.4–7.6 / 7.8:** still partial (see `ROADMAP.md` and `docs/QA-SYSTEM-BACKLOG.md`)
+- **7.8:** ROADMAP/README validation; nightly Chromium `qa:sites`; local `qa:unattended` is the 18-matrix — done
+- **Post-M7:** GitHub Pages, in-CI 18-matrix, keyboard a11y, Lighthouse job, login cookies — see `docs/QA-SYSTEM-BACKLOG.md`
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry

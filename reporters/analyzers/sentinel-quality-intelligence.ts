@@ -160,6 +160,7 @@ export function qualityDimensionsForCategory(
         'requirements-functionality',
         'critical-flows',
         'security-performance',
+        'ux-ui',
       ];
 
     case 'availability':

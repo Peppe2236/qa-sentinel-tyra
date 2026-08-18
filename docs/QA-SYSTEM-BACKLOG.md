@@ -41,10 +41,10 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-06 | Combined Chromium quality job | Split jobs overwrite `playwright-report/`; a single combined run would be a better release artifact | **done** | GitHub `qa-sites` job runs `npm run qa:sites`. Local: `npm run qa:sites` |
 | CI-07 | Do not fail the repo on live-site flake | nation.dev is third-party and flaky from GitHub runners | **done** | Live `qa:sites` uses `continue-on-error: true`; required job is typecheck + unit |
 | CI-08 | Upload Playwright HTML + reports artifacts | GitHub otherwise looks empty because reports are gitignored | **done** | Workflow uploads `playwright-report/`, `reports/` (including `human-review.html` and `executive-report.pdf`) and `dashboard/data/*.json` |
-| CI-09 | Cache Playwright browsers | CI is slow without cache | **not done** | Add `actions/cache` on `~/.cache/ms-playwright` |
+| CI-09 | Cache Playwright browsers | CI is slow without cache | **done** | `actions/cache` on `~/.cache/ms-playwright` in the `qa-sites` job |
 | CI-10 | Branch protection | `main` can still be pushed without green required gates | **not done** | GitHub: require `quality` job typecheck/unit |
 | CI-11 | PR comment with summary | Artifacts are easy to miss | **not done** | Parse `test-results/playwright-results.json` |
-| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | GitHub nightly is Chromium `qa:sites` only. Full 18-project matrix stays local: `npm run qa:unattended`. Fast Chromium: `npm run qa:sites`. Matrix without scan: `npm run qa:matrix` |
+| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | GitHub nightly is Chromium `qa:sites` only (M7.8 operational bar). Full 18-project matrix stays local: `npm run qa:unattended`. Fast Chromium: `npm run qa:sites`. Matrix without scan: `npm run qa:matrix`. In-CI 18-matrix is post-M7 |
 | CI-13 | Fail CI on `test.only` | Already `forbidOnly` when `CI=true` | **done** | `CI=true npm run test:nation:ci` |
 
 ---
@@ -118,15 +118,15 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | Q-01 | `config/security-performance.json` thresholds | Empty thresholds left performance `not-verified` | **done** | `npm run test:unit` |
 | Q-02 | `requiredChecks` list | Documents intended security areas | **done** | Inspect `config/security-performance.json` |
 | Q-03 | Wire `requiredChecks` into `analyzeSecurity` | Config is otherwise unused | **done** | `npm run test:unit` |
-| Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **done** | Nation homepage and Skills catalog assert `https:` |
+| Q-04 | HTTPS / transport assertion | Sites are HTTPS; no explicit test | **done** | Nation homepage and Skills catalog assert `https:`; mixed-content http: requests and http: homepage links fail honestly |
 | Q-05 | Security-header checks | HSTS, CSP, X-Frame-Options | **done** | Homepages + sign-in document headers; missing headers fail honestly |
-| Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **partial** | Anonymous Set-Cookie flags are measured; no cookies = not-observed, not POOR. Login cookies still need N-04 |
+| Q-06 | Cookie flags after login | Session cookies need Secure/HttpOnly/SameSite | **partial** | Anonymous Set-Cookie flags are measured; no cookies = not-observed, not POOR. Login cookies still need N-04 (post-M7 credentials) |
 | Q-07 | Page-load metric collection | Threshold `pageLoadMs` exists; observer only fills test-duration p95 | **done** | `npm run qa:sites` — Nation homepage, Nation sign-in, Skills catalog |
 | Q-08 | API/backend latency observation | Thresholds exist; values stay `not-verified` | **partial** | First-party XHR/fetch on those pages; none = not-observed, not POOR. No backend APM |
 | Q-09 | axe-core accessibility scan | UX/UI areas are mostly `not-verified` | **done** | `@axe-core/playwright` on Nation homepage + Skills catalog; serious/critical fail, moderate and color-contrast log as warnings |
-| Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **not done** | `page.keyboard` tab order |
-| Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **not done** | Optional Playwright screenshots + axe contrast |
-| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **not done** | Separate scheduled job, not every PR. CLS skipped as too flaky |
+| Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **not done** | `page.keyboard` tab order — post-M7 |
+| Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **partial** | Reduced-motion usability is measured on homepage/catalog. Contrast budget and visual regression stay post-M7 |
+| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **partial** | LCP/FCP from PerformanceObserver when the browser exposes them; nav-timing remains the page-load bar. Scheduled Lighthouse and CLS fail-budgets stay post-M7 (CLS is observed, not failed, because it is too flaky) |
 
 ---
 
@@ -179,7 +179,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | D-01 | Gitignore live `dashboard/data/*.json` | Stops huge runs landing on GitHub | **done** | `.gitignore` |
 | D-02 | Committed sample stub | Empty clone + empty GitHub UI | **done** | `npm run dashboard:sample` |
 | D-03 | Sample README | Explains generate vs seed | **done** | `dashboard/data/sample/README.md` |
-| D-04 | Publish dashboard on GitHub Pages | Private repo; optional internal Pages | **not done** | Workflow + `peaceiris/actions-gh-pages` or artifact Pages |
+| D-04 | Publish dashboard on GitHub Pages | Private repo; optional internal Pages | **not done** | Post-M7: workflow + `peaceiris/actions-gh-pages` or artifact Pages after repo Pages is enabled |
 | D-05 | History retention policy | `history.json` already grew huge locally | **not done** | Cap history length in the reporter |
 | D-06 | Do not commit `test-results/` or `playwright-report/` | Binary traces | **done** | `.gitignore` |
 | D-07 | CI artifact retention | 14 days; not a long-term store | **partial** | Increase or export to S3 later |
@@ -224,6 +224,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | A-02 | Heuristic Sentinel AI documented as non-LLM | Avoid implying GPT in the dashboard | **partial** | README still says “Sentinel AI”; backlog is the honest source |
 | A-03 | Optional LLM explanations behind a flag | Only after evidence quality is real | **done** | Heuristic always; `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` enrich fail-open. Do not add fake API keys |
 | A-04 | M7.2 / M7.3 dashboard panels | Already in `dashboard/index.html` | **done** | `npm run dashboard` |
+| A-05 | M7.4–M7.6 measured UX/security/performance | Nav, forms, reduced-motion, layout-shift, mixed content, HTTPS links, LCP | **done** | `npm run test:unit`; live: `npm run qa:unattended` |
 
 ---
 
