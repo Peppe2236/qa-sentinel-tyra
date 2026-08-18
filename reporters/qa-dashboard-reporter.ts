@@ -150,6 +150,20 @@ import {
 } from './utils/json-store';
 
 import {
+  capHistory,
+  historyRetentionLimit,
+} from './utils/history-retention';
+
+import {
+  applyLighthouseSummaries,
+  loadLighthouseSummaries,
+} from './utils/lighthouse-summary';
+
+import {
+  writeTraceabilityReport,
+} from './utils/traceability-report';
+
+import {
   consolidateTestIssues,
 } from './utils/test-issue-dedup';
 
@@ -1330,11 +1344,19 @@ const securityPerformanceConfig =
   loadSecurityPerformanceConfig();
 
 const securityPerformanceAssessment =
-  analyzeSecurityPerformance(
-    this.results,
-    unifiedIssues,
-    performance,
-    securityPerformanceConfig
+  applyLighthouseSummaries(
+    analyzeSecurityPerformance(
+      this.results,
+      unifiedIssues,
+      performance,
+      securityPerformanceConfig
+    ),
+    loadLighthouseSummaries(
+      path.resolve(
+        process.cwd(),
+        'reports'
+      )
+    )
   );
 
 const compatibilityAssessment =
@@ -1778,7 +1800,10 @@ const outputRun: SentinelOutput = {
 
     writeJson(
       historyFile,
-      history.slice(-100)
+      capHistory(
+        history,
+        historyRetentionLimit()
+      )
     );
 
 
@@ -1799,6 +1824,23 @@ const htmlReportFile =
     run,
     reportsDirectory
   );
+
+    try {
+      const traceabilityFile =
+        writeTraceabilityReport({
+          requirements: this.requirements,
+          coverage: requirementCoverage ?? [],
+          reportsDirectory,
+          generatedAt: finishedAt.toISOString(),
+          runId: run.runId,
+        });
+      console.log(`Traceability: ${traceabilityFile}`);
+    } catch (error) {
+      console.error(
+        '[QA Sentinel] Traceability report failed; continuing.'
+      );
+      console.error(error);
+    }
 
     let humanReviewHtml = '';
 

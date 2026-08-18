@@ -36,3 +36,7 @@ npm run dashboard
 
 The sample is a 3-test stub. It is not a release baseline and must not be used
 as evidence that Nation or AI Skills is healthy.
+
+GitHub Pages uses the same stub (`npm run pages:prepare` in
+`.github/workflows/pages.yml`). Enable Pages once: Settings → Pages → Source
+GitHub Actions. See [`docs/GITHUB-PAGES.md`](../../../docs/GITHUB-PAGES.md).

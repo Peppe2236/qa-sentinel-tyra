@@ -164,7 +164,11 @@ export function inferRoute(test: DashboardTestResult): string {
     return test.site === 'ai-skills' ? '/skills' : '/';
   }
 
-  if (fromFile.includes('security-headers') || fromFile.includes('accessibility')) {
+  if (
+    fromFile.includes('security-headers') ||
+    fromFile.includes('accessibility') ||
+    fromFile.includes('keyboard-a11y')
+  ) {
     return test.site === 'ai-skills' ? '/skills' : '/';
   }
 

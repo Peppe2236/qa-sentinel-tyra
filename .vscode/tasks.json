@@ -61,6 +61,25 @@
       "problemMatcher": []
     },
     {
+      "label": "qa:lighthouse",
+      "type": "npm",
+      "script": "qa:lighthouse",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "report:traceability",
+      "type": "npm",
+      "script": "report:traceability",
+      "problemMatcher": []
+    },
+    {
+      "label": "pages:prepare",
+      "type": "npm",
+      "script": "pages:prepare",
+      "problemMatcher": []
+    },
+    {
       "label": "dashboard",
       "type": "npm",
       "script": "dashboard",

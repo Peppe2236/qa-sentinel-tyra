@@ -62,6 +62,15 @@
           ]
         },
         {
+          "id": "SCN-NATION-HOME-KEYBOARD",
+          "title": "Homepage Tab order reaches the first focusable controls without a keyboard trap",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-NATION-A11Y-001"
+          ]
+        },
+        {
           "id": "SCN-NATION-HOME-PERF",
           "title": "Homepage page-load, first-party API timing and LCP are measured",
           "type": "edge-case",
@@ -303,6 +312,15 @@
           ]
         },
         {
+          "id": "SCN-SKILLS-CATALOG-KEYBOARD",
+          "title": "Catalog Tab order reaches the first focusable controls without a keyboard trap",
+          "type": "edge-case",
+          "critical": false,
+          "requirementIds": [
+            "REQ-SKILLS-A11Y-001"
+          ]
+        },
+        {
           "id": "SCN-SKILLS-CATALOG-PERF",
           "title": "Catalog page-load, first-party API timing and LCP are measured",
           "type": "edge-case",
@@ -325,7 +343,7 @@
     {
       "id": "FLOW-SKILLS-LEARN",
       "title": "Learner opens assessment, path and practice pages",
-      "description": "Anonymous smoke coverage of /assessment, /path and /practice. Completing those journeys is still out of scope without AI_SKILLS_TEST_* credentials.",
+      "description": "Anonymous smoke of /assessment, /path and /practice: public landmarks or a login redirect. Completing those journeys is still out of scope without AI_SKILLS_TEST_* credentials.",
       "site": "ai-skills",
       "critical": false,
       "requirementIds": [
@@ -334,7 +352,7 @@
       "scenarios": [
         {
           "id": "SCN-SKILLS-ASSESSMENT",
-          "title": "Assessment page loads with a prompt or start control",
+          "title": "Assessment page is public with a start control or redirects to sign-in",
           "type": "happy-path",
           "critical": false,
           "requirementIds": [

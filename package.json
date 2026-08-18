@@ -25,6 +25,7 @@
     "qa:nation": "node scripts/qa-sites.mjs --nation-only",
     "qa:skills": "node scripts/qa-sites.mjs --skills-only",
     "qa:matrix": "node scripts/qa-matrix.mjs",
+    "qa:lighthouse": "node scripts/qa-lighthouse.mjs",
     "qa:browsers": "node scripts/qa-matrix.mjs",
     "qa:compat": "node scripts/qa-compat.mjs",
     "scan": "node scripts/scan-site.mjs",
@@ -38,6 +39,8 @@
     "test:ci": "npm run typecheck && npm run test:unit",
     "validate": "npm run typecheck && npm run test:all",
     "dashboard:sample": "node scripts/seed-dashboard-sample.mjs",
+    "pages:prepare": "node scripts/prepare-pages.mjs",
+    "report:traceability": "node scripts/report-traceability.mjs",
     "sentinel": "node scripts/sentinel.mjs",
     "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\""
   },

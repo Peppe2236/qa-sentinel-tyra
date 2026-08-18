@@ -179,17 +179,31 @@ export function classifyIssue(
     result.category === 'accessibility' ||
     title.includes('axe-core') ||
     title.includes('axe ') ||
+    title.includes('keyboard') ||
+    title.includes('tab order') ||
     includesAny(message, [
       'axe findings',
       'serious/critical axe',
+      'keyboard trap',
+      'keyboard-focusable',
     ])
   ) {
+    const keyboardFailure =
+      title.includes('keyboard') ||
+      title.includes('tab order') ||
+      includesAny(message, [
+        'keyboard trap',
+        'keyboard-focusable',
+      ]);
+
     return {
       classification: 'accessibility-issue',
-      reason:
-        'axe-core reported serious or critical accessibility findings.',
-      recommendation:
-        'Fix the listed axe violations. Moderate and color-contrast noise is logged as a warning, not a suite failure.',
+      reason: keyboardFailure
+        ? 'Keyboard or focus navigation failed (trap or unusable tab order).'
+        : 'axe-core reported serious or critical accessibility findings.',
+      recommendation: keyboardFailure
+        ? 'Fix the keyboard trap or make the first controls reachable with Tab. Do not require a mouse.'
+        : 'Fix the listed axe violations. Moderate and color-contrast noise is logged as a warning, not a suite failure.',
     };
   }
 

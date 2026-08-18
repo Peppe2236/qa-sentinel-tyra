@@ -17,6 +17,12 @@ export default defineConfig({
   },
   reporter: [
     ['list'],
+    [
+      'json',
+      {
+        outputFile: 'test-results/unit-results.json',
+      },
+    ],
   ],
   outputDir: 'test-results/unit',
 });

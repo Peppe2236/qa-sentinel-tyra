@@ -42,9 +42,9 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | CI-07 | Do not fail the repo on live-site flake | nation.dev is third-party and flaky from GitHub runners | **done** | Live `qa:sites` uses `continue-on-error: true`; required job is typecheck + unit |
 | CI-08 | Upload Playwright HTML + reports artifacts | GitHub otherwise looks empty because reports are gitignored | **done** | Workflow uploads `playwright-report/`, `reports/` (including `human-review.html` and `executive-report.pdf`) and `dashboard/data/*.json` |
 | CI-09 | Cache Playwright browsers | CI is slow without cache | **done** | `actions/cache` on `~/.cache/ms-playwright` in the `qa-sites` job |
-| CI-10 | Branch protection | `main` can still be pushed without green required gates | **not done** | GitHub: require `quality` job typecheck/unit |
-| CI-11 | PR comment with summary | Artifacts are easy to miss | **not done** | Parse `test-results/playwright-results.json` |
-| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | GitHub nightly is Chromium `qa:sites` only (M7.8 operational bar). Full 18-project matrix stays local: `npm run qa:unattended`. Fast Chromium: `npm run qa:sites`. Matrix without scan: `npm run qa:matrix`. In-CI 18-matrix is post-M7 |
+| CI-10 | Branch protection | `main` can still be pushed without green required gates | **docs** | [`docs/BRANCH-PROTECTION.md`](BRANCH-PROTECTION.md) — Petter must enable in GitHub UI; require job `Typecheck and unit tests` |
+| CI-11 | PR comment with summary | Artifacts are easy to miss | **done** | `quality` job posts/updates a PR comment from `test-results/unit-results.json` |
+| CI-12 | Nightly full matrix | Compatibility projects (Firefox/WebKit/tablet/mobile) are optional locally | **partial** | GitHub nightly is Chromium `qa:sites` only. Full 18-project matrix stays local `npm run qa:unattended` or optional `workflow_dispatch` `run_full_matrix` (120 min, continue-on-error). Fast Chromium: `npm run qa:sites` |
 | CI-13 | Fail CI on `test.only` | Already `forbidOnly` when `CI=true` | **done** | `CI=true npm run test:nation:ci` |
 
 ---
@@ -75,9 +75,9 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | S-01 | Catalog page smoke | `/skills` is the public entry | **done** | `npm run test:skills:ci` |
 | S-02 | Skill detail pages (gamma, claude, notebooklm) | Only generated HTTP loads, no UI assertions | **partial** | `tests/skills/detail.spec.ts` plus generated scan smoke |
 | S-03 | Nested task pages | Scan has task URLs; no “complete task” scenario | **partial** | Generated HTTP smoke after `npm run qa:sites`; no complete-task scenario |
-| S-04 | Assessment flow | `/assessment` is a core product path and is untested | **partial** | Anonymous page-load in `tests/skills/learn.spec.ts`; completing the assessment is not covered |
-| S-05 | Learning path flow | `/path` untested | **partial** | Same learn spec, load only |
-| S-06 | Practice flow | `/practice` untested | **partial** | Same learn spec, load only |
+| S-04 | Assessment flow | `/assessment` is a core product path and is untested | **partial** | Anonymous load: public start CTA / landmarks or login redirect, no HTTP 500 (`tests/skills/learn.spec.ts`). Completing the assessment still needs `AI_SKILLS_TEST_*` |
+| S-05 | Learning path flow | `/path` untested | **partial** | Same learn spec: public landmarks or redirect; no complete-path scenario |
+| S-06 | Practice flow | `/practice` untested | **partial** | Same learn spec: public landmarks or redirect; no complete-practice scenario |
 | S-07 | AI Skills sign-in | Scan has marked `/signin` failed; no dedicated spec | **done** | Form coverage in `tests/skills/auth.spec.ts`; login skips without `AI_SKILLS_TEST_*` |
 | S-08 | Authenticated Skills session | Same gap as Nation | **partial** | `tests/auth/ai-skills.setup.ts` + `tests/skills/auth-session.spec.ts`; skips without `AI_SKILLS_TEST_*` |
 | S-09 | notebooklm network failure | Scan recorded an unexpected failed request | **not done** | Reproduce, classify product vs third-party |
@@ -94,7 +94,7 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | R-04 | Catalog includes known **untested** requirements | Honest gaps (real login, jobs, assessment) | **done** | Read `REQ-NATION-AUTH-005`, `REQ-SKILLS-LEARN-001` |
 | R-05 | Release-blocking `critical` only where tests exist | Untested critical ACs would mark every run `not-ready` | **done** | Unit test in `tests/unit/quality-catalog.spec.ts` |
 | R-06 | Site-filtered requirement assessment | A Nation-only run currently evaluates Skills requirements as not-tested | **done** | `filterCatalogBySites` in the reporter; combined command is `npm run qa:sites` |
-| R-07 | Traceability matrix report | Need a single table: requirement → tests → last result | **not done** | Extend markdown report |
+| R-07 | Traceability matrix report | Need a single table: requirement → tests → last result | **done** | `reports/traceability.html` from reporter `onEnd`; `npm run report:traceability` |
 | R-08 | Ban new specs without annotations | Drift will return | **not done** | Unit test that greps `tests/**/*.spec.ts` |
 
 ---
@@ -124,9 +124,9 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | Q-07 | Page-load metric collection | Threshold `pageLoadMs` exists; observer only fills test-duration p95 | **done** | `npm run qa:sites` — Nation homepage, Nation sign-in, Skills catalog |
 | Q-08 | API/backend latency observation | Thresholds exist; values stay `not-verified` | **partial** | First-party XHR/fetch on those pages; none = not-observed, not POOR. No backend APM |
 | Q-09 | axe-core accessibility scan | UX/UI areas are mostly `not-verified` | **done** | `@axe-core/playwright` on Nation homepage + Skills catalog; serious/critical fail, moderate and color-contrast log as warnings |
-| Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **not done** | `page.keyboard` tab order — post-M7 |
-| Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **partial** | Reduced-motion usability is measured on homepage/catalog. Contrast budget and visual regression stay post-M7 |
-| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **partial** | LCP/FCP from PerformanceObserver when the browser exposes them; nav-timing remains the page-load bar. Scheduled Lighthouse and CLS fail-budgets stay post-M7 (CLS is observed, not failed, because it is too flaky) |
+| Q-10 | Keyboard / focus tests | Theme and sidebar are mouse-click only | **done** | `tests/nation/keyboard-a11y.spec.ts` and `tests/skills/keyboard-a11y.spec.ts` — first N Tab stops, no trap; failures are accessibility issues |
+| Q-11 | Reduced-motion / contrast | No visual regression or contrast budget | **partial** | Reduced-motion usability is measured on homepage/catalog. Contrast budget and visual regression stay later |
+| Q-12 | Lighthouse / Web Vitals | Performance intelligence is test-duration, not UX performance | **partial** | LCP/FCP from PerformanceObserver when the browser exposes them; `npm run qa:lighthouse` writes `reports/lighthouse-*.json` and the reporter attaches notes. CI is `workflow_dispatch` only (not every PR). CLS fail-budgets stay later (CLS is observed, not failed, because it is too flaky) |
 
 ---
 
@@ -179,8 +179,8 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 | D-01 | Gitignore live `dashboard/data/*.json` | Stops huge runs landing on GitHub | **done** | `.gitignore` |
 | D-02 | Committed sample stub | Empty clone + empty GitHub UI | **done** | `npm run dashboard:sample` |
 | D-03 | Sample README | Explains generate vs seed | **done** | `dashboard/data/sample/README.md` |
-| D-04 | Publish dashboard on GitHub Pages | Private repo; optional internal Pages | **not done** | Post-M7: workflow + `peaceiris/actions-gh-pages` or artifact Pages after repo Pages is enabled |
-| D-05 | History retention policy | `history.json` already grew huge locally | **not done** | Cap history length in the reporter |
+| D-04 | Publish dashboard on GitHub Pages | Private repo; optional internal Pages | **partial** | Workflow `.github/workflows/pages.yml` + `npm run pages:prepare`. Petter must enable Pages (GitHub Actions source). See [`GITHUB-PAGES.md`](GITHUB-PAGES.md) |
+| D-05 | History retention policy | `history.json` already grew huge locally | **done** | Last 50 runs (`QA_HISTORY_LIMIT`) in the reporter |
 | D-06 | Do not commit `test-results/` or `playwright-report/` | Binary traces | **done** | `.gitignore` |
 | D-07 | CI artifact retention | 14 days; not a long-term store | **partial** | Increase or export to S3 later |
 

@@ -96,7 +96,10 @@ Automation in Milestone 6 is deliberately advisory: QA Sentinel Tyra can propose
 | Discovery-aware release readiness | ✅ Discovery JSON wired into M7.3 counters |
 | Milestone 7 — Unified Dashboard Intelligence & Operationalization | ✅ Complete |
 | PDF executive reports | ✅ `reports/executive-report.pdf` after each run |
-| GitHub Actions integration | ✅ Typecheck + unit required; scheduled/`workflow_dispatch` `qa:sites` may flake |
+| GitHub Actions integration | ✅ Typecheck + unit required; PR comment; scheduled/`workflow_dispatch` `qa:sites` may flake; optional dispatch 18-matrix + Lighthouse |
+| GitHub Pages sample dashboard | ✅ Workflow ready; Petter must enable Pages (Actions source) |
+| History retention | ✅ `history.json` keeps the last 50 runs (`QA_HISTORY_LIMIT` override) |
+| Requirements traceability | ✅ `reports/traceability.html` after each reporter run; `npm run report:traceability` |
 | Multi-project dashboard | ✅ Nation + AI Skills in `config/projects.json` |
 
 ---
@@ -169,6 +172,23 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 cp .env.example .env
 ```
 
+Fill only what you have. Never commit `.env`.
+
+```bash
+# .env (you fill)
+NATION_TEST_EMAIL=
+NATION_TEST_PASSWORD=
+AI_SKILLS_TEST_EMAIL=
+AI_SKILLS_TEST_PASSWORD=
+OPENAI_API_KEY=
+SENTINEL_CAPTCHA_SOLVER_KEY=
+```
+
+`NATION_TEST_*` / `AI_SKILLS_TEST_*` unlock member routes. `OPENAI_API_KEY`
+(or `SENTINEL_LLM_API_KEY` in `.env.example`) is optional LLM enrichment.
+`SENTINEL_CAPTCHA_SOLVER_KEY` is the optional paid iframe solver. Leave blanks
+to skip those paths; tests skip instead of inventing passwords.
+
 5. Install and typecheck:
 
 ```bash
@@ -178,7 +198,18 @@ npm run typecheck
 npm run test:unit
 ```
 
-GitHub Actions on push/PR is typecheck + unit. Nightly and **workflow_dispatch** run `qa:sites` (Chromium, both sites) with artifacts; `qa:unattended` is local/full.
+GitHub Actions on push/PR is typecheck + unit (required). Pull requests get a
+short unit-test comment plus a link to the workflow artifacts. Nightly and
+**workflow_dispatch** run `qa:sites` (Chromium, both sites) with artifacts;
+`qa:unattended` is local/full. Optional **Run workflow** checkboxes:
+
+- `run_full_matrix` — 18-project `qa:matrix` (120 min, continue-on-error)
+- `run_lighthouse` — `npm run qa:lighthouse` (not on every PR)
+
+GitHub Pages sample dashboard: enable **Settings → Pages → Source: GitHub
+Actions**, then run **Deploy GitHub Pages dashboard**. See
+[`docs/GITHUB-PAGES.md`](docs/GITHUB-PAGES.md). Branch protection for `main`
+is a repo-admin UI step: [`docs/BRANCH-PROTECTION.md`](docs/BRANCH-PROTECTION.md).
 
 VS Code tasks: **Terminal → Run Task…** → `typecheck`, `test:unit`, `qa:unattended`, `qa:sites`, `qa:matrix`, `dashboard`.
 
@@ -672,7 +703,23 @@ dashboard/data/issues.json
 dashboard/data/unified-issues.json
 ```
 
-`history.json` stores prior runs. Milestone 6.7 uses the latest previous canonical schema-v5 run as a pairwise comparison baseline. If no valid baseline exists, the result is `no-baseline`; the analyzer does not claim a multi-run trend.
+`history.json` stores prior runs and is capped at the **last 50** (`QA_HISTORY_LIMIT`
+to override). Milestone 6.7 uses the latest previous canonical schema-v5 run as a pairwise comparison baseline. If no valid baseline exists, the result is `no-baseline`; the analyzer does not claim a multi-run trend.
+
+### Traceability
+
+Each Playwright run with the dashboard reporter writes:
+
+```text
+reports/traceability.html
+```
+
+That table maps `requirements/requirements.json` to latest-run evidence
+(covered / partial / gap). Regenerate without a new test run:
+
+```bash
+npm run report:traceability
+```
 
 ### Discovery reports
 
@@ -732,6 +779,8 @@ qa-sentinel-tyra/
 │   └── site-health.css
 │
 ├── docs/
+│   ├── BRANCH-PROTECTION.md
+│   ├── GITHUB-PAGES.md
 │   ├── QA-SYSTEM-BACKLOG.md
 │   └── assets/
 │
@@ -904,7 +953,12 @@ The authoritative roadmap is maintained in [`ROADMAP.md`](ROADMAP.md).
 
 Milestone 7 is defined in `ROADMAP.md`. All deliveries **7.1–7.8 are done**: site-specific npm commands, advisory dashboard, discovery-aware provenance, measured UX/security/performance evidence (nav, forms, reduced-motion, layout-shift observation, mixed content, HTTPS links, LCP/FCP), heuristic+LLM root-cause notes, and documented operationalization (`qa:unattended` locally; nightly Chromium `qa:sites` on GitHub).
 
-Post-M7 leftovers (GitHub Pages, in-CI 18-matrix, keyboard a11y, scheduled Lighthouse, login cookies) are tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Unified Decisioning remains the release authority and Autonomous QA remains advisory-only.
+Post-M7 leftovers that still need Petter (credentials or GitHub admin) are
+tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). In-repo
+this round: GitHub Pages **workflow**, in-CI optional 18-matrix, keyboard a11y,
+Lighthouse `workflow_dispatch`, history cap, traceability HTML, PR comments,
+and branch-protection **docs**. Unified Decisioning remains the release
+authority and Autonomous QA remains advisory-only.
 
 ---
 
@@ -924,7 +978,29 @@ git commit -m "Describe the change"
 git push origin main
 ```
 
-Required GitHub Actions on push/PR is typecheck + unit only. Live Chromium `qa:sites` (both sites) runs on the nightly schedule and on **Actions → Run workflow**; it continues on live-site flake and uploads `playwright-report/`, `reports/` (including the human pack and `executive-report.pdf`) and `dashboard/data/*.json`. The full 18-project matrix stays local: `npm run qa:unattended`.
+Required GitHub Actions on push/PR is typecheck + unit only (plus a PR comment
+summarizing unit health). Live Chromium `qa:sites` (both sites) runs on the
+nightly schedule and on **Actions → Run workflow**; it continues on live-site
+flake and uploads `playwright-report/`, `reports/` (human pack, executive PDF,
+`traceability.html`) and `dashboard/data/*.json`. Optional dispatch:
+`run_full_matrix` (`qa:matrix`, 120 min) and `run_lighthouse`. The default local
+full matrix remains `npm run qa:unattended`.
+
+Lighthouse (Nation home + Skills catalog), not on every PR:
+
+```bash
+npx playwright install chromium
+npm run qa:lighthouse
+```
+
+Writes `reports/lighthouse-nation.json` and `reports/lighthouse-skills.json`.
+The reporter attaches those scores as performance notes when the files exist.
+
+Sample GitHub Pages dashboard (after Petter enables Pages):
+
+```bash
+npm run pages:prepare
+```
 
 For Deep Discovery development:
 
@@ -1005,7 +1081,8 @@ Completed: 2026-08-18
 - **7.6:** page-load, API timing, LCP/FCP when the browser exposes them — done
 - **7.7:** heuristic root-cause notes always; LLM opt-in fail-open — done
 - **7.8:** ROADMAP/README validation; nightly Chromium `qa:sites`; local `qa:unattended` is the 18-matrix — done
-- **Post-M7:** GitHub Pages, in-CI 18-matrix, keyboard a11y, Lighthouse job, login cookies — see `docs/QA-SYSTEM-BACKLOG.md`
+- **Post-M7 in repo:** Pages workflow, PR comments, history cap 50, traceability HTML, keyboard a11y, Lighthouse dispatch, optional CI 18-matrix, branch-protection docs — see `docs/QA-SYSTEM-BACKLOG.md`
+- **Still needs Petter:** `.env` test accounts / OpenAI / captcha solver; GitHub Pages toggle; branch protection UI; GitHub Actions secrets for CI login
 - **Release authority:** Unified Decisioning v5
 - **Dashboard schema:** v5
 - **Legacy release assessment:** preserved as comparison telemetry

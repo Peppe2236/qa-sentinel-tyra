@@ -7,10 +7,23 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+    inputs:
+      run_full_matrix:
+        description: Run the 18-project qa:matrix (slow, continue-on-error)
+        type: boolean
+        default: false
+      run_lighthouse:
+        description: Run Lighthouse on Nation home + Skills catalog
+        type: boolean
+        default: false
 
 concurrency:
   group: qa-ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   quality:
@@ -32,10 +45,81 @@ jobs:
         run: npm ci
 
       - name: Typecheck
+        id: typecheck
         run: npm run typecheck
 
       - name: Analyzer unit tests
+        id: unit
         run: npm run test:unit
+
+      - name: Upload unit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: test-results/unit-results.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: PR comment summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          UNIT_OUTCOME: ${{ steps.unit.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- qa-sentinel-unit-summary -->';
+            let statsLine = '_unit-results.json not written_';
+            try {
+              const report = JSON.parse(
+                fs.readFileSync('test-results/unit-results.json', 'utf8')
+              );
+              const stats = report.stats ?? {};
+              statsLine = [
+                `passed (expected): ${stats.expected ?? 0}`,
+                `failed (unexpected): ${stats.unexpected ?? 0}`,
+                `skipped: ${stats.skipped ?? 0}`,
+                `flaky: ${stats.flaky ?? 0}`
+              ].join(', ');
+            } catch {
+              // Typecheck may have failed before unit tests ran.
+            }
+            const body = [
+              marker,
+              '## QA Sentinel — PR checks',
+              '',
+              `- Typecheck: **${process.env.TYPECHECK_OUTCOME}**`,
+              `- Unit tests: **${process.env.UNIT_OUTCOME}** (${statsLine})`,
+              `- Artifacts: [this run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`,
+              '',
+              'Live Chromium `qa:sites` is **not** a required PR gate (nightly / workflow_dispatch, continue-on-error).',
+              'Full 18-project matrix is optional workflow_dispatch `run_full_matrix`.'
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            const existing = comments.find((comment) =>
+              comment.body?.includes(marker)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
 
   qa-sites:
     name: Live Chromium both sites
@@ -93,6 +177,7 @@ jobs:
             reports/
             reports/human-review.html
             reports/executive-report.pdf
+            reports/traceability.html
             dashboard/data/*.json
           if-no-files-found: ignore
           retention-days: 14
@@ -102,6 +187,104 @@ jobs:
         run: |
           echo "qa:sites is Chromium-only for both sites. It is not the required gate."
           echo "Typecheck and unit tests are required. Live E2E may flake against nation.dev."
-          echo "The full 18-project matrix is local: npm run qa:unattended"
-          echo "GitHub Pages dashboard publish is post-M7 (needs repo Pages enablement)."
+          echo "The full 18-project matrix is local npm run qa:unattended or optional workflow_dispatch run_full_matrix."
+          echo "GitHub Pages: enable Actions source in Settings → Pages. See docs/GITHUB-PAGES.md"
           echo "sites step outcome: ${{ steps.sites.outcome }}"
+
+  qa-matrix:
+    name: Optional full 18-project matrix
+    if: github.event_name == 'workflow_dispatch' && (inputs.run_full_matrix == true || inputs.run_full_matrix == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-all-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-all-
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: qa:matrix (continue on live flake)
+        id: matrix
+        continue-on-error: true
+        run: npm run qa:matrix
+        env:
+          CI: true
+
+      - name: Upload matrix Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-matrix
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload matrix QA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports-matrix
+          path: |
+            reports/
+            dashboard/data/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Matrix note
+        if: always()
+        run: echo "qa-matrix outcome: ${{ steps.matrix.outcome }} (not a required gate)"
+
+  lighthouse:
+    name: Lighthouse Nation + Skills
+    if: github.event_name == 'workflow_dispatch' && (inputs.run_lighthouse == true || inputs.run_lighthouse == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: qa:lighthouse
+        id: lighthouse
+        continue-on-error: true
+        run: npm run qa:lighthouse
+
+      - name: Upload Lighthouse JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: reports/lighthouse-*.json
+          if-no-files-found: ignore
+          retention-days: 14

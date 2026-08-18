@@ -419,7 +419,7 @@
     {
       "id": "REQ-SKILLS-LEARN-001",
       "title": "AI Skills learning routes are usable",
-      "description": "Anonymous /assessment, /path and /practice load with visible content. Completing an assessment, finishing a path, or submitting practice still requires a product scenario and may need AI_SKILLS_TEST_* credentials.",
+      "description": "Anonymous /assessment, /path and /practice either show public landmarks (start CTA, heading, no HTTP 500) or redirect to sign-in. Completing an assessment, finishing a path, or submitting practice is not claimed without AI_SKILLS_TEST_* credentials.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -429,17 +429,17 @@
       "acceptanceCriteria": [
         {
           "id": "AC-SKILLS-LEARN-001-ASSESSMENT",
-          "title": "Assessment page loads and shows a task, prompt or start control",
+          "title": "Assessment page is public with a start CTA or redirects anonymous users to sign-in, and does not return HTTP 500",
           "critical": false
         },
         {
           "id": "AC-SKILLS-LEARN-001-PATH",
-          "title": "Learning path page shows a usable path structure",
+          "title": "Learning path page is public with landmarks or redirects anonymous users to sign-in, and does not return HTTP 500",
           "critical": false
         },
         {
           "id": "AC-SKILLS-LEARN-001-PRACTICE",
-          "title": "Practice page exposes a practice task",
+          "title": "Practice page is public with a task or start control or redirects anonymous users to sign-in, and does not return HTTP 500",
           "critical": false
         }
       ]
@@ -561,8 +561,8 @@
     },
     {
       "id": "REQ-NATION-A11Y-001",
-      "title": "Nation homepage has an axe-core accessibility smoke check",
-      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings so the suite is not blocked on contrast-only noise.",
+      "title": "Nation homepage has axe-core and keyboard accessibility smoke checks",
+      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings so the suite is not blocked on contrast-only noise. Keyboard Tab order on the first focusable controls is checked for a trap; those failures are accessibility issues.",
       "site": "nation",
       "critical": false,
       "qualityDimensions": [
@@ -573,13 +573,18 @@
           "id": "AC-NATION-A11Y-001-AXE",
           "title": "Homepage has no serious or critical axe-core violations excluding noisy color-contrast",
           "critical": false
+        },
+        {
+          "id": "AC-NATION-A11Y-001-KEYBOARD",
+          "title": "Homepage keyboard tab order reaches the first focusable controls without a keyboard trap",
+          "critical": false
         }
       ]
     },
     {
       "id": "REQ-SKILLS-A11Y-001",
-      "title": "AI Skills catalog has an axe-core accessibility smoke check",
-      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings.",
+      "title": "AI Skills catalog has axe-core and keyboard accessibility smoke checks",
+      "description": "Serious and critical axe violations fail. Moderate findings and color-contrast noise are logged as warnings. Keyboard Tab order on the first focusable controls is checked for a trap; those failures are accessibility issues.",
       "site": "ai-skills",
       "critical": false,
       "qualityDimensions": [
@@ -589,6 +594,11 @@
         {
           "id": "AC-SKILLS-A11Y-001-AXE",
           "title": "Catalog has no serious or critical axe-core violations excluding noisy color-contrast",
+          "critical": false
+        },
+        {
+          "id": "AC-SKILLS-A11Y-001-KEYBOARD",
+          "title": "Catalog keyboard tab order reaches the first focusable controls without a keyboard trap",
           "critical": false
         }
       ]

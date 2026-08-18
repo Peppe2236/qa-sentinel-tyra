@@ -80,22 +80,30 @@ Unified Decisioning is the canonical schema-v5 release authority. Legacy release
 
 ## Remaining planned work
 
-The long-term product still needs real authenticated E2E depth, optional GitHub
-Pages, in-CI full-matrix runtime, keyboard a11y, a scheduled Lighthouse job,
-persistence beyond gitignored artifacts and (optionally) an LLM. Those items live in
-[`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). They are not silently
-treated as completed by Milestone 5, 6 or 7.
+The long-term product still needs real authenticated E2E depth (Petter's
+`.env` test accounts), GitHub Pages **enabled in repo settings**, and
+(optionally) an LLM key. In-repo leftovers from this round are implemented:
+Pages workflow, PR comments, history cap, traceability HTML, keyboard a11y,
+Lighthouse `workflow_dispatch`, optional CI 18-matrix, branch-protection docs.
+See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Do not treat
+credentialed member journeys as completed without `NATION_TEST_*` /
+`AI_SKILLS_TEST_*`.
 
 | Capability | Status | Direction |
 |---|---|---|
 | AI-assisted root-cause intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches per failing test when `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` is set and fails open |
 | Unified dashboard intelligence | ✅ Done | One Control Center + quality dashboard consumes unified scoring, discovery provenance, both sites, advisory, remediation, human review and the executive PDF |
 | Discovery-aware release readiness | ✅ Done | After `qa:unattended` / `qa:sites`, M7.3 counters read discovery JSON + scan inventory, not only generated route tests |
-| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Playwright browser cache is enabled. Full 18-project matrix is local `qa:unattended` |
-| Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` seeds a tiny stub; live JSON stays gitignored |
-| Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; many flows are still not-tested |
+| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR, with a PR comment. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Optional dispatch: `run_full_matrix` (`qa:matrix`, 120 min) and `run_lighthouse`. Playwright browser cache is enabled. Local full 18-project matrix remains `qa:unattended` |
+| GitHub Pages sample dashboard | ✅ Workflow | `pages.yml` publishes sanitized sample JSON. Petter must set Pages source to GitHub Actions ([`docs/GITHUB-PAGES.md`](docs/GITHUB-PAGES.md)) |
+| Branch protection | 📄 Docs | Cannot enable via API without admin. UI steps: [`docs/BRANCH-PROTECTION.md`](docs/BRANCH-PROTECTION.md) |
+| Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` / `pages:prepare` seeds a tiny stub; live JSON stays gitignored |
+| Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; `reports/traceability.html` is the covered/gap matrix |
 | PDF executive reports | ✅ Done | `reports/executive-report.pdf` after reporter `onEnd` (verdict, counts, top issues, human queue) |
 | Multi-project dashboard | ✅ Done | `config/projects.json` — Nation and AI Skills as two projects in one dashboard (not multiple GitHub repos) |
+| Keyboard / focus a11y | ✅ Done | Tab order on Nation homepage and Skills catalog (first N focusable, no trap); failures classify as accessibility issues |
+| Lighthouse | ✅ Dispatch | `npm run qa:lighthouse`; CI `workflow_dispatch` only. Summaries attach as performance notes when `reports/lighthouse-*.json` exist |
+| History retention | ✅ Done | Last 50 runs in `history.json` (`QA_HISTORY_LIMIT`) |
 
 ## Ubuntu + VS Code workflow
 
@@ -209,7 +217,7 @@ Earlier docs marked Milestone 7 as “not started”, then “in progress”. De
 | 7.5 Security Verification Coverage | ✅ Done | Header/cookie Playwright checks, mixed-content http: requests, HTTPS-only homepage/catalog links; analyzer consumes `config/security-performance.json`. Anonymous Set-Cookie flags remain not-observed when none are set |
 | 7.6 Performance Verification Coverage | ✅ Done | Page-load and first-party API timing plus LCP/FCP from PerformanceObserver when the browser exposes them; LCP uses `pageLoadMs`. Not-observed LCP is not poor. Navigation timing remains the page-load bar |
 | 7.7 Evidence-grounded Root-cause Intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches when a key is set and fails open |
-| 7.8 Milestone Validation & Documentation | ✅ Done | ROADMAP lists activated vs policy-disabled; nightly GitHub `qa:sites` (Chromium); local `qa:unattended` is the full 18-matrix. GitHub Pages dashboard publish and in-CI 18-matrix stay post-M7 |
+| 7.8 Milestone Validation & Documentation | ✅ Done | ROADMAP lists activated vs policy-disabled; nightly GitHub `qa:sites` (Chromium); local `qa:unattended` is the full 18-matrix. Pages workflow, optional CI 18-matrix, keyboard a11y, Lighthouse dispatch, history cap, traceability and PR comments are in-repo; Pages toggle and branch protection still need GitHub admin |
 
 ### Milestone 7 authority and safety contract
 
@@ -222,4 +230,4 @@ Earlier docs marked Milestone 7 as “not started”, then “in progress”. De
 - First-party evidence remains sanitized and source provenance remains visible.
 - Compatibility failures, promoted issues and uncertainty must not be hidden by positive evidence.
 
-**Milestone 7:** ✅ COMPLETE — leftovers that need credentials, repo admin, or a scheduled Lighthouse job live in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md) as post-M7 work, not silent gaps inside 7.1–7.8.
+**Milestone 7:** ✅ COMPLETE — leftovers that need credentials or repo admin (Pages toggle, branch protection, login secrets) live in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md) as post-M7 work, not silent gaps inside 7.1–7.8.
