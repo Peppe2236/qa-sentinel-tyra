@@ -4,10 +4,21 @@
 
 QA Sentinel Tyra has completed the **Milestone 5 Quality Intelligence Framework**, the **Milestone 6 Advisory Autonomous QA Framework**, and **Milestone 7 Unified Dashboard Intelligence & Operationalization**.
 
+The project is now formally evolving from a Playwright-centered QA platform into an **evidence-driven Quality Intelligence ecosystem**. Playwright remains a core execution engine, but the long-term architecture is broader: Discovery, Functional QA, Security, Accessibility, UX/UI, Performance, API/Backend, Root-Cause Intelligence, Cross-Layer Correlation, Unified Decisioning, Sentinel AI / Eve, reporting and advisory Autonomous QA all contribute to one shared evidence model.
+
 Earlier foundations — Playwright reporting, Deep Discovery, actionable issue consolidation and the Quality Command Center — provide the evidence consumed by these frameworks.
 
-After Milestone 6, Sentinel AI was bound to the live dashboard and positive first-party API/backend verification evidence was integrated into canonical release readiness. These are verified post-M6 enhancements and do not retroactively change the completed M5–M6 scope.
+After Milestone 6, Sentinel AI was bound to the live dashboard and positive first-party API/backend verification evidence was integrated into canonical release readiness. Post-M7 hardening also added authenticated Google-SSO session coverage for Nation and AI Skills, dynamic discovered-route coverage, clearer pass-rate versus Quality Health presentation, and a release-scope integrity guard so partial runs cannot publish a full release decision.
 
+### Current prototype baseline — 2026-08-25
+
+The current two-site Chromium prototype suite has been verified at **151 discovered tests** with **146 passed, 5 failed, 0 skipped, 0 flaky and 99% Quality Health**. The five retained failures are classified findings rather than hidden automation noise: one Nation accessibility issue, one Nation product/theme issue, one Nation content issue and two AI Skills CSP/security findings.
+
+A targeted seven-test authenticated AI Skills run was also verified to report **`RELEASE NOT VERIFIED`** rather than a false full release decision. This establishes the current demo-integrity rule:
+
+> **A partial run may report valid test evidence, but it may not claim full release readiness.**
+
+The historical 2026-08-17 18-project compatibility matrix remains a separate validation snapshot and should not be confused with the current Chromium prototype baseline.
 ## Decision authority and safety boundaries
 
 - Unified Decisioning is the canonical release authority for dashboard schema v5.
@@ -15,7 +26,11 @@ After Milestone 6, Sentinel AI was bound to the live dashboard and positive firs
 - The legacy release assessment remains available only as comparison telemetry.
 - Autonomous QA is advisory-only: execution, remediation authorization and automatic release-decision updates remain intentionally disabled.
 - Existing Unified Decision, P0–P4 priority and evidence semantics are reused; no competing weighted score is introduced.
-
+- **Evidence before conclusions:** Sentinel must never claim more than the available evidence supports.
+- **Not verified is not passed:** missing or out-of-scope evidence remains a verification gap.
+- **Partial runs are not release runs:** arbitrary targeted Playwright runs must resolve release readiness to `not-verified` unless the full configured release scope is explicitly selected.
+- **Security evidence is maturity-based:** an observation is not automatically a weakness, and a weakness is not automatically a vulnerability.
+- Production-changing actions remain human-controlled.
 ## Milestone 5 – Quality Intelligence Framework ✅ COMPLETE
 
 **Completed: 2026-08-13**
@@ -77,40 +92,53 @@ Unified Decisioning is the canonical schema-v5 release authority. Legacy release
 | API/backend validation | Healthy; 22 endpoints; 2 services; 47 positive evidence records; zero release gaps |
 | Compatibility validation | Configured coverage complete with zero release gaps; real failures remain visible as `degraded` |
 | Safety boundary | Autonomous QA remains advisory-only with `executionEnabled: false` |
+| Google SSO authenticated session coverage | ✅ Nation and AI Skills storageState reuse, protected-route access, cookie security and logout/session invalidation checks verified |
+| Dynamic generated-route coverage | ✅ Current scanner inventory contributes 13 generated routes for Nation and 13 for AI Skills |
+| Partial-run release integrity | ✅ Targeted runs retain test findings but publish `not-verified` instead of a false full release decision |
+| Demo semantics | ✅ Project percentages are identified as pass rate while weighted overall Quality Health remains a separate metric |
+| Current Chromium prototype baseline | ✅ 2026-08-25: 151 tests, 146 passed, 5 classified findings, 0 skipped, 0 flaky, 99% Quality Health |
 
 ## Remaining planned work
 
-The long-term product still needs real authenticated E2E depth (Petter's
-`.env` test accounts), GitHub Pages **enabled in repo settings**, and
-(optionally) an LLM key. In-repo leftovers from this round are implemented:
-Pages workflow, PR comments, history cap, traceability HTML, keyboard a11y,
-Lighthouse `workflow_dispatch`, optional CI 18-matrix, branch-protection docs.
-See [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md). Do not treat
-credentialed member journeys as completed without `NATION_TEST_*` /
-`AI_SKILLS_TEST_*`.
+The next major development phase is no longer a single backlog of isolated QA features. QA Sentinel Tyra is being organized as a **modular Quality Intelligence ecosystem**.
+
+Immediate work is divided into three planned milestones:
+
+| Milestone | Status | Direction |
+|---|---|---|
+| **M8 — Security Weakness Intelligence** | 🧭 Planned | Build non-destructive, evidence-driven security assessment and Security Posture intelligence |
+| **M9 — Sentinel Ecosystem Intelligence** | 🧭 Planned | Formalize the shared Evidence Engine and connect all quality domains through common models and decision semantics |
+| **M10 — Platform & Enterprise Evolution** | 🧭 Planned | Expand to multi-project, CI/CD, policies, auditability, integrations and reusable modules/adapters |
+
+Existing operational backlog items that require credentials, GitHub administration or optional external services remain tracked in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md).
+
+The development rule for future milestones is:
+
+> **New capabilities must feed shared evidence, provenance, correlation and Unified Decisioning rather than become isolated tools.**
 
 | Capability | Status | Direction |
 |---|---|---|
-| AI-assisted root-cause intelligence | ✅ Done | Heuristic notes always (theme, copy, headers); LLM enriches per failing test when `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY` is set and fails open |
-| Unified dashboard intelligence | ✅ Done | One Control Center + quality dashboard consumes unified scoring, discovery provenance, both sites, advisory, remediation, human review and the executive PDF |
-| Discovery-aware release readiness | ✅ Done | After `qa:unattended` / `qa:sites`, M7.3 counters read discovery JSON + scan inventory, not only generated route tests |
-| GitHub Actions integration | ✅ Done | Typecheck and analyzer unit tests are required on push/PR, with a PR comment. Scheduled / `workflow_dispatch` runs `qa:sites` (Chromium, both sites) and uploads artifacts with `continue-on-error`. Optional dispatch: `run_full_matrix` (`qa:matrix`, 120 min) and `run_lighthouse`. Playwright browser cache is enabled. Local full 18-project matrix remains `qa:unattended` |
-| GitHub Pages sample dashboard | ✅ Workflow | `pages.yml` publishes sanitized sample JSON. Petter must set Pages source to GitHub Actions ([`docs/GITHUB-PAGES.md`](docs/GITHUB-PAGES.md)) |
-| Branch protection | 📄 Docs | Cannot enable via API without admin. UI steps: [`docs/BRANCH-PROTECTION.md`](docs/BRANCH-PROTECTION.md) |
-| Dashboard sample data | ✅ Foundation | `npm run dashboard:sample` / `pages:prepare` seeds a tiny stub; live JSON stays gitignored |
-| Requirements and critical-flow catalogs | ✅ Foundation | JSON catalogs exist and tests annotate IDs; `reports/traceability.html` is the covered/gap matrix |
-| PDF executive reports | ✅ Done | `reports/executive-report.pdf` after reporter `onEnd` (verdict, counts, top issues, human queue) |
-| Multi-project dashboard | ✅ Done | `config/projects.json` — Nation and AI Skills as two projects in one dashboard (not multiple GitHub repos) |
-| Keyboard / focus a11y | ✅ Done | Tab order on Nation homepage and Skills catalog (first N focusable, no trap); failures classify as accessibility issues |
-| Lighthouse | ✅ Dispatch | `npm run qa:lighthouse`; CI `workflow_dispatch` only. Summaries attach as performance notes when `reports/lighthouse-*.json` exist |
-| History retention | ✅ Done | Last 50 runs in `history.json` (`QA_HISTORY_LIMIT`) |
-
+| AI-assisted root-cause intelligence | ✅ Done / expandable | Heuristic notes always; LLM enrichment remains optional and evidence-bound |
+| Unified dashboard intelligence | ✅ Done / expandable | Quality Command Center remains the central presentation layer for ecosystem intelligence |
+| Discovery-aware release readiness | ✅ Done | Discovery evidence and route inventory remain part of release verification |
+| Authenticated E2E foundation | ✅ Verified | Nation and AI Skills Google-SSO storageState/session coverage works; deeper authenticated product journeys continue as coverage expansion |
+| Release-scope integrity | ✅ Verified | Partial/targeted runs report `RELEASE NOT VERIFIED`; only explicitly full scope may publish canonical release readiness |
+| GitHub Actions integration | ✅ Done | Typecheck/unit and QA workflows remain the CI foundation; future M10 work adds richer PR/release policies |
+| GitHub Pages sample dashboard | ✅ Workflow | Repository admin must still enable Pages where required |
+| Branch protection | 📄 Docs | Repository-admin configuration remains external to Sentinel runtime |
+| Dashboard sample data | ✅ Foundation | Sanitized sample data supports public/demo views without publishing live secrets |
+| Requirements and critical-flow catalogs | ✅ Foundation | Continue expanding traceability and coverage closure |
+| PDF executive reports | ✅ Done | Executive reporting remains part of the shared ecosystem output layer |
+| Multi-project dashboard | ✅ Done | Nation + AI Skills are the current reference projects; M10 generalizes this model |
+| Keyboard / focus a11y | ✅ Done | Expand per-route and per-profile accessibility coverage over time |
+| Lighthouse | ✅ Dispatch | Performance evidence can continue to grow into trend/budget intelligence |
+| History retention | ✅ Done | Current history supports future trend and regression intelligence |
 ## Ubuntu + VS Code workflow
 
 Default development is **Ubuntu on WSL** plus **VS Code** (Remote - WSL).
 
 ```bash
-cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
+cd qa-sentinel-tyra
 cp .env.example .env
 npm install
 npx playwright install chromium firefox webkit
@@ -231,3 +259,191 @@ Earlier docs marked Milestone 7 as “not started”, then “in progress”. De
 - Compatibility failures, promoted issues and uncertainty must not be hidden by positive evidence.
 
 **Milestone 7:** ✅ COMPLETE — leftovers that need credentials or repo admin (Pages toggle, branch protection, login secrets) live in [`docs/QA-SYSTEM-BACKLOG.md`](docs/QA-SYSTEM-BACKLOG.md) as post-M7 work, not silent gaps inside 7.1–7.8.
+
+---
+
+## Milestone 8 – Security Weakness Intelligence 🧭 PLANNED
+
+### Goal
+
+Build a dedicated **non-destructive Security Weakness Intelligence** layer that can discover, classify, explain and report security weaknesses without overstating the evidence.
+
+Milestone 8 does **not** turn normal QA runs into uncontrolled penetration testing. The default operating mode is safe observation and verification against systems the operator is authorized to test.
+
+### Security evidence maturity model
+
+Sentinel security findings must use an explicit maturity model:
+
+```text
+NOT VERIFIED
+    ↓
+SECURITY OBSERVATION
+    ↓
+CONFIRMED WEAKNESS
+    ↓
+SUSPECTED VULNERABILITY
+    ↓
+CONFIRMED VULNERABILITY
+```
+
+A finding may only move upward when new evidence supports the stronger claim.
+
+### Planned deliveries
+
+| Delivery | Planned capability |
+|---|---|
+| 8.1 Security Evidence Foundation | Shared security evidence model, provenance, scope, confidence and maturity state |
+| 8.2 Header & Browser Security Intelligence | CSP, HSTS, clickjacking protection, Referrer-Policy, Permissions-Policy and related browser controls |
+| 8.3 Cookie & Session Security | Secure/HttpOnly/SameSite analysis, session reuse, logout invalidation and session-boundary evidence |
+| 8.4 Authentication & Authorization Intelligence | Protected-route access, anonymous/member boundaries and safe authorization verification |
+| 8.5 CORS & Cross-Origin Intelligence | Detect overly broad or inconsistent cross-origin policy evidence without fabricating exploitability |
+| 8.6 Information Disclosure Intelligence | Stack traces, debug output, framework/version leakage and exposed diagnostic/admin routes |
+| 8.7 API Security Evidence | Authentication/authorization evidence, unexpected 401/403/5xx patterns and first-party API security observations |
+| 8.8 Safe Input & Abuse-Resistance Signals | Non-destructive reflection/validation checks, repeated-submit and rate-limit verification |
+| 8.9 Security Posture & Correlation | Security Posture score, deduplication, root-cause links and Cross-Layer correlation |
+| 8.10 Security Reporting & Unified Decisioning | Dashboard view, remediation guidance, executive output, history and release-decision integration |
+
+### Milestone 8 safety contract
+
+- Security assessment is **non-destructive by default**.
+- Ordinary QA configuration must never imply authorization for intrusive testing.
+- Active exploitation, destructive payloads, credential attacks and persistence are outside normal Sentinel operation.
+- Any future active-security mode must require explicit authorization, scope and policy controls.
+- A missing control may be a weakness without being a confirmed vulnerability.
+- A suspected vulnerability must remain suspected until reproducible evidence supports confirmation.
+- Security evidence must preserve source, route/endpoint, timestamp, scope and confidence where available.
+- Production-changing actions remain human-controlled.
+
+---
+
+## Milestone 9 – Sentinel Ecosystem Intelligence 🧭 PLANNED
+
+### Goal
+
+Formalize QA Sentinel Tyra as a complete **Quality Intelligence ecosystem** with a shared Evidence Engine and consistent semantics across every quality domain.
+
+The platform should no longer be understood as “Playwright plus a dashboard”. Playwright is one execution source inside a broader evidence architecture.
+
+### Ecosystem architecture
+
+```text
+                    QA SENTINEL TYRA
+                           │
+                  QUALITY COMMAND CENTER
+                           │
+     ┌─────────────────────┼─────────────────────┐
+     │                     │                     │
+ Discovery            Functional QA        Security
+     │                     │                     │
+ Accessibility          UX / UI            Performance
+     │                     │                     │
+ API / Backend       Compatibility       Requirements
+     └─────────────────────┼─────────────────────┘
+                           │
+                    EVIDENCE ENGINE
+                           │
+                 Root-Cause Intelligence
+                           │
+                 Cross-Layer Correlation
+                           │
+                  Unified Decisioning
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
+   Dashboard            Reports        Sentinel AI / Eve
+                                               │
+                                    Advisory Autonomous QA
+```
+
+### Planned deliveries
+
+| Delivery | Planned capability |
+|---|---|
+| 9.1 Central Evidence Engine | Common evidence envelope, provenance, maturity, confidence and scope |
+| 9.2 Domain Adapter Model | Standard adapters for Functional, Discovery, Security, A11y, UX/UI, Performance, API/Backend and Compatibility |
+| 9.3 Unified Confidence Semantics | Shared confidence language without inventing precision |
+| 9.4 Ecosystem Correlation | Correlate evidence across domains while preserving source identity |
+| 9.5 Coverage Closure Intelligence | Verified / partial / missing / human-review coverage map across routes, requirements and critical flows |
+| 9.6 Unified Historical Intelligence | Cross-run comparison, regression evidence and trend semantics |
+| 9.7 Sentinel AI / Eve Ecosystem Reasoning | Evidence-grounded explanations, prioritization and next-action guidance |
+| 9.8 Ecosystem Command Center | One operational view across projects, quality domains, evidence and release state |
+
+### Shared intelligence doctrine
+
+Every intelligence module should answer, whenever evidence permits:
+
+```text
+What was verified?
+What evidence was observed?
+What does the evidence support?
+How confident is Sentinel?
+What should happen next?
+```
+
+Missing evidence stays missing evidence. It must never be silently converted into success.
+
+---
+
+## Milestone 10 – Platform & Enterprise Evolution 🧭 PLANNED
+
+### Goal
+
+Evolve QA Sentinel Tyra from a powerful project-specific ecosystem into a reusable quality platform for multiple applications, teams and delivery pipelines.
+
+### Planned deliveries
+
+| Delivery | Planned capability |
+|---|---|
+| 10.1 Multi-project Quality Command Center | Generalized project registration, filtering and portfolio-level health |
+| 10.2 Historical Quality & Security Trends | Long-term regression, posture and release history |
+| 10.3 CI/CD Quality Gates | Configurable pipeline and pull-request policies |
+| 10.4 GitHub Integration | PR evidence summaries, issue workflows and release-context integration |
+| 10.5 Policy Profiles | Organization/project policies for scope, release, security and automation boundaries |
+| 10.6 Team & Project Profiles | Reusable configuration and ownership metadata |
+| 10.7 Audit Trail | Evidence provenance, decision history and policy-change traceability |
+| 10.8 Integration & Export API | Machine-readable external access to sanitized Sentinel evidence and decisions |
+| 10.9 Plugin / Module Architecture | Extensible analyzers, adapters and integrations without modifying core decision semantics |
+| 10.10 Reusable Application Adapters | Project templates for new sites and systems |
+| 10.11 Notification & Quality Events | Optional external notifications and event integrations |
+| 10.12 Enterprise Operationalization | Scalable configuration, governance, retention and deployment patterns |
+
+---
+
+## Ecosystem doctrine
+
+QA Sentinel Tyra should become more capable without becoming less trustworthy.
+
+The core rule is:
+
+> **Sentinel must never claim more than the available evidence supports.**
+
+Therefore:
+
+- untested does not mean passed;
+- partial verification does not mean full release verification;
+- a warning does not automatically mean a release blocker;
+- a security observation does not automatically mean a weakness;
+- a weakness does not automatically mean a vulnerability;
+- correlation does not automatically prove causation;
+- AI-generated analysis must remain traceable to evidence;
+- confidence must describe evidence strength rather than cosmetic certainty;
+- autonomous recommendations must not silently become execution authority;
+- production-changing actions remain human-controlled.
+
+This doctrine applies across Functional QA, Discovery, Security, Accessibility, UX/UI, Performance, Compatibility, API/Backend, Requirements, Critical Flows, Root Cause, Cross-Layer Intelligence, Sentinel AI / Eve and all future modules.
+
+---
+
+## Planned milestone sequence
+
+```text
+M5  Quality Intelligence Framework                  ✅ COMPLETE
+M6  Advisory Autonomous QA Framework                ✅ COMPLETE
+M7  Unified Dashboard & Operationalization          ✅ COMPLETE
+M8  Security Weakness Intelligence                  🧭 PLANNED
+M9  Sentinel Ecosystem Intelligence                 🧭 PLANNED
+M10 Platform & Enterprise Evolution                 🧭 PLANNED
+```
+
+The roadmap remains evidence-driven: milestone completion should only be marked when the implemented capability and its safety/authority boundaries have been verified.
+
