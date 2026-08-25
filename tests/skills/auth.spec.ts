@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { readOptionalCredentials } from '../helpers/env';
+import { AI_SKILLS_AUTH_STATE } from '../helpers/auth-state';
 import { qualityMeta } from '../helpers/quality';
 import { SkillsCatalogPage } from '../pages/skills-catalog.page';
-import { completeConfiguredLogin } from '../helpers/complete-login';
 
 test.describe('AI Skills authentication', () => {
   test(
@@ -51,23 +50,23 @@ test.describe('AI Skills authentication', () => {
       ],
       securityCheck: 'authentication',
     }),
-    async ({ page }) => {
-      const credentials = readOptionalCredentials('ai-skills');
+    async ({ browser }) => {
+      const context = await browser.newContext({
+        storageState: AI_SKILLS_AUTH_STATE,
+      });
 
-      test.skip(
-        !credentials,
-        'Set AI_SKILLS_TEST_EMAIL and AI_SKILLS_TEST_PASSWORD in .env to enable real Skills login.'
-      );
+      try {
+        const page = await context.newPage();
+        const catalog = new SkillsCatalogPage(page);
 
-      test.setTimeout(90_000);
+        await catalog.goto();
 
-      const catalog = new SkillsCatalogPage(page);
-
-      await catalog.gotoPath('/signin');
-      await completeConfiguredLogin(page, credentials!, 'AI Skills');
-      await expect(page).toHaveURL(/aiskills\.nation\.dev/i, { timeout: 20_000 });
-      await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 20_000 });
-      await expect(page.locator('body')).toBeVisible();
+        await expect(page).toHaveURL(/aiskills\.nation\.dev/i);
+        await expect(page).not.toHaveURL(/\/signin/i);
+        await expect(page.locator('body')).toBeVisible();
+      } finally {
+        await context.close();
+      }
     }
   );
 });

@@ -210,9 +210,18 @@ function renderDataSourceBanner(run) {
 function renderMetadata(run) {
   const metadata = run.metadata ?? {};
 
-  setText('build-value', metadata.build ?? 'local');
-  setText('branch-value', metadata.branch ?? 'local');
-  setText('commit-value', metadata.commit ?? '—');
+  setText(
+    'build-value',
+    String(metadata.build ?? '').trim() || 'local'
+  );
+  setText(
+    'branch-value',
+    String(metadata.branch ?? '').trim() || 'local'
+  );
+  setText(
+    'commit-value',
+    String(metadata.commit ?? '').trim() || 'unavailable'
+  );
   setText(
     'run-number-value',
     metadata.runNumber ?? run.runId?.slice(0, 8) ?? '—'

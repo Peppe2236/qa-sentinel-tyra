@@ -1033,6 +1033,20 @@ class QaDashboardReporter implements Reporter {
     console.log(
       `Discovered tests: ${this.discoveredTests}`
     );
+
+    const releaseScope =
+      (process.env.QA_SENTINEL_RELEASE_SCOPE ?? '')
+        .trim()
+        .toLowerCase();
+
+    console.log(
+      `Release scope: ${
+        releaseScope === 'full'
+          ? 'FULL'
+          : 'PARTIAL / UNSCOPED'
+      }`
+    );
+
     console.log(
       'Priority: user-impacting flows first'
     );
@@ -1568,11 +1582,54 @@ const criticalFlowCoverage =
 
 
 
-const releaseAssessment =
+const canonicalReleaseAssessment =
   buildCanonicalReleaseAssessment(
     legacyReleaseAssessment,
     unifiedDecisionAssessment
   );
+
+const releaseScope =
+  (process.env.QA_SENTINEL_RELEASE_SCOPE ?? '')
+    .trim()
+    .toLowerCase();
+
+/*
+ * Demo / production integrity guard.
+ *
+ * Release readiness must never be inferred from an arbitrary
+ * targeted Playwright run. Only a run explicitly marked as the
+ * complete configured QA scope may publish a release decision.
+ *
+ * Test results and findings from partial runs remain valid.
+ */
+const releaseAssessment =
+  releaseScope === 'full'
+    ? canonicalReleaseAssessment
+    : {
+        ...canonicalReleaseAssessment,
+
+        status:
+          'not-verified' as const,
+
+        /*
+         * Use current-run evidence for risk/counts rather than
+         * interpreting missing full-suite coverage as a defect.
+         */
+        risk:
+          baseReleaseAssessment.risk,
+
+        blockingIssues:
+          baseReleaseAssessment.blockingIssues,
+
+        nonBlockingIssues:
+          baseReleaseAssessment.nonBlockingIssues,
+
+        verdict:
+          'Release readiness is not verified because this run was not explicitly marked as the full configured QA scope. Executed test results and findings remain valid.',
+
+        recommendedAction:
+          'Run the complete QA suite with QA_SENTINEL_RELEASE_SCOPE=full before using this result as a release decision.',
+      };
 
 
 const autonomousQaHistoryFile =

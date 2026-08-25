@@ -42,7 +42,8 @@
     "pages:prepare": "node scripts/prepare-pages.mjs",
     "report:traceability": "node scripts/report-traceability.mjs",
     "sentinel": "node scripts/sentinel.mjs",
-    "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\""
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "qa:demo": "npm run scan:all && node scripts/qa-demo.mjs"
   },
   "keywords": [
     "qa",

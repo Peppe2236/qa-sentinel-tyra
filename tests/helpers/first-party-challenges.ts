@@ -11,7 +11,7 @@ import { recordCaptchaQueueItem } from '../../reporters/utils/captcha-queue';
 import { trySolveFirstPartyCaptcha } from './captcha-solver';
 
 const CONSENT_NAME =
-  /accept all|allow all|accept|allow|i agree|got it|continue|ok|godkänn|acceptera|tillåt/i;
+  /accept all|allow all|accept|allow|i agree|got it|ok|godkänn|acceptera|tillåt/i;
 
 export interface ChallengeHandleResult {
   kind: CaptchaChallengeKind;

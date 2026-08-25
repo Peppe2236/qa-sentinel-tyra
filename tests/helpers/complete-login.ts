@@ -26,13 +26,30 @@ export function googleIdentifierField(page: Page): Locator {
 }
 
 export function googleNextButton(page: Page): Locator {
-  return page.getByRole('button', { name: /^next$/i }).first();
+  return page
+    .locator('#identifierNext, #passwordNext')
+    .or(
+      page.getByRole('button', {
+        name: /^(next|nästa)$/i,
+      })
+    )
+    .or(
+      page.locator('button').filter({
+        hasText: /^\s*(next|nästa)\s*$/i,
+      })
+    )
+    .first();
 }
 
 export function isGoogleIdentityUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return host === 'accounts.google.com' || host.endsWith('.google.com');
+
+    return (
+      host === 'accounts.google.com' ||
+      host === 'accounts.google.se' ||
+      host.endsWith('.google.com')
+    );
   } catch {
     return false;
   }
@@ -40,10 +57,46 @@ export function isGoogleIdentityUrl(url: string): boolean {
 
 async function fillQuietly(locator: Locator, value: string): Promise<void> {
   await locator.waitFor({ state: 'visible', timeout: 20_000 });
+
+  await locator.scrollIntoViewIfNeeded().catch(() => undefined);
   await locator.click();
-  await locator.press('ControlOrMeta+A');
-  await locator.press('Backspace');
-  await locator.pressSequentially(value, { delay: 20 });
+
+  /*
+   * Prefer Playwright's native fill().
+   * Google identity inputs can occasionally ignore or lose
+   * character-by-character keyboard input.
+   */
+  try {
+    await locator.fill('');
+    await locator.fill(value);
+  } catch {
+    await locator.press('ControlOrMeta+A');
+    await locator.press('Backspace');
+    await locator.pressSequentially(value, { delay: 30 });
+  }
+
+  await locator.page().waitForTimeout(250);
+
+  let currentValue = await locator.inputValue().catch(() => '');
+
+  /*
+   * One keyboard fallback if the browser did not retain fill().
+   */
+  if (currentValue !== value) {
+    await locator.click();
+    await locator.press('ControlOrMeta+A');
+    await locator.press('Backspace');
+    await locator.pressSequentially(value, { delay: 30 });
+
+    await locator.page().waitForTimeout(250);
+    currentValue = await locator.inputValue().catch(() => '');
+  }
+
+  if (currentValue !== value) {
+    throw new Error(
+      'Login field did not retain the configured value after both fill and keyboard input.'
+    );
+  }
 }
 
 async function throwIfGoogleBlocked(
@@ -69,10 +122,19 @@ async function completeGoogleIdentityLogin(
 ): Promise<void> {
   const identifier = googleIdentifierField(page);
 
-  if (await identifier.isVisible().catch(() => false)) {
-    await fillQuietly(identifier, credentials.email);
-    await googleNextButton(page).click();
+if (await identifier.isVisible().catch(() => false)) {
+  await fillQuietly(identifier, credentials.email.trim());
+
+  const enteredIdentifier = await identifier.inputValue();
+
+  if (enteredIdentifier.trim() !== credentials.email.trim()) {
+    throw new Error(
+      `${siteLabel} Google identifier field did not retain the configured QA email.`
+    );
   }
+
+  await googleNextButton(page).click();
+}
 
   await throwIfGoogleBlocked(page, siteLabel);
 
@@ -133,15 +195,87 @@ async function completeFirstPartyLogin(
 ): Promise<void> {
   await assertLoginNotBlocked(page, siteLabel);
 
-  const email = page.getByRole('textbox', { name: /email/i }).first();
-  const password = visiblePasswordField(page);
-  const submit = page
-    .getByRole('button', { name: /sign in|log in/i })
+  /*
+   * Generic first-party email/password fallback for sites
+   * that do not authenticate through Google SSO.
+   */
+  const signInWithEmail = page
+    .getByRole('button', { name: /^sign in with email$/i })
     .first();
 
-  await fillQuietly(email, credentials.email);
+  if (await signInWithEmail.isVisible().catch(() => false)) {
+    await signInWithEmail.click();
+  }
+
+  const email = page
+    .getByRole('textbox', { name: /email/i })
+    .or(page.locator('input[type="email"]'))
+    .or(page.locator('input[name="email"]'))
+    .first();
+
+  await email.waitFor({
+    state: 'visible',
+    timeout: 20_000,
+  });
+
+  await fillQuietly(email, credentials.email.trim());
+
+
+  const password = visiblePasswordField(page);
+
+  /*
+   * Support email-first forms where password appears
+   * only after Continue / Next.
+   */
+  if (!(await password.isVisible().catch(() => false))) {
+    const continueButton = page
+      .getByRole('button', {
+        name: /^(continue|next|sign in|log in)$/i,
+      })
+      .filter({ hasNotText: /google/i })
+      .first();
+
+    if (await continueButton.isVisible().catch(() => false)) {
+      await continueButton.click();
+
+    }
+  }
+
+  await password.waitFor({
+    state: 'visible',
+    timeout: 20_000,
+  });
+
   await fillQuietly(password, credentials.password);
+
+  const passwordForm = page
+  .locator('form')
+  .filter({ has: password })
+  .first();
+
+let submit = passwordForm
+  .getByRole('button', {
+    name: /^(sign in|sign in with email|log in|continue)$/i,
+  })
+  .filter({ hasNotText: /google/i })
+  .first();
+
+if (!(await submit.isVisible().catch(() => false))) {
+  submit = page
+    .getByRole('button', {
+      name: /^(sign in|sign in with email|log in|continue)$/i,
+    })
+    .filter({ hasNotText: /google/i })
+    .first();
+}
+
+await submit.waitFor({
+  state: 'visible',
+  timeout: 20_000,
+});
+
   await submit.click();
+
   await assertLoginNotBlocked(page, siteLabel);
 }
 
@@ -152,22 +286,50 @@ export async function completeConfiguredLogin(
 ): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
 
-  const google = googleIdentifierField(page);
-  const firstPartyPassword = visiblePasswordField(page);
+  /*
+   * Nation and AI Skills authenticate through Google SSO.
+   *
+   * Provider selection is explicit instead of inferred from
+   * visible email/password fields, because Google's own fields
+   * would otherwise look like a first-party login form.
+   */
+  if (siteLabel === 'Nation' || siteLabel === 'AI Skills') {
+    if (!isGoogleIdentityUrl(page.url())) {
+      const googleButton = page
+        .getByRole('button', {
+          name: /continue with google|sign in with google/i,
+        })
+        .first();
 
-  await Promise.race([
-    google.waitFor({ state: 'visible', timeout: 20_000 }),
-    firstPartyPassword.waitFor({ state: 'visible', timeout: 20_000 }),
-    page.waitForURL(url => isGoogleIdentityUrl(String(url)), { timeout: 20_000 }),
-  ]).catch(() => undefined);
+      await googleButton.waitFor({
+        state: 'visible',
+        timeout: 20_000,
+      });
 
-  if (
-    isGoogleIdentityUrl(page.url()) ||
-    (await google.isVisible().catch(() => false))
-  ) {
-    await completeGoogleIdentityLogin(page, credentials, siteLabel);
+      await googleButton.click();
+    }
+
+    await page.waitForURL(
+      url => isGoogleIdentityUrl(String(url)),
+      { timeout: 20_000 }
+    );
+
+    await completeGoogleIdentityLogin(
+      page,
+      credentials,
+      siteLabel
+    );
+
     return;
   }
 
-  await completeFirstPartyLogin(page, credentials, siteLabel);
+  /*
+   * Fallback for future sites that use first-party
+   * email/password authentication.
+   */
+  await completeFirstPartyLogin(
+    page,
+    credentials,
+    siteLabel
+  );
 }

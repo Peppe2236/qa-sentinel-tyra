@@ -99,9 +99,16 @@ export interface StoredCookieFlags {
 const SESSION_COOKIE_NAME =
   /(^|[-_.])(session|sess|sid|auth|jwt|login)([-_.]|$)|sb-.+-auth/i;
 
+const NON_SESSION_AUTH_COOKIE_NAME =
+  /(^|[-_.])(csrf-token|callback-url)([-_.]|$)/i;
+
 export function isLikelySessionCookie(
   cookie: StoredCookieFlags
 ): boolean {
+  if (NON_SESSION_AUTH_COOKIE_NAME.test(cookie.name)) {
+    return false;
+  }
+
   return cookie.httpOnly || SESSION_COOKIE_NAME.test(cookie.name);
 }
 
