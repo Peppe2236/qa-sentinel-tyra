@@ -11,6 +11,7 @@ import type {
   SecurityPerformanceStatus,
   ReleaseAssessment,
   RiskLevel,
+  SecurityEvidenceState,
 } from '../models/types';
 
 import {
@@ -172,6 +173,27 @@ function securityAreaIsSatisfied(
   );
 }
 
+function issueIsExecutionFailure(
+  issue: UnifiedSecurityPerformanceIssue
+): boolean {
+
+  const text =
+    issueText(
+      issue
+    );
+
+  return (
+    text.includes(
+      'test timeout of'
+    ) ||
+    text.includes(
+      'browser has been closed'
+    ) ||
+    text.includes(
+      'target page, context or browser has been closed'
+    )
+  );
+}
 
 function classificationIsUncertain(
   classification:
@@ -192,6 +214,60 @@ function classificationIsUncertain(
   );
 }
 
+function isConfirmedSecurityWeakness(
+  issue: UnifiedSecurityPerformanceIssue
+): boolean {
+
+  const text =
+    issueText(
+      issue
+    );
+
+  const confirmedWeaknessSignals = [
+    'content-security-policy was not present',
+    'strict-transport-security was not present',
+    'x-content-type-options was not present',
+    'x-frame-options was not present',
+    'missing content-security-policy',
+    'missing content security policy',
+    'missing csp',
+    'mixed content',
+    'insecure http',
+    'cookie missing secure',
+    'cookie missing httponly',
+    'cookie missing samesite',
+  ];
+
+  return confirmedWeaknessSignals.some(
+    signal =>
+      text.includes(
+        signal
+      )
+  );
+}
+
+function securityEvidenceState(
+  tests: DashboardTestResult[],
+  issues: UnifiedSecurityPerformanceIssue[]
+): SecurityEvidenceState {
+
+  if (
+    tests.length === 0 &&
+    issues.length === 0
+  ) {
+    return 'not-verified';
+  }
+
+  if (
+    issues.some(
+      isConfirmedSecurityWeakness
+    )
+  ) {
+    return 'confirmed-weakness';
+  }
+
+  return 'security-observation';
+}
 
 function statusFromSeverity(
   issues:
@@ -288,6 +364,27 @@ export function securityAreasForIssue(
     ];
   }
 
+  if (
+  text.includes(
+    'content-security-policy was not present'
+  ) ||
+  text.includes(
+    'content security policy was not present'
+  ) ||
+  text.includes(
+    'missing content-security-policy'
+  ) ||
+  text.includes(
+    'missing content security policy'
+  ) ||
+  text.includes(
+    'missing csp'
+  )
+) {
+  return [
+    'content-security-policy',
+  ];
+}
 
   if (
     category ===
@@ -829,7 +926,6 @@ function catalogSecurityAreas(
       ];
 }
 
-
 function analyzeSecurity(
   tests:
     DashboardTestResult[],
@@ -865,13 +961,16 @@ function analyzeSecurity(
 
   const securityIssues =
     issues.filter(
-      issue =>
-        !classificationIsUncertain(
-          issue.classification
-        ) &&
-        securityAreasForIssue(
-          issue
-        ).length > 0
+    issue =>
+      !issueIsExecutionFailure(
+        issue
+      ) &&
+      !classificationIsUncertain(
+        issue.classification
+      ) &&
+      securityAreasForIssue(
+        issue
+      ).length > 0
     );
 
 
@@ -995,7 +1094,10 @@ function analyzeSecurity(
               area,
 
               status:
-                'not-verified',
+               'not-verified',
+
+              evidenceState:
+               'not-verified',
 
               required,
 
@@ -1094,7 +1196,13 @@ function analyzeSecurity(
             area,
 
             status:
-              areaStatus,
+            areaStatus,
+
+             evidenceState:
+              securityEvidenceState(
+                 areaTests,
+                 areaIssues
+              ),
 
             required,
 

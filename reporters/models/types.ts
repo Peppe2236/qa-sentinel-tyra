@@ -2013,6 +2013,9 @@ export interface SecurityAreaAssessment {
   status:
     SecurityPerformanceStatus;
 
+   evidenceState:
+    SecurityEvidenceState;
+
   required:
     boolean;
 
@@ -2041,8 +2044,15 @@ export interface SecurityAreaAssessment {
     string[];
 }
 
+export type SecurityEvidenceState =
+  | 'not-verified'
+  | 'security-observation'
+  | 'confirmed-weakness'
+  | 'suspected-vulnerability'
+  | 'confirmed-vulnerability';
 
 export interface SecurityAssessment {
+
   status:
     SecurityPerformanceStatus;
 
@@ -2591,7 +2601,7 @@ export interface DashboardRun {
   browserStatistics: BrowserStatistics;
   categoryStatistics: CategoryStatistics;
   profileStatistics: BrowserStatistics;
-  
+
   siteStatistics?: Record<string, {
   site: string;
   total: number;
