@@ -1594,18 +1594,28 @@ const releaseScope =
     .toLowerCase();
 
 /*
- * Demo / production integrity guard.
+ * Release execution-integrity guard.
  *
- * Release readiness must never be inferred from an arbitrary
- * targeted Playwright run. Only a run explicitly marked as the
- * complete configured QA scope may publish a release decision.
+ * FULL scope is a request to execute the complete configured QA suite.
+ * It is not, by itself, evidence that the complete suite actually ran.
  *
- * Test results and findings from partial runs remain valid.
+ * A setup/browser/auth/runner failure may terminate Playwright before
+ * many discovered tests produce results. Missing execution evidence
+ * must never be interpreted as product failure evidence.
  */
+const discoveredTestCount =
+  this.discoveredTests;
+
+const executedResultCount =
+  this.results.length;
+
+const executionComplete =
+  discoveredTestCount > 0 &&
+  executedResultCount >= discoveredTestCount;
+
 const releaseAssessment =
-  releaseScope === 'full'
-    ? canonicalReleaseAssessment
-    : {
+  releaseScope !== 'full'
+    ? {
         ...canonicalReleaseAssessment,
 
         status:
@@ -1618,6 +1628,9 @@ const releaseAssessment =
         risk:
           baseReleaseAssessment.risk,
 
+        confidence:
+          baseReleaseAssessment.confidence,
+
         blockingIssues:
           baseReleaseAssessment.blockingIssues,
 
@@ -1629,8 +1642,42 @@ const releaseAssessment =
 
         recommendedAction:
           'Run the complete QA suite with QA_SENTINEL_RELEASE_SCOPE=full before using this result as a release decision.',
-      };
+      }
 
+    : !executionComplete
+      ? {
+          ...canonicalReleaseAssessment,
+
+          status:
+            'not-verified' as const,
+
+          /*
+           * The suite was requested as FULL, but execution stopped
+           * before all discovered tests produced results.
+           *
+           * Do not allow downstream coverage gaps caused by missing
+           * execution to become false release blockers.
+           */
+          risk:
+            baseReleaseAssessment.risk,
+
+          confidence:
+            baseReleaseAssessment.confidence,
+
+          blockingIssues:
+            baseReleaseAssessment.blockingIssues,
+
+          nonBlockingIssues:
+            baseReleaseAssessment.nonBlockingIssues,
+
+          verdict:
+            `Release readiness is not verified because the full QA execution was incomplete. ${executedResultCount} of ${discoveredTestCount} discovered tests produced results. Executed test results and findings remain valid.`,
+
+          recommendedAction:
+            'Resolve the execution or environment failure and rerun the complete QA suite before making a release decision.',
+        }
+
+      : canonicalReleaseAssessment;
 
 const autonomousQaHistoryFile =
   path.resolve(
@@ -1747,7 +1794,7 @@ const run: DashboardRun = {
         siteStatistics,
       }),
       policy,
-      
+
       tests:
         this.results,
     };
