@@ -2,6 +2,7 @@ import { test as setup, expect } from '@playwright/test';
 
 import { readOptionalCredentials } from '../helpers/env';
 import {
+  authStateHasData,
   AI_SKILLS_AUTH_STATE,
   writeEmptyAuthState,
 } from '../helpers/auth-state';
@@ -11,6 +12,10 @@ import { completeConfiguredLogin } from '../helpers/complete-login';
 setup.setTimeout(120_000);
 
 setup('prepare AI Skills storageState', async ({ page }) => {
+  if (authStateHasData(AI_SKILLS_AUTH_STATE)) {
+    return;
+  }
+
   writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
 
   const credentials = readOptionalCredentials('ai-skills');

@@ -2,6 +2,7 @@ import { test as setup, expect } from '@playwright/test';
 
 import { readOptionalCredentials } from '../helpers/env';
 import {
+  authStateHasData,
   NATION_AUTH_STATE,
   writeEmptyAuthState,
 } from '../helpers/auth-state';
@@ -11,6 +12,10 @@ import { completeConfiguredLogin } from '../helpers/complete-login';
 setup.setTimeout(120_000);
 
 setup('prepare Nation storageState', async ({ page }) => {
+  if (authStateHasData(NATION_AUTH_STATE)) {
+    return;
+  }
+
   writeEmptyAuthState(NATION_AUTH_STATE);
 
   const credentials = readOptionalCredentials('nation');

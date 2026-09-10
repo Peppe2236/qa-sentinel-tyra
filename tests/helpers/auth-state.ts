@@ -32,3 +32,31 @@ export function writeEmptyAuthState(filePath: string): void {
 export function authStateExists(filePath: string): boolean {
   return fs.existsSync(filePath);
 }
+
+type StoredAuthState = {
+  cookies?: unknown[];
+  origins?: unknown[];
+};
+
+export function authStateHasData(filePath: string): boolean {
+  if (!authStateExists(filePath)) {
+    return false;
+  }
+
+  try {
+    const state = JSON.parse(
+      fs.readFileSync(filePath, 'utf8')
+    ) as StoredAuthState;
+
+    const cookies = Array.isArray(state.cookies)
+      ? state.cookies.length
+      : 0;
+    const origins = Array.isArray(state.origins)
+      ? state.origins.length
+      : 0;
+
+    return cookies + origins > 0;
+  } catch {
+    return false;
+  }
+}

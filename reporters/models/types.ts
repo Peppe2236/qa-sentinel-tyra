@@ -479,6 +479,38 @@ export type UxUiArea =
   | 'content-clarity';
 
 
+export type UxUiTestEvidenceOrigin =
+  | 'explicit-observation';
+
+
+export type UxUiObservationState =
+  | 'measured'
+  | 'not-observed';
+
+
+export interface UxUiTestEvidence {
+  evidenceId: string;
+
+  origin:
+    UxUiTestEvidenceOrigin;
+
+  measuredAreas:
+    UxUiArea[];
+
+  notObservedAreas:
+    UxUiArea[];
+
+  status: string;
+  title: string;
+  file: string;
+
+  site: string;
+  project: string;
+  browserFamily: string;
+  profile: string;
+}
+
+
 export interface UxUiAreaAssessment {
   area:
     UxUiArea;
@@ -489,6 +521,13 @@ export interface UxUiAreaAssessment {
   score?: number;
 
   evidenceCount: number;
+
+  explicitEvidenceCount: number;
+  derivedEvidenceCount: number;
+  notObservedEvidenceCount: number;
+
+  evidenceTestIds:
+    string[];
 
   issueCount: number;
 
@@ -514,6 +553,13 @@ export interface UxUiAssessment {
   score?: number;
 
   evidenceCount: number;
+
+  explicitEvidenceCount: number;
+  derivedEvidenceCount: number;
+  notObservedEvidenceCount: number;
+
+  testEvidence:
+    UxUiTestEvidence[];
 
   issueCount: number;
 

@@ -33,6 +33,40 @@ test.describe('AI Skills UX/UI intelligence signals', () => {
         ...chrome,
       });
 
+      annotateUxObservation(testInfo, {
+        area: 'usability',
+        page: 'catalog',
+        ...chrome,
+      });
+
+      annotateUxObservation(testInfo, {
+        area: 'content-clarity',
+        page: 'catalog',
+        ...chrome,
+      });
+
+      const title =
+        (await page.title()).trim();
+
+      const bodyText =
+        (await catalog.body().innerText())
+          .trim();
+
+      expect(
+        title,
+        'Catalog document title is empty'
+      ).not.toBe('');
+
+      expect(
+        chrome.headingCount,
+        'Catalog has no visible heading'
+      ).toBeGreaterThan(0);
+
+      expect(
+        bodyText.length,
+        'Catalog contains too little visible content'
+      ).toBeGreaterThan(20);
+
       expect(
         chrome.navLandmark || chrome.visibleLinkCount > 0,
         `Catalog has no visible navigation landmark or links (links=${chrome.visibleLinkCount})`
@@ -63,9 +97,63 @@ test.describe('AI Skills UX/UI intelligence signals', () => {
         ...chrome,
       });
 
-      await expect(catalog.emailField()).toBeVisible();
-      await expect(catalog.passwordField()).toBeVisible();
+      const email =
+        catalog.emailField();
+
+      const password =
+        catalog.passwordField();
+
+      await expect(email).toBeVisible();
+      await expect(password).toBeVisible();
       await expect(catalog.signInSubmit()).toBeVisible();
+
+      await expect(email)
+        .toHaveAttribute('type', /email/i);
+
+      await email.fill('not-an-email');
+
+      expect(
+        await email.evaluate(
+          element =>
+            (element as HTMLInputElement)
+              .checkValidity()
+        ),
+        'Email field accepted an invalid email address'
+      ).toBe(false);
+
+      await email.fill(
+        'qa-ux-verification@example.com'
+      );
+
+      await password.fill(
+        'SafeUxVerification123!'
+      );
+
+      await expect(email).toHaveValue(
+        'qa-ux-verification@example.com'
+      );
+
+      await expect(password).toHaveValue(
+        'SafeUxVerification123!'
+      );
+
+      await email.focus();
+
+      expect(
+        await email.evaluate(
+          element =>
+            document.activeElement ===
+            element
+        ),
+        'Email field could not receive keyboard focus'
+      ).toBe(true);
+
+      annotateUxObservation(testInfo, {
+        area: 'interaction',
+        page: 'sign-in',
+        ...chrome,
+      });
+
       expect(
         chrome.formControlCount,
         'Sign-in page has no visible form controls'
@@ -141,6 +229,13 @@ test.describe('AI Skills UX/UI intelligence signals', () => {
           type: 'ux-observation',
           description: 'layout-shift-not-observed',
         });
+      } else {
+        expect(
+          typeof shift.cls === 'number'
+            ? shift.cls
+            : Number.POSITIVE_INFINITY,
+          'Cumulative Layout Shift exceeded 0.25'
+        ).toBeLessThanOrEqual(0.25);
       }
 
       await expect(catalog.body()).toBeVisible();
@@ -171,6 +266,24 @@ test.describe('AI Skills UX/UI intelligence signals', () => {
       });
 
       await expect(catalog.body()).toBeVisible();
+
+      const dimensions =
+        await page.evaluate(() => ({
+          clientWidth:
+            document.documentElement
+              .clientWidth,
+          scrollWidth:
+            document.documentElement
+              .scrollWidth,
+        }));
+
+      expect(
+        dimensions.scrollWidth,
+        `Horizontal overflow at ${chrome.viewportWidth}x${chrome.viewportHeight}`
+      ).toBeLessThanOrEqual(
+        dimensions.clientWidth + 2
+      );
+
       expect(
         chrome.navLandmark || chrome.visibleLinkCount > 0,
         `Viewport ${chrome.viewportWidth}x${chrome.viewportHeight} has no visible navigation chrome`

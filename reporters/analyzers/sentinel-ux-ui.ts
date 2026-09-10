@@ -6,7 +6,9 @@ import type {
   UxUiArea,
   UxUiAreaAssessment,
   UxUiAssessment,
+  UxUiObservationState,
   UxUiStatus,
+  UxUiTestEvidence,
 } from '../models/types';
 
 
@@ -47,6 +49,193 @@ function unique(
       values.filter(Boolean)
     ),
   ];
+}
+
+
+type ParsedUxObservation = {
+  area: UxUiArea;
+  state: UxUiObservationState;
+};
+
+
+function normalizedTestFile(
+  test: DashboardTestResult
+): string {
+  return test.file
+    .replace(/\\/g, '/')
+    .toLowerCase();
+}
+
+
+function isNonSiteVerificationTest(
+  test: DashboardTestResult
+): boolean {
+  const file =
+    normalizedTestFile(test);
+
+  return (
+    file.startsWith('tests/diagnostics/') ||
+    file.includes('/tests/diagnostics/') ||
+    file.startsWith('tests/unit/') ||
+    file.includes('/tests/unit/') ||
+    file.startsWith('tests/auth/') ||
+    file.includes('/tests/auth/')
+  );
+}
+
+
+function uxObservationsForTest(
+  test: DashboardTestResult
+): ParsedUxObservation[] {
+  if (
+    isNonSiteVerificationTest(test)
+  ) {
+    return [];
+  }
+
+  const states =
+    new Map<
+      UxUiArea,
+      UxUiObservationState
+    >();
+
+  for (
+    const annotation
+    of test.annotations ?? []
+  ) {
+    if (
+      annotation.type
+        .toLowerCase() !==
+      'ux-observation'
+    ) {
+      continue;
+    }
+
+    const description =
+      String(
+        annotation.description ??
+        ''
+      ).trim();
+
+    if (!description) {
+      continue;
+    }
+
+    try {
+      const parsed =
+        JSON.parse(
+          description
+        ) as Record<
+          string,
+          unknown
+        >;
+
+      const area =
+        String(
+          parsed.area ??
+          ''
+        )
+          .trim()
+          .toLowerCase() as UxUiArea;
+
+      if (
+        !UX_UI_AREAS.includes(area)
+      ) {
+        continue;
+      }
+
+      const markers = [
+        parsed.observation,
+        parsed.source,
+        parsed.layoutShiftSource,
+      ]
+        .map(
+          value =>
+            String(value ?? '')
+              .trim()
+              .toLowerCase()
+        );
+
+      const state:
+        UxUiObservationState =
+          markers.includes(
+            'not-observed'
+          )
+            ? 'not-observed'
+            : 'measured';
+
+      const current =
+        states.get(area);
+
+      if (
+        current !== 'measured' ||
+        state === 'measured'
+      ) {
+        states.set(area, state);
+      }
+    }
+    catch {
+      /* Non-JSON UX notes are context, not verification evidence. */
+    }
+  }
+
+  return [
+    ...states.entries(),
+  ].map(
+    ([area, state]) => ({
+      area,
+      state,
+    })
+  );
+}
+
+
+function measuredUxAreas(
+  test: DashboardTestResult
+): UxUiArea[] {
+  return uxObservationsForTest(test)
+    .filter(
+      observation =>
+        observation.state ===
+        'measured'
+    )
+    .map(
+      observation =>
+        observation.area
+    );
+}
+
+
+function notObservedUxAreas(
+  test: DashboardTestResult
+): UxUiArea[] {
+  return uxObservationsForTest(test)
+    .filter(
+      observation =>
+        observation.state ===
+        'not-observed'
+    )
+    .map(
+      observation =>
+        observation.area
+    );
+}
+
+
+function categoryDerivedAreas(
+  test: DashboardTestResult
+): UxUiArea[] {
+  if (
+    isNonSiteVerificationTest(test) ||
+    !(test.qualityDimensions ?? [])
+      .includes('ux-ui')
+  ) {
+    return [];
+  }
+
+  return uxAreasForCategory(
+    test.category
+  );
 }
 
 
@@ -185,22 +374,26 @@ export function analyzeUxUi(
   }
 
 
-  function realTestEvidence(
+  function trustworthyTestResult(
     test: DashboardTestResult
   ): boolean {
-    if (
-      !(test.qualityDimensions ?? [])
-        .includes('ux-ui')
-    ) {
-      return false;
-    }
-
     if (test.status === 'passed') {
       return true;
     }
 
     return !uncertain(
       test.classification
+    );
+  }
+
+
+  function realTestEvidence(
+    test: DashboardTestResult
+  ): boolean {
+    return (
+      trustworthyTestResult(test) &&
+      measuredUxAreas(test)
+        .length > 0
     );
   }
 
@@ -224,6 +417,74 @@ export function analyzeUxUi(
 
   const uxTests =
     tests.filter(realTestEvidence);
+
+
+  const observedUxTests =
+    tests.filter(
+      test =>
+        trustworthyTestResult(test) &&
+        uxObservationsForTest(test)
+          .length > 0
+    );
+
+
+  const derivedUxTests =
+    tests.filter(
+      test =>
+        trustworthyTestResult(test) &&
+        uxObservationsForTest(test)
+          .length === 0 &&
+        categoryDerivedAreas(test)
+          .length > 0
+    );
+
+
+  const testEvidence:
+    UxUiTestEvidence[] =
+      observedUxTests.map(
+        test => ({
+          evidenceId:
+            test.id,
+
+          origin:
+            'explicit-observation',
+
+          measuredAreas:
+            measuredUxAreas(test),
+
+          notObservedAreas:
+            notObservedUxAreas(test),
+
+          status:
+            test.status,
+
+          title:
+            test.title,
+
+          file:
+            test.file,
+
+          site:
+            test.site,
+
+          project:
+            test.project,
+
+          browserFamily:
+            test.browserFamily,
+
+          profile:
+            test.profile,
+        })
+      );
+
+
+  const notObservedEvidenceCount =
+    testEvidence.filter(
+      evidence =>
+        evidence.notObservedAreas
+          .length > 0
+    ).length;
 
 
   const uxIssues =
@@ -251,18 +512,25 @@ export function analyzeUxUi(
 
         const areaTests =
           uxTests.filter(
-            test => {
-              const mapped =
-                uxAreasForCategory(
-                  test.category
-                );
+            test =>
+              measuredUxAreas(test)
+                .includes(area)
+          );
 
-              if (mapped.length === 0) {
-                return area === 'usability';
-              }
 
-              return mapped.includes(area);
-            }
+        const derivedAreaTests =
+          derivedUxTests.filter(
+            test =>
+              categoryDerivedAreas(test)
+                .includes(area)
+          );
+
+
+        const notObservedAreaTests =
+          observedUxTests.filter(
+            test =>
+              notObservedUxAreas(test)
+                .includes(area)
           );
 
 
@@ -374,6 +642,15 @@ export function analyzeUxUi(
             area,
             status: 'not-verified',
             evidenceCount: 0,
+
+            explicitEvidenceCount: 0,
+            derivedEvidenceCount:
+              derivedAreaTests.length,
+            notObservedEvidenceCount:
+              notObservedAreaTests.length,
+
+            evidenceTestIds: [],
+
             issueCount: areaIssues.length,
 
             critical: 0,
@@ -407,6 +684,21 @@ export function analyzeUxUi(
           score,
 
           evidenceCount,
+
+          explicitEvidenceCount:
+            areaTests.length,
+          derivedEvidenceCount:
+            derivedAreaTests.length,
+          notObservedEvidenceCount:
+            notObservedAreaTests.length,
+
+          evidenceTestIds:
+            unique(
+              areaTests.map(
+                test => test.id
+              )
+            ),
+
           issueCount: areaIssues.length,
 
           critical,
@@ -495,6 +787,14 @@ export function analyzeUxUi(
       status: 'not-verified',
 
       evidenceCount: 0,
+
+      explicitEvidenceCount: 0,
+      derivedEvidenceCount:
+        derivedUxTests.length,
+      notObservedEvidenceCount,
+
+      testEvidence,
+
       issueCount: uxIssues.length,
 
       verifiedAreas,
@@ -567,6 +867,16 @@ export function analyzeUxUi(
     evidenceCount:
       uxTests.length +
       realUxIssues.length,
+
+    explicitEvidenceCount:
+      uxTests.length,
+
+    derivedEvidenceCount:
+      derivedUxTests.length,
+
+    notObservedEvidenceCount,
+
+    testEvidence,
 
     issueCount:
       uxIssues.length,

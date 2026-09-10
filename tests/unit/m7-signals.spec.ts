@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { analyzeUxUi } from '../../reporters/analyzers/sentinel-ux-ui';
 import { analyzeSecurityPerformance } from '../../reporters/analyzers/sentinel-security-performance';
-import type { DashboardTestResult } from '../../reporters/models/types';
+import type { DashboardTestResult, UxUiArea } from '../../reporters/models/types';
 import {
   PERFORMANCE_OBSERVATION_TYPE,
   parsePerformanceObservation,
@@ -37,29 +37,64 @@ function sampleTest(
   } as DashboardTestResult;
 }
 
+function uxObservation(
+  area: UxUiArea,
+  state: 'measured' | 'not-observed' = 'measured'
+) {
+  return {
+    type: 'ux-observation',
+    description: JSON.stringify({
+      area,
+      page: 'unit-fixture',
+      ...(state === 'not-observed'
+        ? { observation: 'not-observed' }
+        : { source: 'site-verification' }),
+    }),
+  };
+}
+
+
 test.describe('M7.4 UX/UI measured signals', () => {
-  test('nav, forms, visual, responsive and a11y passing tests fill those UX areas', () => {
+  test('explicit site observations verify all eight UX areas', () => {
     const assessment = analyzeUxUi(
       [
         sampleTest({
-          id: 'nav',
+          id: 'nav-content-usability',
           category: 'navigation',
+          annotations: [
+            uxObservation('navigation'),
+            uxObservation('usability'),
+            uxObservation('content-clarity'),
+          ],
         }),
         sampleTest({
-          id: 'forms',
+          id: 'forms-interaction',
           category: 'authentication',
+          annotations: [
+            uxObservation('forms-validation'),
+            uxObservation('interaction'),
+          ],
         }),
         sampleTest({
           id: 'visual',
           category: 'visual',
+          annotations: [
+            uxObservation('visual-stability'),
+          ],
         }),
         sampleTest({
           id: 'responsive',
           category: 'responsive',
+          annotations: [
+            uxObservation('responsive-usability'),
+          ],
         }),
         sampleTest({
           id: 'a11y',
           category: 'accessibility',
+          annotations: [
+            uxObservation('accessibility'),
+          ],
         }),
       ],
       []
@@ -69,14 +104,77 @@ test.describe('M7.4 UX/UI measured signals', () => {
       assessment.areas.map(area => [area.area, area.status])
     );
 
-    expect(byArea.navigation).toBe('healthy');
-    expect(byArea['forms-validation']).toBe('healthy');
-    expect(byArea['visual-stability']).toBe('healthy');
-    expect(byArea['responsive-usability']).toBe('healthy');
-    expect(byArea.accessibility).toBe('healthy');
-    expect(assessment.unverifiedAreas).not.toContain('navigation');
-    expect(assessment.unverifiedAreas).not.toContain('forms-validation');
-    expect(assessment.status).not.toBe('not-verified');
+    for (const status of Object.values(byArea)) {
+      expect(status).toBe('healthy');
+    }
+
+    expect(assessment.unverifiedAreas).toEqual([]);
+    expect(assessment.explicitEvidenceCount).toBe(5);
+    expect(assessment.derivedEvidenceCount).toBe(0);
+    expect(assessment.notObservedEvidenceCount).toBe(0);
+    expect(assessment.testEvidence).toHaveLength(5);
+  });
+
+  test('category labels and diagnostic self-tests cannot verify UX', () => {
+    const assessment = analyzeUxUi(
+      [
+        sampleTest({
+          id: 'category-only',
+          category: 'navigation',
+          file: 'tests/nation/basic-user.spec.ts',
+          annotations: [],
+        }),
+        sampleTest({
+          id: 'diagnostic-observation',
+          category: 'navigation',
+          file: 'tests/diagnostics/sentinel-diagnostics.spec.ts',
+          annotations: [
+            uxObservation('navigation'),
+          ],
+        }),
+        sampleTest({
+          id: 'auth-setup',
+          category: 'authentication',
+          file: 'tests/auth/nation.setup.ts',
+          annotations: [],
+        }),
+      ],
+      []
+    );
+
+    expect(assessment.status).toBe('not-verified');
+    expect(assessment.explicitEvidenceCount).toBe(0);
+    expect(assessment.derivedEvidenceCount).toBe(1);
+    expect(assessment.testEvidence).toEqual([]);
+    expect(assessment.verifiedAreas).toEqual([]);
+  });
+
+  test('not-observed measurements remain visible without becoming healthy', () => {
+    const assessment = analyzeUxUi(
+      [
+        sampleTest({
+          id: 'visual-not-observed',
+          category: 'visual',
+          annotations: [
+            uxObservation(
+              'visual-stability',
+              'not-observed'
+            ),
+          ],
+        }),
+      ],
+      []
+    );
+
+    const visual = assessment.areas.find(
+      area => area.area === 'visual-stability'
+    );
+
+    expect(visual?.status).toBe('not-verified');
+    expect(visual?.notObservedEvidenceCount).toBe(1);
+    expect(assessment.notObservedEvidenceCount).toBe(1);
+    expect(assessment.explicitEvidenceCount).toBe(0);
+    expect(assessment.derivedEvidenceCount).toBe(0);
   });
 
   test('unverified UX areas stay not-verified rather than poor', () => {
@@ -85,16 +183,20 @@ test.describe('M7.4 UX/UI measured signals', () => {
         sampleTest({
           id: 'nav-only',
           category: 'navigation',
+          annotations: [
+            uxObservation('navigation'),
+          ],
         }),
       ],
       []
     );
+
     const visual = assessment.areas.find(
       area => area.area === 'visual-stability'
     );
 
     expect(visual?.status).toBe('not-verified');
-    expect(assessment.status).not.toBe('poor');
+    expect(assessment.status).toBe('degraded');
   });
 });
 

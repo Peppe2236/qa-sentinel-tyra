@@ -455,9 +455,17 @@ async function scanSite() {
       finalUrl = page.url();
       title = (await page.title()).trim();
 
-      const hrefs = await page
-        .locator('a[href]')
-        .evaluateAll(elements =>
+      const linkLocator = page.locator('a[href]');
+
+      if ((await linkLocator.count()) === 0) {
+        await linkLocator
+          .first()
+          .waitFor({ state: 'attached', timeout: 5000 })
+          .catch(() => {});
+        await page.waitForTimeout(250);
+      }
+
+      const hrefs = await linkLocator.evaluateAll(elements =>
           elements
             .map(element => element.getAttribute('href'))
             .filter(Boolean)
