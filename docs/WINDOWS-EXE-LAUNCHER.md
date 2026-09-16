@@ -1,123 +1,183 @@
-# QA Sentinel Tyra Windows launcher
+# QA Sentinel Tyra Windows EXE and Desktop Workbench
 
-`QA-Sentinel-Tyra.exe` is a Windows launcher for the existing repository. It
-does not replace Playwright or the QA implementation.
+QA Sentinel Tyra includes a Windows desktop launcher that opens the local **QA Sentinel Tyra Workbench** in an app-like Edge window while keeping the QA engine, dashboard server, report server and security actions inside the existing repository.
 
-## What the launcher does
+## Normal startup
 
-1. Finds the QA Sentinel Tyra project root.
-2. Checks that Node.js, npm and the local Playwright package are available.
-3. Runs `npm run qa:unattended` to scan both configured sites and execute the
-   full browser/device matrix.
-4. Starts the dashboard on `http://127.0.0.1:4173/`.
-5. Starts the Playwright report on `http://127.0.0.1:9323/`.
-6. Opens both pages in the default browser.
-7. Stops both local servers when the launcher is closed with `Ctrl+C`.
-
-A non-zero Playwright exit code can mean that the QA run found real product,
-security or accessibility issues. The launcher still opens the generated
-evidence when the report files exist.
-
-## One-time requirements
-
-Run these commands once in the project directory:
+Build the EXE:
 
 ```powershell
 npm install
-npx playwright install chromium firefox webkit
-```
-
-## Build the EXE
-
-```powershell
 npm run build:exe
 ```
 
-The result is written to `dist/QA-Sentinel-Tyra.exe`. Keep the executable in
-the `dist` folder inside the project, or copy it to the project root.
-
-## Diagnostic options
+Launch it:
 
 ```powershell
-dist\QA-Sentinel-Tyra.exe --check
-dist\QA-Sentinel-Tyra.exe --no-test
+.\dist\QA-Sentinel-Tyra.exe
 ```
 
-- `--check` validates the local requirements without running tests.
-- `--no-test` opens the most recently generated dashboard and report.
+A normal launch:
 
-## Workbench mode (desktop control center)
+1. validates the local project requirements;
+2. starts the dashboard on `127.0.0.1:4173`;
+3. starts the local Workbench control API on `127.0.0.1:4174`;
+4. opens one app-like QA Sentinel Tyra window;
+5. **does not automatically start Full QA**;
+6. keeps the Playwright report inactive until the operator requests it.
 
-The launcher now opens the dashboard in an Edge app window (`--app=http://127.0.0.1:4173/`) so Sentinel becomes the main desktop window instead of opening a normal browser tab first.
+This makes desktop startup safe and predictable: opening the program is not the same action as launching a full scan/test matrix.
 
-Current workbench behavior:
-- starts the dashboard immediately
-- opens a single app-like Edge window without the normal address bar
-- starts the automatic QA run in the background after the workbench is visible
-- keeps Playwright Report on demand — it is not opened automatically
-- exposes local control actions for **Run full QA**, **Fast Chromium**, **Production Safe Security**, **Staging Active** and **Manual validation**
-- publishes live launcher state to `dashboard/data/workbench-status.json`
+## Explicit automatic Full QA
 
-The local control API is available only on the same PC at `http://127.0.0.1:4174/api/status`.
+Automatic Full QA at startup is opt-in:
 
+```powershell
+.\dist\QA-Sentinel-Tyra.exe --auto-test
+```
 
-### Workbench v2 behavior
+Diagnostic startup:
 
-The Workbench is always visible near the top of the dashboard and uses the Tyra header artwork. The Playwright report server is **not started during normal launcher startup**. Selecting **Open Playwright report** starts `scripts/serve-playwright-report.mjs` on `127.0.0.1:9323` and then opens the report. This static server deliberately does not launch a browser on its own.
+```powershell
+.\dist\QA-Sentinel-Tyra.exe --check
+```
 
-## Workbench v3 — menu-based desktop layout
+`--no-test` remains accepted for compatibility, but normal startup already behaves as a no-auto-test Workbench launch.
 
-Workbench v3 changes the desktop window from a long panel stack into a menu-based operator workspace.
+## Workbench navigation
 
-The persistent top area contains:
+The desktop Workbench provides these top-level views:
 
-- the existing Accessibility controls
-- the QA Sentinel Tyra hero/banner artwork
-- the primary navigation bar
-- a compact live launcher/status strip
+- **Dashboard**
+- **Run Full QA**
+- **Fast Chromium**
+- **Security Modes**
+- **Reports**
+- **Playwright**
+- **Accessibility**
+- **Settings**
 
-Primary views:
+### Dashboard
 
-- **Dashboard** — essential health, release and decision information
-- **Run Full QA** — full unattended QA action plus root-cause/autonomous advisory evidence
-- **Fast Chromium** — fast two-site Chromium action
-- **Security Modes** — Production Safe, Staging Active and Manual Validation plus security evidence
-- **Reports** — Sentinel reports and detailed evidence panels
-- **Playwright** — native Playwright report, started only on explicit operator action
-- **Settings** — existing Sentinel settings page
+The Dashboard exposes current metrics, project/run metadata, Quick Actions, System Status, Recent Runs and the Release Status pipeline:
 
-The existing Accessibility implementation is preserved and remains globally reachable at the top of the Workbench. Keyboard arrow navigation is supported across the main menu tabs.
+```text
+Build → Tests → Analysis → Report → Release Decision
+```
 
-### EXE icon
+The pipeline describes the current Workbench/run state. Existing old report files must not be treated as proof that a new current run has already reached the Report phase.
 
-Workbench v3 includes:
+## Test target selection
 
-- `dashboard/assets/qa-sentinel-tyra-icon.png`
-- `dashboard/assets/qa-sentinel-tyra.ico`
+Workbench actions support:
 
-The icon uses an emerald/fantasy glow shield with a gold `T`.
+```text
+Both sites
+Nation only
+AI Skills only
+```
 
-`npm run build:exe` now builds the Windows executable and applies the `.ico` resource with `rcedit`. The icon step uses `npx --yes rcedit@4.0.1`, so the first icon-enabled build may need network access to fetch that utility.
+Fast Chromium maps to the existing site-scoped commands. Full QA keeps `qa:unattended` as the complete both-sites path; scoped site runs remain scoped evidence and must not be presented as full release verification.
 
-### Workbench v3 static assets
+## Playwright report — on demand only
 
-- `dashboard/workbench-v3.css`
-- `dashboard/workbench-v3.mjs`
-- `dashboard/assets/qa-sentinel-tyra-workbench-header.png`
-- `dashboard/assets/qa-sentinel-tyra-icon.png`
-- `dashboard/assets/qa-sentinel-tyra.ico`
+The Playwright report server is not started during ordinary Workbench startup.
 
-## Multilingual Workbench UI (V4)
+When the operator chooses **Open Playwright report**, Sentinel starts `scripts/serve-playwright-report.mjs` on `127.0.0.1:9323` and opens the report. The static report server itself does not launch another browser window.
 
-Workbench supports Swedish plus English, Simplified Chinese (Mandarin UI), Hindi, Spanish, Standard Arabic and French. Swedish is the default. The language selector sits beside the global Accessibility controls and persists locally between starts. Arabic activates RTL layout.
+## Language and appearance
 
-Localization intentionally applies to the application chrome, navigation, actions, status messaging and common dashboard labels. Raw test names, finding payloads, technical evidence, URLs, code and generated report evidence remain source-native so localization cannot alter QA evidence semantics.
+English is the default Workbench language. Settings provides:
 
+- English
+- Swedish
+- Simplified Chinese
+- Hindi
+- Spanish
+- Arabic with RTL layout
+- French
 
-### Workbench V5.1 UI
+The selected language persists locally.
 
-- English is the default interface language.
-- Language and colour theme selectors are located under Settings.
-- Accessibility is a dedicated top-level navigation item between Playwright and Settings.
-- The hero banner and navigation proportions are compacted to match the desktop-workbench target.
-- Accessibility remains independent of the selected visual colour theme.
+Selectable colour themes:
+
+- Tyra Azure
+- Emerald
+- Amethyst
+- Amber
+- Rose
+- Arctic
+
+Theme choice is separate from Accessibility preferences.
+
+## Accessibility
+
+Accessibility has its own top-level navigation entry so it remains easy to find regardless of the current Workbench view.
+
+Display preferences are local/presentation-only and do not modify QA evidence, Unified Decisioning, release readiness or security assessment semantics.
+
+## Security Modes
+
+The Workbench launches the existing guarded security modes:
+
+- **Production Safe** — authorized, non-destructive checks
+- **Staging Active** — allowlisted non-production targets with explicit active-mode opt-in
+- **Manual Validation** — checklist/report workflow with no network requests
+
+See [`PENTEST-SECURITY.md`](PENTEST-SECURITY.md) for the authorization and scope contract.
+
+## EXE build pipeline and icon failsafe
+
+The executable build is deliberately split into a RAW `pkg` build and a post-processing step.
+
+```text
+launcher source
+      ↓
+pkg
+      ↓
+QA-Sentinel-Tyra.raw.exe
+      ↓
+resedit --no-grow
+      ↓
+QA-Sentinel-Tyra.exe
+      ↓
+--check smoke verification
+```
+
+`resedit --no-grow` is used because `pkg` executables are sensitive to PE resource growth and shifted offsets.
+
+The final-build helper:
+
+1. applies the compact Tyra icon without growing the resource section;
+2. runs the final executable with `--check`;
+3. detects post-processing failure/corruption;
+4. restores the verified RAW executable as `QA-Sentinel-Tyra.exe` if icon injection is unsafe.
+
+The goal is simple: a custom icon must never be allowed to leave the user with a broken executable.
+
+## Current Workbench assets
+
+```text
+dashboard/assets/qa-sentinel-tyra-workbench-header.png
+dashboard/assets/qa-sentinel-tyra-icon.png
+dashboard/assets/qa-sentinel-tyra.ico
+dashboard/assets/qa-sentinel-tyra-compact.ico
+
+dashboard/workbench-i18n.mjs
+dashboard/workbench-v3.css
+dashboard/workbench-v3.mjs
+dashboard/workbench-v52.css
+dashboard/workbench-v52.mjs
+```
+
+The README banner in `docs/assets/qa-sentinel-tyra-banner.png` uses the current Tyra artwork so the repository front page matches the current Workbench visual identity.
+
+## Ports
+
+| Service | Local port |
+|---|---:|
+| Dashboard / Workbench | 4173 |
+| Workbench Control API | 4174 |
+| Playwright report | 9323, on demand |
+
+All Workbench control services are local to the machine.

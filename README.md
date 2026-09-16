@@ -23,6 +23,8 @@
   <img src="https://img.shields.io/badge/Milestone%209-Ecosystem%20Intelligence-yellow" alt="Milestone 9 planned" />
   <img src="https://img.shields.io/badge/Milestone%2010-Platform%20Evolution-yellow" alt="Milestone 10 planned" />
   <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Desktop%20Workbench-v5.3.1-0A84FF" alt="Desktop Workbench v5.3.1" />
+  <img src="https://img.shields.io/badge/UI%20Languages-7-6A5ACD" alt="7 UI languages" />
 </p>
 
 ---
@@ -47,9 +49,24 @@ ARIA, keyboard-focus and keyboard-trap checks for accessibility evidence.
 
 ### Windows launcher and desktop workbench
 
-Build `dist/QA-Sentinel-Tyra.exe` with `npm run build:exe`. The verified 2026-09-16 build includes the separate security modes and the browser-opening hardening that removed the duplicate Playwright report page.
+QA Sentinel Tyra now includes a dedicated **desktop Workbench** built around the current Tyra visual identity. Build it with `npm run build:exe` and launch `dist/QA-Sentinel-Tyra.exe`.
 
-The next launcher UI evolution is a dedicated **QA Sentinel Tyra desktop workbench/control center**: Sentinel remains the primary window while Playwright, the dashboard server, pentest engine and reports run behind it. Playwright reports should be opened only when the operator explicitly selects them from the workbench. This desktop-workbench UI is kept marked as active development until its own validation evidence is complete.
+Normal EXE startup opens the Workbench **without automatically starting a Full QA run**. Testing begins only when the operator chooses an action inside the application. Automatic Full QA at startup is opt-in with `--auto-test`.
+
+The Workbench provides:
+
+- Dashboard overview with current metrics, recent runs and system status
+- Release Status pipeline: **Build → Tests → Analysis → Report → Release Decision**
+- explicit run target selection: **Both sites / Nation only / AI Skills only**
+- **Run Full QA**, **Fast Chromium** and guarded **Security Modes**
+- report navigation without the old long stacked-panel layout
+- Playwright report **on demand only**
+- a dedicated global **Accessibility** main-menu entry
+- **English as the default UI language**, with Swedish, Simplified Chinese, Hindi, Spanish, Arabic (RTL) and French available in Settings
+- selectable visual themes: **Tyra Azure, Emerald, Amethyst, Amber, Rose and Arctic**
+- persisted local language, theme and accessibility preferences
+
+The Windows build uses a failsafe packaging step: the custom Tyra icon is applied with `resedit --no-grow`, the resulting EXE is smoke-checked with `--check`, and the build falls back to the verified RAW executable if post-processing is unsafe.
 
 See `docs/WINDOWS-EXE-LAUNCHER.md` for build/setup details and `docs/PENTEST-SECURITY.md` for the authorized security modes.
 
@@ -202,8 +219,13 @@ New modules should feed the same evidence, provenance, confidence and Unified De
 | Active staging security assessment | ✅ Guarded: allowlisted non-production targets + explicit double opt-in |
 | Manual security validation | ✅ No-network checklist/report workflow |
 | Pentest dashboard + evidence reports | ✅ HTML/JSON/Markdown; intentionally isolated from Unified Decisioning |
-| Windows EXE security-mode build | ✅ 2026-09-16 validation; 140 tests passed |
-| Dedicated desktop QA workbench | 🚧 Active development; not yet claimed as completed |
+| Windows EXE / desktop launcher | ✅ Workbench startup, on-demand QA, failsafe EXE post-processing and Tyra icon pipeline |
+| Dedicated desktop QA Workbench v5.3.1 | ✅ Delivered 2026-09-16 |
+| Workbench target selection | ✅ Both sites / Nation only / AI Skills only |
+| Workbench Release Status pipeline | ✅ Build / Tests / Analysis / Report / Release Decision |
+| Workbench language support | ✅ English default + Swedish / Simplified Chinese / Hindi / Spanish / Arabic RTL / French |
+| Workbench colour themes | ✅ Tyra Azure / Emerald / Amethyst / Amber / Rose / Arctic |
+| Global Workbench accessibility view | ✅ Dedicated main-menu entry with persisted display preferences |
 
 ---
 
@@ -228,6 +250,24 @@ The newest verified evidence is for the Security Modes v6 / Windows launcher cha
 | Playwright launch duplication | Fixed — duplicate report opening removed |
 
 This validation does **not** replace a fresh full-scope `qa:unattended` release run. It proves the changed security/launcher code passed its local validation boundary.
+
+### Desktop Workbench delivery — 2026-09-16
+
+The desktop Workbench was implemented and manually exercised as the primary operator interface. This is a **launcher/UI validation**, not a replacement for a fresh full release-scope web QA run.
+
+| Capability | Delivered behavior |
+|---|---|
+| Default EXE startup | Opens Workbench only; no automatic Full QA |
+| Explicit auto-run | `--auto-test` starts Full QA intentionally |
+| Run targeting | Both sites / Nation only / AI Skills only |
+| Release Status | Build → Tests → Analysis → Report → Release Decision |
+| Playwright report | Starts/opens only on operator request |
+| Accessibility | Dedicated top-level Workbench view |
+| Languages | English default plus six additional UI languages; Arabic supports RTL |
+| Themes | Six selectable, persisted colour themes |
+| Desktop packaging | RAW `pkg` build + failsafe icon post-processing + `--check` verification |
+
+The Workbench preserves Sentinel's evidence rules: scoped runs must not be presented as full release verification, and security/pentest evidence remains isolated from Unified Decisioning until its canonical integration is explicitly validated.
 
 ### Historical Chromium prototype snapshot — 2026-08-25
 
@@ -290,7 +330,7 @@ flowchart TB
     G --> H[Cross-Layer Correlation]
     H --> I[Unified Decision v5]
 
-    I --> J[Quality Command Center]
+    I --> J[Desktop Workbench / Quality Command Center]
     I --> K[Reports / Traceability / Executive PDF]
     I --> L[Sentinel AI / Eve]
     L --> M[Advisory Autonomous QA]
@@ -317,6 +357,24 @@ The roadmap extends this architecture with:
 
 Default workflow: **Ubuntu on WSL** + **VS Code** (Remote - WSL). Windows
 PowerShell is not the intended shell.
+
+### Windows desktop Workbench
+
+Build and launch the desktop application:
+
+```powershell
+npm install
+npm run build:exe
+.\dist\QA-Sentinel-Tyra.exe
+```
+
+A normal launch opens the Workbench and waits for operator input. It does **not** automatically start Full QA. To intentionally start Full QA immediately:
+
+```powershell
+.\dist\QA-Sentinel-Tyra.exe --auto-test
+```
+
+Inside the Workbench, choose **Both sites**, **Nation only** or **AI Skills only**, then start Full QA or Fast Chromium from the UI.
 
 ### Ubuntu / WSL and VS Code
 
@@ -954,13 +1012,22 @@ qa-sentinel-tyra/
 │   └── projects.json
 │
 ├── dashboard/
+│   ├── assets/
+│   │   ├── qa-sentinel-tyra-workbench-header.png
+│   │   ├── qa-sentinel-tyra-icon.png
+│   │   └── qa-sentinel-tyra.ico
 │   ├── data/
 │   ├── command-center.css
 │   ├── dashboard.css
 │   ├── dashboard.js
 │   ├── index.html
 │   ├── sentinel-ai.css
-│   └── site-health.css
+│   ├── site-health.css
+│   ├── workbench-i18n.mjs
+│   ├── workbench-v3.css
+│   ├── workbench-v3.mjs
+│   ├── workbench-v52.css
+│   └── workbench-v52.mjs
 │
 ├── docs/
 │   ├── BRANCH-PROTECTION.md
@@ -1209,6 +1276,22 @@ Lighthouse `workflow_dispatch`, history cap, traceability HTML, PR comments,
 and branch-protection **docs**. Unified Decisioning remains the release
 authority and Autonomous QA remains advisory-only.
 
+### Post-M7 — Desktop Workbench & Operator Experience ✅ DELIVERED
+
+Delivered 2026-09-16 as a cross-cutting operational enhancement, without changing Unified Decisioning authority or Milestone 6 autonomy boundaries.
+
+- dedicated desktop Workbench as the primary operator surface
+- compact Tyra-branded desktop layout and current banner artwork
+- Dashboard / Full QA / Fast Chromium / Security / Reports / Playwright / Accessibility / Settings navigation
+- Both / Nation / AI Skills execution targeting
+- Release Status pipeline and current-run state presentation
+- on-demand Playwright report opening
+- English default plus six additional UI languages and Arabic RTL
+- six persisted visual themes
+- dedicated global accessibility surface
+- normal EXE startup does not run QA automatically; `--auto-test` is explicit opt-in
+- failsafe Windows packaging with verified RAW fallback
+
 ### Milestone 8 — Security Weakness Intelligence 🚧 IN PROGRESS
 
 - ✅ separate Production Safe, Staging Active and Manual Validation modes
@@ -1388,7 +1471,7 @@ Completed: 2026-08-18
 - active exploitation disabled by policy; results isolated from Unified Decisioning
 - all dashboard cards can be collapsed or expanded, with locally persisted state
 - Windows EXE rebuilt with the security-mode foundation and duplicate Playwright report-opening fix
-- dedicated desktop QA workbench/control-center UI remains **active development** until separately validated
+- dedicated desktop QA Workbench v5.3.1 **delivered** with target selection, Release Status, accessibility, language/theme settings and on-demand Playwright reporting
 
 See [`docs/PENTEST-SECURITY.md`](docs/PENTEST-SECURITY.md) for safe and authorized commands.
 
