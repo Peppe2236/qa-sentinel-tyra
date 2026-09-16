@@ -6,8 +6,12 @@
   <title>Settings — QA Sentinel Tyra</title>
   <link rel="stylesheet" href="./dashboard.css" />
   <link rel="stylesheet" href="./settings.css" />
+  <link rel="stylesheet" href="./accessibility-preferences.css" />
 </head>
 <body class="settings-page">
+  <a class="skip-link" href="#settings-main">
+    Skip to settings content
+  </a>
   <header class="topbar">
     <div>
       <p class="eyebrow">QA SENTINEL TYRA</p>
@@ -19,7 +23,7 @@
     <a class="settings-back" href="./index.html">← Dashboard</a>
   </header>
 
-  <main class="settings-main">
+  <main id="settings-main" class="settings-main" tabindex="-1">
     <p id="settings-summary" class="settings-summary"></p>
 
     <section class="card">
@@ -60,5 +64,6 @@
   </main>
 
   <script src="./settings.js"></script>
+  <script type="module" src="./accessibility-preferences.mjs"></script>
 </body>
 </html>

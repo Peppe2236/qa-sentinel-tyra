@@ -33,6 +33,25 @@ QA Sentinel Tyra is an **evidence-driven Quality Intelligence ecosystem** for mo
 
 Playwright remains a core execution engine, but Sentinel is designed to go beyond test execution. It combines test outcomes, Deep Discovery, authenticated-session evidence, runtime and network signals, accessibility, UX/UI, security, performance, API/backend evidence and cross-layer correlation into one explainable quality model.
 
+### Accessible dashboard display
+
+The dashboard includes local, presentation-only accessibility preferences for
+larger text, high contrast, red-green and blue-yellow colour support,
+monochrome display, reduced motion and emphasized links. A keyboard skip link,
+visible focus treatment and polite live regions improve navigation with
+assistive technology. Preferences are stored in the browser and do not modify
+test results, scoring, release readiness or autonomous QA decisions.
+
+The monitored sites continue to use the existing axe-core, colour-contrast,
+ARIA, keyboard-focus and keyboard-trap checks for accessibility evidence.
+
+### Windows one-click launcher
+
+Build `dist/QA-Sentinel-Tyra.exe` with `npm run build:exe`. The launcher runs a
+fresh `qa:unattended` scan and full matrix, starts the dashboard and Playwright
+report, and opens both in the default browser. See
+`docs/WINDOWS-EXE-LAUNCHER.md` for setup and diagnostic options.
+
 Instead of stopping at **passed** or **failed**, QA Sentinel Tyra adds:
 
 - requirements and functionality intelligence

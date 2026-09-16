@@ -17,14 +17,14 @@ const CLASSIFICATION_LABELS = {
 };
 
 const CLASSIFICATION_COLORS = {
-  'product-bug': '#ff5f79',
-  'content-bug': '#f1b94e',
-  'automation-issue': '#70a7ff',
-  'accessibility-issue': '#45d7c2',
-  'performance-issue': '#ff985f',
-  'security-issue': '#ff4263',
-  'needs-investigation': '#bd8cff',
-  warning: '#f3c760',
+  'product-bug': 'var(--product)',
+  'content-bug': 'var(--content)',
+  'automation-issue': 'var(--automation)',
+  'accessibility-issue': 'var(--accessibility)',
+  'performance-issue': 'var(--performance)',
+  'security-issue': 'var(--security)',
+  'needs-investigation': 'var(--investigation)',
+  warning: 'var(--warning)',
 };
 
 function setText(id, value) {

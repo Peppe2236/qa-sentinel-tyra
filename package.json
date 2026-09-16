@@ -37,6 +37,9 @@
     "dashboard": "node scripts/serve-dashboard.mjs",
     "report": "playwright show-report",
     "start:local": "node scripts/start-local.mjs",
+    "start:windows": "node scripts/qa-sentinel-launcher.cjs",
+    "check:windows": "node scripts/qa-sentinel-launcher.cjs --check",
+    "build:exe": "pkg scripts/qa-sentinel-launcher.cjs --targets node20-win-x64 --output dist/QA-Sentinel-Tyra.exe",
     "typecheck": "tsc --noEmit",
     "test:unit": "playwright test --config=playwright.unit.config.ts",
     "test:ci": "npm run typecheck && npm run test:unit",
@@ -79,6 +82,7 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
     "@types/pdfkit": "^0.17.6",
+    "@yao-pkg/pkg": "^6.10.0",
     "typescript": "^7.0.2"
   },
   "dependencies": {
