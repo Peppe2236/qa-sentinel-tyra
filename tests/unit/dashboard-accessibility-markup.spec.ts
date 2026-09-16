@@ -16,6 +16,7 @@ test.describe('dashboard accessibility markup', () => {
 
     expect(html).toContain('class="skip-link" href="#dashboard-main"');
     expect(html).toContain('<main id="dashboard-main" tabindex="-1">');
+    expect(html).toContain('id="accessibility-tools-mount"');
     expect(html).toContain('aria-live="polite"');
   });
 
@@ -36,5 +37,32 @@ test.describe('dashboard accessibility markup', () => {
     expect(script).toContain("'monochrome'");
     expect(script).toContain("'extra-large'");
     expect(script).toContain('aria-live="polite"');
+    expect(script).toContain("document.querySelector('.topbar .run-metadata')");
+    expect(script).toContain("runMetadata.insertAdjacentElement('afterend', mount)");
+  });
+
+  test('dashboard server serves browser modules as JavaScript', () => {
+    const server = fs.readFileSync(
+      path.resolve(process.cwd(), 'scripts', 'serve-dashboard.mjs'),
+      'utf8'
+    );
+
+    expect(server).toContain("'.mjs': 'text/javascript; charset=utf-8'");
+  });
+
+  test('monochrome mode filters safe regions without filtering the body', () => {
+    const styles = dashboardFile('accessibility-preferences.css');
+
+    expect(styles).not.toMatch(
+      /html\[data-vision-mode='monochrome'\] body\s*\{[^}]*filter:/s
+    );
+    expect(styles).toContain(
+      ':is(.sample-data-banner, .topbar, main, footer)'
+    );
+    expect(styles).toContain('filter: grayscale(1)');
+    expect(styles).toContain('repeating-linear-gradient(');
+    expect(styles).toContain('border-left-style: dashed');
+    expect(styles).toContain('border-left-style: double');
+    expect(styles).toContain("html[data-vision-mode='monochrome']");
   });
 });

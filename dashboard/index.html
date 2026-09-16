@@ -29,6 +29,8 @@
   <link rel="stylesheet" href="./cross-layer.css" />
   <link rel="stylesheet" href="./unified-decision.css" />
   <link rel="stylesheet" href="./accessibility-preferences.css" />
+  <link rel="stylesheet" href="./pentest-panel.css" />
+  <link rel="stylesheet" href="./collapsible-panels.css" />
 </head>
 
 <body>
@@ -87,6 +89,12 @@
           <strong id="run-number-value">—</strong>
         </span>
       </div>
+
+      <div
+        id="accessibility-tools-mount"
+        class="accessibility-tools-mount"
+        aria-label="Accessibility display controls"
+      ></div>
     </div>
 
     <!-- =========================================================
@@ -2240,6 +2248,44 @@
       </section>
 
       <!-- ==========================================
+           AUTHORIZED PENTEST & SECURITY
+      =========================================== -->
+      <section id="pentest-panel" class="card pentest-panel" data-status="not-run">
+        <div class="section-heading pentest-heading">
+          <div>
+            <span class="pentest-eyebrow">MILESTONE 8 · AUTHORIZED SECURITY</span>
+            <h2>Security Testing Modes</h2>
+            <p class="muted">Production-safe, staging-active and manual validation with enforced target and authorization boundaries.</p>
+          </div>
+          <span id="pentest-status" class="pentest-status" data-risk="not-run">NOT RUN</span>
+        </div>
+        <div class="pentest-mode-strip" aria-label="Selected security mode">
+          <div><span>Selected mode</span><strong id="pentest-mode">Not run</strong></div>
+          <div><span>Execution</span><strong id="pentest-execution">Not run</strong></div>
+          <div><span>Network policy</span><strong id="pentest-network-policy">—</strong></div>
+        </div>
+        <div class="pentest-grid" aria-label="Pentest severity overview">
+          <div class="pentest-stat"><span>Total findings</span><strong id="pentest-total">0</strong></div>
+          <div class="pentest-stat"><span>Critical</span><strong id="pentest-critical">0</strong></div>
+          <div class="pentest-stat"><span>High</span><strong id="pentest-high">0</strong></div>
+          <div class="pentest-stat"><span>Medium</span><strong id="pentest-medium">0</strong></div>
+          <div class="pentest-stat"><span>Low</span><strong id="pentest-low">0</strong></div>
+        </div>
+        <div class="pentest-coverage" aria-label="Pentest coverage">
+          <div class="pentest-coverage-item"><span>Dependencies</span><strong id="pentest-dependencies">Not run</strong></div>
+          <div class="pentest-coverage-item"><span>HTTP headers</span><strong id="pentest-headers">Authorization required</strong></div>
+          <div class="pentest-coverage-item"><span>TLS</span><strong id="pentest-tls">Authorization required</strong></div>
+          <div class="pentest-coverage-item"><span>OWASP ZAP</span><strong id="pentest-zap">Not enabled</strong></div>
+          <div class="pentest-coverage-item"><span>Manual validation</span><strong id="pentest-manual">Not selected</strong></div>
+        </div>
+        <p class="pentest-note"><strong id="pentest-authorization">External checks were not run</strong> · Generated: <span id="pentest-generated">Not run</span>. Production hosts are blocked from active scanning. Pentest results are isolated from the release score.</p>
+        <div id="pentest-safety-blocks" class="pentest-safety-blocks" hidden></div>
+        <div id="pentest-findings" class="pentest-findings" aria-live="polite">
+          <p class="pentest-empty">Run <code>npm run qa:pentest</code> to generate security evidence.</p>
+        </div>
+      </section>
+
+      <!-- ==========================================
            COMPATIBILITY INTELLIGENCE
       =========================================== -->
 
@@ -3919,5 +3965,7 @@
     type="module"
     src="./accessibility-preferences.mjs"
   ></script>
+  <script type="module" src="./pentest-panel.mjs"></script>
+  <script type="module" src="./collapsible-panels.mjs"></script>
 </body>
 </html>

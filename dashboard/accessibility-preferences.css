@@ -36,6 +36,27 @@
   bottom: 1rem;
 }
 
+.accessibility-tools-mount {
+  position: relative;
+  z-index: 910;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 1rem;
+}
+
+.accessibility-tools-mount .accessibility-tools {
+  position: relative;
+  right: auto;
+  bottom: auto;
+}
+
+.accessibility-tools-mount .accessibility-panel {
+  top: calc(100% + 0.75rem);
+  right: auto;
+  bottom: auto;
+  left: 0;
+}
+
 .accessibility-toggle {
   gap: 0.55rem;
   min-height: 48px;
@@ -218,27 +239,101 @@ html[data-vision-mode='blue-yellow'] {
 }
 
 html[data-vision-mode='monochrome'] {
-  --accent: #f5f5f5;
-  --accent-soft: rgba(245, 245, 245, 0.14);
+  color-scheme: dark;
+  --bg: #050505;
+  --bg-elevated: #0a0a0a;
+  --surface: #111111;
+  --surface-raised: #181818;
+  --surface-soft: #202020;
+  --surface-input: #0b0b0b;
+  --border: #707070;
+  --border-soft: rgba(255, 255, 255, 0.22);
+  --border-strong: #b8b8b8;
+  --text: #ffffff;
+  --text-soft: #ededed;
+  --muted: #bdbdbd;
+  --muted-strong: #dedede;
+  --accent: #ffffff;
+  --accent-soft: rgba(255, 255, 255, 0.16);
   --good: #ffffff;
-  --good-soft: rgba(255, 255, 255, 0.12);
-  --warning: #d2d2d2;
-  --warning-soft: rgba(210, 210, 210, 0.14);
-  --danger: #a8a8a8;
-  --danger-soft: rgba(168, 168, 168, 0.16);
+  --good-soft: rgba(255, 255, 255, 0.15);
+  --warning: #d6d6d6;
+  --warning-soft: rgba(214, 214, 214, 0.16);
+  --danger: #ffffff;
+  --danger-soft: rgba(255, 255, 255, 0.12);
   --critical: #ffffff;
-  --critical-soft: rgba(255, 255, 255, 0.18);
+  --critical-soft: rgba(255, 255, 255, 0.2);
   --product: #ffffff;
-  --content: #d8d8d8;
-  --automation: #bfbfbf;
+  --content: #d6d6d6;
+  --automation: #b8b8b8;
   --accessibility: #ffffff;
   --performance: #c8c8c8;
   --security: #ffffff;
-  --investigation: #dedede;
+  --investigation: #e2e2e2;
 }
 
+/*
+ * Apply grayscale to safe page regions rather than <body>. A body filter
+ * creates a containing block that can displace fixed accessibility controls.
+ */
 html[data-vision-mode='monochrome'] body {
+  background: #050505 !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(.sample-data-banner, .topbar, main, footer) {
   filter: grayscale(1);
+}
+
+html[data-vision-mode='monochrome']
+  :is(.card, .site-health-card, .release-card, .accessibility-panel) {
+  border-color: var(--border-strong) !important;
+  box-shadow: none !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(.site-health-bar-fill, .progress-fill, [class*='bar-fill']) {
+  background-color: #ffffff !important;
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      #ffffff 0,
+      #ffffff 6px,
+      #707070 6px,
+      #707070 12px
+    ) !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(.live-status, .badge, .priority-badge, [class*='status'], [class*='classification']) {
+  border-color: currentColor !important;
+  border-width: 2px !important;
+  background-image: none !important;
+  text-shadow: none !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(.issue-product-bug, .issue-security-issue, .issue-performance-issue) {
+  border-left-width: 5px !important;
+  border-left-style: double !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(.issue-content-bug, .issue-warning, .issue-needs-investigation) {
+  border-left-width: 4px !important;
+  border-left-style: dashed !important;
+}
+
+html[data-vision-mode='monochrome']
+  :is(a, button, input, select, summary):focus-visible {
+  outline: 4px solid #ffffff !important;
+  outline-offset: 4px !important;
+}
+
+html[data-vision-mode='monochrome'] a:not(.skip-link) {
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.2em;
 }
 
 html[data-vision-mode]:not([data-vision-mode='default'])
@@ -262,5 +357,21 @@ html[data-vision-mode='high-contrast']
   .accessibility-tools {
     right: 0.5rem;
     bottom: 0.5rem;
+  }
+
+  .accessibility-tools-mount .accessibility-tools {
+    right: auto;
+    bottom: auto;
+  }
+
+  .accessibility-tools-mount .accessibility-panel {
+    position: fixed;
+    top: 0.75rem;
+    right: 0.75rem;
+    bottom: auto;
+    left: 0.75rem;
+    width: auto;
+    max-height: calc(100vh - 1.5rem);
+    overflow: auto;
   }
 }

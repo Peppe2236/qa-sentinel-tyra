@@ -267,6 +267,15 @@ if (!SKIP_TESTS) {
       `[QA Sentinel] The QA run finished with exit code ${run.status ?? 1}. Opening the generated findings.`
     );
   }
+
+  title('SECURITY TESTING MODE');
+  console.log(`[QA Sentinel] Mode: ${process.env.QA_PENTEST_MODE || 'production-safe'}`);
+  console.log('[QA Sentinel] Generating the independent Security Testing Modes panel.');
+  console.log('[QA Sentinel] External and active modes remain authorization-gated.');
+  const pentestRun = windowsCommand('npm run qa:pentest');
+  if (pentestRun.error || (pentestRun.status ?? 1) !== 0) {
+    console.warn('[QA Sentinel] Pentest evidence could not be completed. The dashboard will show the coverage gap.');
+  }
 }
 
 const dashboardData = path.join(projectRoot, 'dashboard', 'data', 'latest-run.json');
@@ -298,8 +307,7 @@ startWindowsCommand(
 Promise.all([waitForUrl(DASHBOARD_URL), waitForUrl(REPORT_URL)])
   .then(() => {
     openBrowser(DASHBOARD_URL);
-    openBrowser(REPORT_URL);
-    console.log('[QA Sentinel] Both pages are ready and have been opened.');
+    console.log('[QA Sentinel] Dashboard and the single Playwright report page are ready.');
   })
   .catch(error => {
     console.error(`[QA Sentinel] ${error.message}`);

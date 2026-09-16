@@ -166,7 +166,25 @@ function createAccessibilityControls() {
     </section>
   `;
 
-  document.body.append(wrapper);
+  let mount = document.getElementById('accessibility-tools-mount');
+
+  if (!mount) {
+    const runMetadata = document.querySelector('.topbar .run-metadata');
+
+    if (runMetadata) {
+      mount = document.createElement('div');
+      mount.id = 'accessibility-tools-mount';
+      mount.className = 'accessibility-tools-mount';
+      mount.setAttribute('aria-label', 'Accessibility display controls');
+      runMetadata.insertAdjacentElement('afterend', mount);
+    }
+  }
+
+  if (mount) {
+    mount.append(wrapper);
+  } else {
+    document.body.append(wrapper);
+  }
 }
 
 function initializeAccessibilityControls() {

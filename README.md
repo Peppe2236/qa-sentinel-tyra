@@ -19,7 +19,7 @@
   <img src="https://img.shields.io/badge/Unified%20Decision-v5-00A6A6" alt="Unified Decision v5" />
   <img src="https://img.shields.io/badge/Milestone%206-Advisory%20QA-success" alt="Milestone 6 complete" />
   <img src="https://img.shields.io/badge/Milestone%207-Complete-success" alt="Milestone 7 complete" />
-  <img src="https://img.shields.io/badge/Milestone%208-Security%20Intelligence-yellow" alt="Milestone 8 planned" />
+  <img src="https://img.shields.io/badge/Milestone%208-Security%20Modes-success" alt="Milestone 8 security testing modes" />
   <img src="https://img.shields.io/badge/Milestone%209-Ecosystem%20Intelligence-yellow" alt="Milestone 9 planned" />
   <img src="https://img.shields.io/badge/Milestone%2010-Platform%20Evolution-yellow" alt="Milestone 10 planned" />
   <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
@@ -1332,12 +1332,19 @@ Completed: 2026-08-18
 - **Captcha:** first-party consent clicks on; iframe solver off unless `SENTINEL_CAPTCHA_SOLVER_KEY`
 - **LLM:** Heuristic Sentinel AI always runs; LLM off — no key unless `SENTINEL_LLM_API_KEY` / `OPENAI_API_KEY`
 
-**Milestone 8 – Security Weakness Intelligence: 🧭 PLANNED**
+**Milestone 8 – Security Weakness Intelligence: 🚧 SECURITY MODES DELIVERED**
 
-- non-destructive security assessment
-- evidence maturity and confidence
-- security posture, remediation and correlation
-- Unified Decisioning integration
+- separate Production Safe, Staging Active and Manual Validation modes
+- authorization-gated, non-destructive production HTTP/TLS assessment
+- local production dependency audit and remediation evidence
+- optional sensitive-path probes and OWASP ZAP Baseline behind separate opt-ins
+- ZAP Full Scan restricted to allowlisted non-production staging hosts with double opt-in
+- OWASP-oriented manual checklist for authentication, authorization, sessions, APIs and business logic
+- dedicated Pentest dashboard and HTML/JSON/Markdown reports
+- active exploitation disabled by policy; results isolated from Unified Decisioning
+- all dashboard cards can be collapsed or expanded, with locally persisted state
+
+See [`docs/PENTEST-SECURITY.md`](docs/PENTEST-SECURITY.md) for safe and authorized commands.
 
 **Milestone 9 – Sentinel Ecosystem Intelligence: 🧭 PLANNED**
 
