@@ -2,7 +2,7 @@
 
 ## Current state
 
-QA Sentinel Tyra has completed the **Milestone 5 Quality Intelligence Framework**, the **Milestone 6 Advisory Autonomous QA Framework**, and **Milestone 7 Unified Dashboard Intelligence & Operationalization**.
+QA Sentinel Tyra has completed the **Milestone 5 Quality Intelligence Framework**, the **Milestone 6 Advisory Autonomous QA Framework**, and **Milestone 7 Unified Dashboard Intelligence & Operationalization**. **Milestone 8 Security Weakness Intelligence is now IN PROGRESS**: the first security execution modes and authorization guardrails were delivered and validated on 2026-09-16, while deeper evidence correlation and Unified Decisioning integration remain unfinished.
 
 The project is now formally evolving from a Playwright-centered QA platform into an **evidence-driven Quality Intelligence ecosystem**. Playwright remains a core execution engine, but the long-term architecture is broader: Discovery, Functional QA, Security, Accessibility, UX/UI, Performance, API/Backend, Root-Cause Intelligence, Cross-Layer Correlation, Unified Decisioning, Sentinel AI / Eve, reporting and advisory Autonomous QA all contribute to one shared evidence model.
 
@@ -10,15 +10,32 @@ Earlier foundations — Playwright reporting, Deep Discovery, actionable issue c
 
 After Milestone 6, Sentinel AI was bound to the live dashboard and positive first-party API/backend verification evidence was integrated into canonical release readiness. Post-M7 hardening also added authenticated Google-SSO session coverage for Nation and AI Skills, dynamic discovered-route coverage, clearer pass-rate versus Quality Health presentation, and a release-scope integrity guard so partial runs cannot publish a full release decision.
 
-### Current prototype baseline — 2026-08-25
+### Latest development validation — 2026-09-16
 
-The current two-site Chromium prototype suite has been verified at **151 discovered tests** with **146 passed, 5 failed, 0 skipped, 0 flaky and 99% Quality Health**. The five retained failures are classified findings rather than hidden automation noise: one Nation accessibility issue, one Nation product/theme issue, one Nation content issue and two AI Skills CSP/security findings.
+The latest verified development validation covers the new Security Modes v6 / Windows launcher changes rather than a fresh full release-scope web QA matrix:
 
-A targeted seven-test authenticated AI Skills run was also verified to report **`RELEASE NOT VERIFIED`** rather than a false full release decision. This establishes the current demo-integrity rule:
+| Validation | Verified result |
+|---|---|
+| Local validation tests | **140 passed** |
+| Security execution modes | `production-safe`, `staging-active`, `manual-validation` |
+| Production Safe | Dependency audit, HTTP/security headers, TLS/certificate checks; optional ZAP Baseline behind authorization/opt-in |
+| Staging Active | ZAP Full Scan only for allowlisted non-production staging targets; requires explicit authorization and active-mode opt-in |
+| Manual Validation | Checklist/report workflow; performs no network requests |
+| Pentest release authority | **Isolated from Unified Decisioning**; does not silently change release readiness |
+| Windows EXE | `dist/QA-Sentinel-Tyra.exe` rebuilt and verified |
+| Browser opening hardening | Duplicate Playwright report opening removed; one Playwright report page is opened by the verified launcher flow |
+
+The requested dedicated desktop **QA Sentinel Tyra workbench/control-center UI** is the next launcher-interface evolution. Until that desktop workbench has its own completed validation evidence, the roadmap does not mark it as a finished capability.
+
+### Historical Chromium prototype snapshot — 2026-08-25
+
+The two-site Chromium prototype suite was verified at **151 discovered tests** with **146 passed, 5 failed, 0 skipped, 0 flaky and 99% Quality Health**. Those five retained failures were classified findings rather than hidden automation noise: one Nation accessibility issue, one Nation product/theme issue, one Nation content issue and two AI Skills CSP/security findings.
+
+A targeted seven-test authenticated AI Skills run was also verified to report **`RELEASE NOT VERIFIED`** rather than a false full release decision. This established the demo-integrity rule:
 
 > **A partial run may report valid test evidence, but it may not claim full release readiness.**
 
-The historical 2026-08-17 18-project compatibility matrix remains a separate validation snapshot and should not be confused with the current Chromium prototype baseline.
+The 2026-08-17 18-project compatibility matrix remains a separate historical validation snapshot.
 ## Decision authority and safety boundaries
 
 - Unified Decisioning is the canonical release authority for dashboard schema v5.
@@ -106,7 +123,7 @@ Immediate work is divided into three planned milestones:
 
 | Milestone | Status | Direction |
 |---|---|---|
-| **M8 — Security Weakness Intelligence** | 🧭 Planned | Build non-destructive, evidence-driven security assessment and Security Posture intelligence |
+| **M8 — Security Weakness Intelligence** | 🚧 In progress | Security execution modes, authorization guardrails and pentest reporting delivered; deeper shared evidence/correlation work continues |
 | **M9 — Sentinel Ecosystem Intelligence** | 🧭 Planned | Formalize the shared Evidence Engine and connect all quality domains through common models and decision semantics |
 | **M10 — Platform & Enterprise Evolution** | 🧭 Planned | Expand to multi-project, CI/CD, policies, auditability, integrations and reusable modules/adapters |
 
@@ -133,6 +150,10 @@ The development rule for future milestones is:
 | Keyboard / focus a11y | ✅ Done | Expand per-route and per-profile accessibility coverage over time |
 | Lighthouse | ✅ Dispatch | Performance evidence can continue to grow into trend/budget intelligence |
 | History retention | ✅ Done | Current history supports future trend and regression intelligence |
+| Security execution modes | ✅ Foundation delivered | Production Safe, Staging Active and Manual Validation with explicit authorization boundaries |
+| Pentest reporting | ✅ Foundation delivered | Dedicated pentest dashboard plus HTML/JSON/Markdown evidence; isolated from release authority |
+| Windows EXE launcher | ✅ Verified build | `dist/QA-Sentinel-Tyra.exe` rebuilt with security-mode support and duplicate Playwright-tab fix |
+| Desktop QA workbench | 🚧 Active development | Replace browser-first launch flow with a dedicated Sentinel Tyra control-center window; completion requires fresh validation |
 ## Ubuntu + VS Code workflow
 
 Default development is **Ubuntu on WSL** plus **VS Code** (Remote - WSL).
@@ -203,7 +224,7 @@ and `reports/executive-report.pdf`:
 Missing test accounts become one queue item, not a crash. Traces and failure
 videos are retained. The dashboard Control Center links to the pack.
 
-## Activated vs still policy-disabled (2026-08-18)
+## Activated vs still policy-disabled (updated 2026-09-16)
 
 | Previously inactive / optional | Now |
 |---|---|
@@ -216,11 +237,16 @@ videos are retained. The dashboard Control Center links to the pack.
 | Autonomous QA “intentionally disabled” copy | UI says **disabled by policy** (`QA_AUTONOMOUS_EXECUTION`) |
 | Local remediation / release-update reports | **Writes** `reports/remediation.md` and `reports/release-status.json` (not production) |
 | First-party cookie/consent clicking | **On** for nation.dev and aiskills.nation.dev |
+| Security mode separation | **Delivered**: Production Safe / Staging Active / Manual Validation |
+| Pentest evidence outputs | **Delivered**: dedicated dashboard + HTML/JSON/Markdown reports, kept separate from Unified Decisioning |
+| Windows EXE security-mode support | **Delivered and rebuilt**; duplicate Playwright report opening corrected |
 
 | Still off by policy (not Coming Soon) | Flag / reason |
 |---|---|
 | Autonomous execution / Playwright launched by the advisor | `QA_AUTONOMOUS_EXECUTION` — even if set, production writes are not implemented |
 | Production mutation / nation.dev writes | Never enabled |
+| Active pentest against production | Never enabled; production hosts are blocked from Staging Active |
+| ZAP Full Scan | Only allowlisted non-production staging hosts with `QA_PENTEST_AUTHORIZED=true` + `QA_PENTEST_ACTIVE=true` |
 | Paid iframe captcha solver | Off unless `SENTINEL_CAPTCHA_SOLVER_KEY` (first-party hosts only) |
 | GitHub issue creation | Off unless `QA_CREATE_ISSUES=1` and `GH_TOKEN` / `GITHUB_TOKEN` |
 | LLM enrichment | `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY`; without a key heuristic still runs |
@@ -262,13 +288,41 @@ Earlier docs marked Milestone 7 as “not started”, then “in progress”. De
 
 ---
 
-## Milestone 8 – Security Weakness Intelligence 🧭 PLANNED
+## Milestone 8 – Security Weakness Intelligence 🚧 IN PROGRESS
+
+**Foundation validated: 2026-09-16**
 
 ### Goal
 
 Build a dedicated **non-destructive Security Weakness Intelligence** layer that can discover, classify, explain and report security weaknesses without overstating the evidence.
 
-Milestone 8 does **not** turn normal QA runs into uncontrolled penetration testing. The default operating mode is safe observation and verification against systems the operator is authorized to test.
+Milestone 8 does **not** turn normal QA runs into uncontrolled penetration testing. Security execution is separated into explicit operating modes with authorization and environment boundaries.
+
+### Delivered security execution modes
+
+| Mode | Current behavior | Authority boundary |
+|---|---|---|
+| **Production Safe** | Local dependency audit, HTTP/security headers, TLS/certificate assessment; optional ZAP Baseline | Requires explicit authorization for network assessment; non-destructive only |
+| **Staging Active** | Active ZAP Full Scan against configured staging targets | Non-production allowlist from `config/pentest.json`; requires `QA_PENTEST_AUTHORIZED=true` and `QA_PENTEST_ACTIVE=true`; production domains are blocked |
+| **Manual Validation** | OWASP-oriented checklist/report workflow for auth, authorization, sessions, APIs and business logic | Performs no network requests |
+
+Current scripts:
+
+```bash
+# Production Safe
+QA_PENTEST_AUTHORIZED=true npm run qa:pentest:production
+
+# Production Safe + optional ZAP Baseline
+QA_PENTEST_AUTHORIZED=true QA_PENTEST_ZAP=true npm run qa:pentest:production
+
+# Staging Active — only allowlisted non-production staging targets
+QA_PENTEST_AUTHORIZED=true QA_PENTEST_ACTIVE=true npm run qa:pentest:staging
+
+# Manual Validation — no network requests
+npm run qa:pentest:manual
+```
+
+Pentest evidence is written separately (including `reports/pentest/pentest-report.html`) and is intentionally **isolated from Unified Decisioning** until the evidence/correlation contract for release authority is explicitly implemented and validated.
 
 ### Security evidence maturity model
 
@@ -288,31 +342,37 @@ CONFIRMED VULNERABILITY
 
 A finding may only move upward when new evidence supports the stronger claim.
 
-### Planned deliveries
+### Delivery status
 
-| Delivery | Planned capability |
-|---|---|
-| 8.1 Security Evidence Foundation | Shared security evidence model, provenance, scope, confidence and maturity state |
-| 8.2 Header & Browser Security Intelligence | CSP, HSTS, clickjacking protection, Referrer-Policy, Permissions-Policy and related browser controls |
-| 8.3 Cookie & Session Security | Secure/HttpOnly/SameSite analysis, session reuse, logout invalidation and session-boundary evidence |
-| 8.4 Authentication & Authorization Intelligence | Protected-route access, anonymous/member boundaries and safe authorization verification |
-| 8.5 CORS & Cross-Origin Intelligence | Detect overly broad or inconsistent cross-origin policy evidence without fabricating exploitability |
-| 8.6 Information Disclosure Intelligence | Stack traces, debug output, framework/version leakage and exposed diagnostic/admin routes |
-| 8.7 API Security Evidence | Authentication/authorization evidence, unexpected 401/403/5xx patterns and first-party API security observations |
-| 8.8 Safe Input & Abuse-Resistance Signals | Non-destructive reflection/validation checks, repeated-submit and rate-limit verification |
-| 8.9 Security Posture & Correlation | Security Posture score, deduplication, root-cause links and Cross-Layer correlation |
-| 8.10 Security Reporting & Unified Decisioning | Dashboard view, remediation guidance, executive output, history and release-decision integration |
+| Delivery | Status | Capability |
+|---|---|---|
+| 8.1 Security Evidence Foundation | 🚧 Partial | Mode separation, authorization/scope boundaries and dedicated pentest evidence are delivered; shared canonical evidence-envelope integration continues |
+| 8.2 Header & Browser Security Intelligence | ✅ Foundation delivered | HTTP/security headers plus TLS/certificate assessment in Production Safe |
+| 8.3 Cookie & Session Security | 🚧 Partial | Existing session/cookie verification remains; deeper pentest-domain evidence maturity continues |
+| 8.4 Authentication & Authorization Intelligence | 🚧 Partial | Existing protected-route evidence plus Manual Validation checklist; deeper safe boundary tests continue |
+| 8.5 CORS & Cross-Origin Intelligence | 🧭 Planned / expandable | Evidence-driven CORS assessment without fabricating exploitability |
+| 8.6 Information Disclosure Intelligence | 🚧 Partial | Optional safe exposure/sensitive-path checks; deeper classification continues |
+| 8.7 API Security Evidence | 🚧 Partial | Existing first-party API evidence plus manual security validation; dedicated security semantics continue |
+| 8.8 Safe Input & Abuse-Resistance Signals | 🚧 Partial | Manual validation foundation delivered; automated non-destructive signals continue |
+| 8.9 Security Posture & Correlation | 🧭 Planned | Correlation/posture model must be completed before canonical release integration |
+| 8.10 Security Reporting & Unified Decisioning | 🚧 Partial | Dedicated pentest dashboard and HTML/JSON/Markdown reports delivered; Unified Decisioning integration intentionally not yet active |
 
 ### Milestone 8 safety contract
 
 - Security assessment is **non-destructive by default**.
 - Ordinary QA configuration must never imply authorization for intrusive testing.
-- Active exploitation, destructive payloads, credential attacks and persistence are outside normal Sentinel operation.
-- Any future active-security mode must require explicit authorization, scope and policy controls.
+- Production Safe may observe production only within explicitly authorized, non-destructive checks.
+- Staging Active is restricted to allowlisted **non-production** staging targets.
+- ZAP Full Scan requires double opt-in: authorization plus active mode.
+- Active exploitation, destructive payloads, credential attacks and persistence remain outside normal Sentinel operation.
+- Manual Validation performs no network requests.
 - A missing control may be a weakness without being a confirmed vulnerability.
 - A suspected vulnerability must remain suspected until reproducible evidence supports confirmation.
 - Security evidence must preserve source, route/endpoint, timestamp, scope and confidence where available.
+- Pentest results do not silently modify Unified Decisioning or release readiness.
 - Production-changing actions remain human-controlled.
+
+**Milestone 8:** 🚧 IN PROGRESS — security modes and reporting foundation delivered; canonical shared-evidence/correlation completion remains.
 
 ---
 
@@ -440,7 +500,7 @@ This doctrine applies across Functional QA, Discovery, Security, Accessibility, 
 M5  Quality Intelligence Framework                  ✅ COMPLETE
 M6  Advisory Autonomous QA Framework                ✅ COMPLETE
 M7  Unified Dashboard & Operationalization          ✅ COMPLETE
-M8  Security Weakness Intelligence                  🧭 PLANNED
+M8  Security Weakness Intelligence                  🚧 IN PROGRESS
 M9  Sentinel Ecosystem Intelligence                 🧭 PLANNED
 M10 Platform & Enterprise Evolution                 🧭 PLANNED
 ```
