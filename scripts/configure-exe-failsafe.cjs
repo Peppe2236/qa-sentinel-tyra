@@ -1,0 +1,11 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const packagePath = path.join(root, 'package.json');
+const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+pkg.scripts ||= {};
+pkg.scripts['build:exe:raw'] = 'pkg scripts/qa-sentinel-launcher.cjs --targets node20-win-x64 --output dist/QA-Sentinel-Tyra.raw.exe';
+pkg.scripts['build:exe:icon'] = 'node scripts/build-exe-final.cjs';
+pkg.scripts['build:exe'] = 'npm run build:exe:raw && npm run build:exe:icon';
+fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
+console.log('[QA Sentinel] Failsafe EXE build scripts configured.');

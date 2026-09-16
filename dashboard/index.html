@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,7 +13,8 @@
     content="QA Sentinel Tyra quality intelligence dashboard"
   />
 
-  <title>QA Sentinel Tyra Dashboard</title>
+  <title>QA Sentinel Tyra</title>
+  <link rel="icon" type="image/png" href="./assets/qa-sentinel-tyra-icon.png" />
 
 <link rel="stylesheet" href="./dashboard.css"/>
 <link rel="stylesheet" href="./command-center.css"/>
@@ -31,6 +32,9 @@
   <link rel="stylesheet" href="./accessibility-preferences.css" />
   <link rel="stylesheet" href="./pentest-panel.css" />
   <link rel="stylesheet" href="./collapsible-panels.css" />
+  <link rel="stylesheet" href="./workbench-v3.css" />
+  <link rel="stylesheet" href="./workbench-v52.css" />
+
 </head>
 
 <body>
@@ -89,12 +93,6 @@
           <strong id="run-number-value">—</strong>
         </span>
       </div>
-
-      <div
-        id="accessibility-tools-mount"
-        class="accessibility-tools-mount"
-        aria-label="Accessibility display controls"
-      ></div>
     </div>
 
     <!-- =========================================================
@@ -285,6 +283,170 @@
   </header>
 
   <main id="dashboard-main" tabindex="-1">
+  <section id="workbench-panel" class="workbench-shell" aria-label="QA Sentinel Tyra Workbench navigation">
+    <div class="workbench-accessibility-bar">
+      <div class="workbench-app-mark">
+        <img src="./assets/qa-sentinel-tyra-icon.png" alt="" aria-hidden="true" />
+        <div class="workbench-accessibility-copy">
+          <strong>QA Sentinel Tyra Workbench</strong>
+          <small>Accessibility controls stay available globally for colour, contrast, text and visual preferences.</small>
+        </div>
+      </div>
+      <div class="workbench-global-tools">
+        <div
+          id="accessibility-tools-mount"
+          class="accessibility-tools-mount"
+          aria-label="Accessibility display controls"
+        ></div>
+
+        <label class="workbench-language-picker" for="workbench-language-select">
+          <span class="workbench-language-icon" aria-hidden="true">🌐</span>
+          <span class="workbench-language-copy">
+            <strong id="workbench-language-label">Språk</strong>
+            <small id="workbench-language-help">Gränssnittsspråk</small>
+          </span>
+          <select id="workbench-language-select" aria-label="Välj språk">
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+            <option value="zh-CN">中文（简体）</option>
+            <option value="hi">हिन्दी</option>
+            <option value="es">Español</option>
+            <option value="ar">العربية</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="workbench-hero">
+      <img src="./assets/qa-sentinel-tyra-workbench-header.png" alt="QA Sentinel Tyra — Enterprise Quality Intelligence Platform" />
+    </div>
+
+    <nav class="workbench-nav" role="tablist" aria-label="Workbench sections">
+      <button type="button" role="tab" aria-selected="true" data-workbench-nav="dashboard"><span class="workbench-nav-icon">⌂</span><span>Dashboard</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="full-qa"><span class="workbench-nav-icon">▶</span><span>Run Full QA</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="fast"><span class="workbench-nav-icon">ϟ</span><span>Fast Chromium</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="security"><span class="workbench-nav-icon">◈</span><span>Security Modes</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="reports"><span class="workbench-nav-icon">▥</span><span>Reports</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="playwright"><span class="workbench-nav-icon">◉</span><span>Playwright</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="accessibility"><span class="workbench-nav-icon">◐</span><span data-v5-i18n="accessibility">Accessibility</span></button>
+      <button type="button" role="tab" aria-selected="false" data-workbench-nav="settings"><span class="workbench-nav-icon">⚙</span><span>Settings</span></button>
+    </nav>
+
+    <div class="workbench-statusbar" aria-live="polite">
+      <div class="workbench-status-item"><span>State</span><strong id="workbench-badge">STARTING</strong></div>
+      <div class="workbench-status-item"><span>Status</span><strong id="workbench-message">Preparing the launcher.</strong></div>
+      <div class="workbench-status-item"><span>Updated</span><strong id="workbench-updated">--</strong></div>
+      <span id="workbench-phase" hidden>starting</span>
+      <span id="workbench-playwright-status" hidden>WAITING</span>
+    </div>
+  </section>
+
+  <section id="workbench-full-qa-view" class="workbench-action-view" data-workbench-view="full-qa" role="tabpanel">
+    <div class="workbench-action-layout">
+      <div class="workbench-action-main">
+        <p class="eyebrow">FULL QUALITY RUN</p>
+        <h2>Run Full QA</h2>
+        <p>For Both sites, runs the complete unattended QA workflow. Nation-only and AI Skills-only use the existing scoped site runners so you can check one site without running the other.</p>
+        <div class="workbench-button-row">
+          <button id="run-full-qa-button" class="workbench-primary-button" type="button">▶ Run Full QA</button>
+        </div>
+      </div>
+      <aside class="workbench-action-side">
+        <strong>What this run covers</strong>
+        <p>Both sites provides the complete unattended release workflow. Scoped targets preserve honest site-specific evidence and do not imply cross-site release coverage.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="workbench-fast-view" class="workbench-action-view" data-workbench-view="fast" role="tabpanel">
+    <div class="workbench-action-layout">
+      <div class="workbench-action-main">
+        <p class="eyebrow">FAST FEEDBACK</p>
+        <h2>Fast Chromium</h2>
+        <p>Runs the fast Chromium path for the currently selected target: Both sites, Nation only, or AI Skills only.</p>
+        <div class="workbench-button-row">
+          <button id="fast-chromium-button" class="workbench-primary-button" type="button">ϟ Start Fast Chromium</button>
+        </div>
+      </div>
+      <aside class="workbench-action-side">
+        <strong>Use when</strong>
+        <p>You want a quick development check. Full cross-browser release evidence still requires the full QA path.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="workbench-security-view" class="workbench-action-view" data-workbench-view="security" role="tabpanel">
+    <p class="eyebrow">AUTHORIZED SECURITY</p>
+    <h2>Security Modes</h2>
+    <p class="muted">Security execution remains explicitly separated from normal QA and keeps its existing authorization guardrails.</p>
+    <div class="workbench-security-grid">
+      <article class="workbench-security-option">
+        <strong>Production Safe</strong>
+        <p>Authorized, non-destructive security checks for production-safe assessment.</p>
+        <button id="security-production-button" class="workbench-primary-button" type="button">Run Production Safe</button>
+      </article>
+      <article class="workbench-security-option">
+        <strong>Staging Active</strong>
+        <p>Active checks only for allowlisted non-production staging targets with required opt-ins.</p>
+        <button id="security-staging-button" class="workbench-secondary-button" type="button">Run Staging Active</button>
+      </article>
+      <article class="workbench-security-option">
+        <strong>Manual Validation</strong>
+        <p>OWASP-oriented checklist/report workflow. No network requests are made in this mode.</p>
+        <button id="security-manual-button" class="workbench-secondary-button" type="button">Open Manual Validation</button>
+      </article>
+    </div>
+  </section>
+
+  <section id="workbench-reports-view" class="workbench-action-view" data-workbench-view="reports" role="tabpanel">
+    <p class="eyebrow">EVIDENCE & REPORTING</p>
+    <h2>Reports</h2>
+    <p class="muted">Open the generated Sentinel evidence without leaving the Workbench workflow.</p>
+    <div class="workbench-report-links">
+      <a class="workbench-secondary-button" href="/reports/latest-report.html" target="_blank" rel="noreferrer">Executive HTML</a>
+      <a class="workbench-secondary-button" href="/reports/executive-report.pdf" target="_blank" rel="noreferrer">Executive PDF</a>
+      <a class="workbench-secondary-button" href="/reports/human-review.html" target="_blank" rel="noreferrer">Human Review</a>
+      <a class="workbench-secondary-button" href="/reports/latest-report.md" target="_blank" rel="noreferrer">Markdown Report</a>
+      <a class="workbench-secondary-button" href="/reports/traceability.html" target="_blank" rel="noreferrer">Traceability</a>
+      <a class="workbench-secondary-button" href="/reports/pentest/pentest-report.html" target="_blank" rel="noreferrer">Pentest Report</a>
+    </div>
+  </section>
+
+  <section id="workbench-playwright-view" class="workbench-action-view" data-workbench-view="playwright" role="tabpanel">
+    <div class="workbench-action-layout">
+      <div class="workbench-action-main">
+        <p class="eyebrow">NATIVE TEST EVIDENCE</p>
+        <h2>Playwright Report</h2>
+        <p>The Playwright report server stays off until you explicitly request it here.</p>
+        <div class="workbench-button-row">
+          <button id="workbench-playwright-button" class="workbench-primary-button" type="button">Open Playwright Report</button>
+        </div>
+      </div>
+      <aside class="workbench-action-side">
+        <strong>On demand only</strong>
+        <p>No Playwright tab is opened automatically when QA Sentinel Tyra starts.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="workbench-settings-view" class="workbench-action-view" data-workbench-view="settings" role="tabpanel">
+    <div class="workbench-action-layout">
+      <div class="workbench-action-main">
+        <p class="eyebrow">WORKBENCH CONFIGURATION</p>
+        <h2>Settings</h2>
+        <p>Open the existing Sentinel settings page for sites, scan limits, catalogs and policy configuration.</p>
+        <div class="workbench-button-row">
+          <a class="workbench-primary-button" href="./settings.html">Open Settings</a>
+        </div>
+      </div>
+      <aside class="workbench-action-side">
+        <strong>Accessibility is global</strong>
+        <p>The accessibility controls remain at the top of every Workbench view so display preferences are always reachable.</p>
+      </aside>
+    </div>
+  </section>
+
     <section
       id="release-card"
       class="release-card card"
@@ -618,7 +780,8 @@
       </article>
     </section>
 
-    <!-- =========================================================
+    
+<!-- =========================================================
      CONTROL CENTER
      ========================================================= -->
 
@@ -966,6 +1129,7 @@
 
     <!-- PLAYWRIGHT -->
     <a
+      id="control-playwright-link"
       class="control-action control-playwright"
       href="http://127.0.0.1:9323"
       target="_blank"
@@ -3967,5 +4131,9 @@
   ></script>
   <script type="module" src="./pentest-panel.mjs"></script>
   <script type="module" src="./collapsible-panels.mjs"></script>
+  <script type="module" src="./workbench-i18n.mjs"></script>
+  <script type="module" src="./workbench-v3.mjs"></script>
+  <script type="module" src="./workbench-v52.mjs"></script>
+
 </body>
 </html>

@@ -43,7 +43,7 @@
     "start:local": "node scripts/start-local.mjs",
     "start:windows": "node scripts/qa-sentinel-launcher.cjs",
     "check:windows": "node scripts/qa-sentinel-launcher.cjs --check",
-    "build:exe": "pkg scripts/qa-sentinel-launcher.cjs --targets node20-win-x64 --output dist/QA-Sentinel-Tyra.exe",
+    "build:exe": "npm run build:exe:raw && npm run build:exe:icon",
     "typecheck": "tsc --noEmit",
     "test:unit": "playwright test --config=playwright.unit.config.ts",
     "test:ci": "npm run typecheck && npm run test:unit",
@@ -53,7 +53,9 @@
     "report:traceability": "node scripts/report-traceability.mjs",
     "sentinel": "node scripts/sentinel.mjs",
     "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\"",
-    "qa:demo": "npm run scan:all && node scripts/qa-demo.mjs"
+    "qa:demo": "npm run scan:all && node scripts/qa-demo.mjs",
+    "build:exe:raw": "pkg scripts/qa-sentinel-launcher.cjs --targets node20-win-x64 --output dist/QA-Sentinel-Tyra.raw.exe",
+    "build:exe:icon": "node scripts/build-exe-final.cjs"
   },
   "keywords": [
     "qa",
@@ -87,6 +89,7 @@
     "@types/node": "^26.1.2",
     "@types/pdfkit": "^0.17.6",
     "@yao-pkg/pkg": "^6.10.0",
+    "resedit-cli": "^3.1.0",
     "typescript": "^7.0.2"
   },
   "dependencies": {
