@@ -5,17 +5,24 @@ const path = require('node:path');
 const process = require('node:process');
 
 const DASHBOARD_URL = 'http://127.0.0.1:4173/';
+const WORKBENCH_APP_URL = `${DASHBOARD_URL}?tyra-desktop=1&v=73`;
 const REPORT_URL = 'http://127.0.0.1:9323/';
 const CONTROL_HOST = '127.0.0.1';
 const CONTROL_PORT = 4174;
+const CONTROL_URL = `http://${CONTROL_HOST}:${CONTROL_PORT}/api/status`;
 const CHECK_ONLY = process.argv.includes('--check');
 const AUTO_TEST_ON_START = process.argv.includes('--auto-test');
 const SKIP_TESTS = process.argv.includes('--no-test') || !AUTO_TEST_ON_START;
 const AUTO_CLOSE = process.argv.includes('--auto-close');
+const SMOKE_STARTUP = process.argv.includes('--smoke-startup');
+const SMOKE_TASK_LAUNCH = process.argv.includes('--smoke-task-launch');
 const serviceProcesses = new Map();
 let controlServer = null;
 let stopping = false;
 let activeTask = null;
+let workbenchWindowProcess = null;
+let edgeLifetimeMonitor = null;
+let ownsInstanceLock = false;
 
 function title(text) {
   console.log('');
@@ -91,6 +98,24 @@ function commandAvailable(command) {
   return !result.error && result.status === 0;
 }
 
+function appendBackgroundLog(label, chunk) {
+  if (!projectRoot || !chunk) return;
+  try {
+    const logDir = path.join(projectRoot, 'logs');
+    fs.mkdirSync(logDir, { recursive: true });
+    const safeLabel = String(label).replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
+    const line = `[${new Date().toISOString()}] ${String(chunk)}`;
+    fs.appendFileSync(path.join(logDir, `workbench-${safeLabel}.log`), line);
+  } catch {
+    // Logging must never stop the Workbench.
+  }
+}
+
+function pipeBackgroundOutput(child, label) {
+  child.stdout?.on('data', chunk => appendBackgroundLog(label, chunk));
+  child.stderr?.on('data', chunk => appendBackgroundLog(label, chunk));
+}
+
 function startWindowsService(label, command) {
   const child = spawn(
     process.env.ComSpec || 'cmd.exe',
@@ -98,12 +123,13 @@ function startWindowsService(label, command) {
     {
       cwd: projectRoot,
       env: process.env,
-      stdio: 'inherit',
+      stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
-      windowsHide: false,
+      windowsHide: true,
     }
   );
 
+  pipeBackgroundOutput(child, label);
   serviceProcesses.set(label, child);
 
   child.once('error', error => {
@@ -118,6 +144,213 @@ function startWindowsService(label, command) {
     if (!stopping) {
       const detail = signal ? `signal ${signal}` : `exit code ${code ?? 1}`;
       console.error(`[QA Sentinel] ${label} stopped unexpectedly (${detail}).`);
+      setWorkbenchState({
+        overallStatus: 'error',
+        phase: 'service-stopped',
+        message: `${label} stopped unexpectedly (${detail}).`,
+      });
+      stopAll(code ?? 1);
+    }
+  });
+
+  return child;
+}
+
+function resolveNodeExecutable() {
+  if (process.platform !== 'win32') return 'node';
+
+  const result = spawnSync('where.exe', ['node.exe'], {
+    cwd: projectRoot,
+    env: process.env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+    windowsHide: true,
+    shell: false,
+  });
+
+  const found = String(result.stdout || '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .find(line => line && /node\.exe$/i.test(line));
+
+  return found || 'node.exe';
+}
+
+
+function resolveNpmCli() {
+  const nodeExecutable = resolveNodeExecutable();
+  const candidates = [];
+
+  if (process.platform === 'win32') {
+    const result = spawnSync('where.exe', ['npm.cmd'], {
+      cwd: projectRoot,
+      env: process.env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      windowsHide: true,
+      shell: false,
+    });
+
+    for (const line of String(result.stdout || '').split(/\r?\n/)) {
+      const npmCmd = line.trim();
+      if (!npmCmd) continue;
+      candidates.push(path.join(path.dirname(npmCmd), 'node_modules', 'npm', 'bin', 'npm-cli.js'));
+    }
+
+    candidates.push(path.join(path.dirname(nodeExecutable), 'node_modules', 'npm', 'bin', 'npm-cli.js'));
+  }
+
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return { nodeExecutable, npmCliPath: candidate };
+    }
+  }
+
+  return null;
+}
+
+function runNpmCliSync(args, options = {}) {
+  const resolved = resolveNpmCli();
+  if (!resolved) {
+    return {
+      error: new Error('Could not resolve npm-cli.js from the installed Node.js runtime.'),
+      status: 1,
+      stdout: '',
+      stderr: '',
+    };
+  }
+
+  return spawnSync(resolved.nodeExecutable, [resolved.npmCliPath, ...args], {
+    cwd: projectRoot,
+    env: { ...process.env, ...(options.env || {}) },
+    encoding: options.encoding || 'utf8',
+    stdio: options.stdio || ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+    shell: false,
+  });
+}
+
+function psSingleQuote(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function safeTaskFileName(value) {
+  return String(value || 'task')
+    .replace(/[^a-z0-9._-]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'task';
+}
+
+function spawnNpmScript(scriptName, label) {
+  const resolved = resolveNpmCli();
+  if (!resolved) {
+    throw new Error('Could not resolve npm-cli.js from the installed Node.js runtime.');
+  }
+
+  const runtimeRoot = path.join(process.env.LOCALAPPDATA || projectRoot, 'QA-Sentinel-Tyra');
+  const runnerDirectory = path.join(runtimeRoot, 'TaskRunners');
+  fs.mkdirSync(runnerDirectory, { recursive: true });
+
+  const displayLabel = label || scriptName;
+  const runnerPath = path.join(
+    runnerDirectory,
+    `${Date.now()}-${safeTaskFileName(scriptName)}.ps1`
+  );
+
+  const runnerScript = [
+    '$ErrorActionPreference = \'Continue\'',
+    `try { $Host.UI.RawUI.WindowTitle = ${psSingleQuote(`QA Sentinel Tyra - ${displayLabel}`)} } catch {}`,
+    `Set-Location -LiteralPath ${psSingleQuote(projectRoot)}`,
+    "Write-Host ''",
+    "Write-Host '============================================================' -ForegroundColor DarkCyan",
+    `Write-Host ${psSingleQuote(`  QA Sentinel Tyra - ${displayLabel}`)} -ForegroundColor Cyan`,
+    "Write-Host '============================================================' -ForegroundColor DarkCyan",
+    `Write-Host ${psSingleQuote(`Running: npm run ${scriptName}`)} -ForegroundColor Gray`,
+    "Write-Host ''",
+    `& ${psSingleQuote(resolved.nodeExecutable)} ${psSingleQuote(resolved.npmCliPath)} 'run' ${psSingleQuote(scriptName)}`,
+    '$tyraExitCode = $LASTEXITCODE',
+    "Write-Host ''",
+    "if ($tyraExitCode -eq 0) {",
+    "  Write-Host '[QA Sentinel Tyra] Task completed.' -ForegroundColor Green",
+    "} else {",
+    "  Write-Host ('[QA Sentinel Tyra] Task finished with exit code ' + $tyraExitCode + '.') -ForegroundColor Yellow",
+    "}",
+    "Start-Sleep -Milliseconds 1200",
+    'exit $tyraExitCode',
+    '',
+  ].join('\r\n');
+
+  fs.writeFileSync(runnerPath, runnerScript, 'utf8');
+
+  appendBackgroundLog(
+    'launcher',
+    `Starting visible task console for ${displayLabel} (npm run ${scriptName}).\n`
+  );
+
+  // The packaged launcher is a Windows GUI application, so its own console stays hidden.
+  // A hidden wrapper PowerShell uses Start-Process to create a normal visible PowerShell
+  // task window. The wrapper waits for it and returns the real npm exit code to Workbench.
+  const wrapperCommand = [
+    `$p = Start-Process -FilePath 'powershell.exe'`,
+    `-ArgumentList @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',${psSingleQuote(runnerPath)})`,
+    `-WorkingDirectory ${psSingleQuote(projectRoot)}`,
+    '-WindowStyle Normal -Wait -PassThru;',
+    'exit $p.ExitCode',
+  ].join(' ');
+
+  const child = spawn(
+    'powershell.exe',
+    ['-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-Command', wrapperCommand],
+    {
+      cwd: projectRoot,
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: false,
+      windowsHide: true,
+    }
+  );
+
+  child.once('exit', () => {
+    try { fs.rmSync(runnerPath, { force: true }); } catch {}
+  });
+
+  return child;
+}
+
+function startNodeService(label, relativeScriptPath, args = []) {
+  const scriptPath = path.join(projectRoot, relativeScriptPath);
+
+  if (!fs.existsSync(scriptPath)) {
+    throw new Error(`${label} script not found: ${scriptPath}`);
+  }
+
+  // IMPORTANT: never start the dashboard through npm/cmd/Windows Terminal.
+  // node.exe is launched directly and hidden. This makes the first EXE click
+  // behave like a real desktop application instead of exposing a terminal.
+  const nodeExecutable = resolveNodeExecutable();
+  const child = spawn(nodeExecutable, [scriptPath, ...args], {
+    cwd: projectRoot,
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell: false,
+    windowsHide: true,
+  });
+
+  pipeBackgroundOutput(child, label);
+  serviceProcesses.set(label, child);
+
+  child.once('error', error => {
+    appendBackgroundLog('launcher', `${label} could not start: ${error.message}\n`);
+    serviceProcesses.delete(label);
+    if (!stopping) stopAll(1);
+  });
+
+  child.once('exit', (code, signal) => {
+    serviceProcesses.delete(label);
+
+    if (!stopping) {
+      const detail = signal ? `signal ${signal}` : `exit code ${code ?? 1}`;
+      appendBackgroundLog('launcher', `${label} stopped unexpectedly (${detail}).\n`);
       setWorkbenchState({
         overallStatus: 'error',
         phase: 'service-stopped',
@@ -165,6 +398,11 @@ function stopAll(code = 0) {
 
   serviceProcesses.clear();
 
+  if (edgeLifetimeMonitor) {
+    clearInterval(edgeLifetimeMonitor);
+    edgeLifetimeMonitor = null;
+  }
+
   if (controlServer) {
     try {
       controlServer.close();
@@ -173,6 +411,7 @@ function stopAll(code = 0) {
     }
   }
 
+  releaseInstanceLock();
   process.exit(code);
 }
 
@@ -222,51 +461,145 @@ function findEdgeCommand() {
   return candidates.find(candidate => fs.existsSync(candidate)) || null;
 }
 
-function openWorkbenchWindow(url) {
+function edgeAppProcessIds(url) {
+  if (process.platform !== 'win32') return [];
+
+  try {
+    const escaped = String(`--app=${url}`).replace(/'/g, "''");
+    const script = [
+      `$needle = '${escaped}'`,
+      `$items = Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($needle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 } | Select-Object -ExpandProperty ProcessId`,
+      `$items | ForEach-Object { Write-Output $_ }`,
+    ].join('; ');
+
+    const result = spawnSync('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy', 'Bypass',
+      '-Command', script,
+    ], {
+      cwd: projectRoot,
+      env: process.env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      windowsHide: true,
+      shell: false,
+      timeout: 5_000,
+    });
+
+    return String(result.stdout || '')
+      .split(/\r?\n/)
+      .map(line => Number.parseInt(line.trim(), 10))
+      .filter(Number.isFinite);
+  } catch {
+    return [];
+  }
+}
+
+function startEdgeLifetimeMonitor(url) {
+  if (edgeLifetimeMonitor) {
+    clearInterval(edgeLifetimeMonitor);
+    edgeLifetimeMonitor = null;
+  }
+
+  let appSeen = false;
+  let consecutiveMisses = 0;
+  let checks = 0;
+
+  const check = () => {
+    if (stopping) return;
+
+    checks += 1;
+    const pids = edgeAppProcessIds(url);
+
+    if (pids.length > 0) {
+      appSeen = true;
+      consecutiveMisses = 0;
+      return;
+    }
+
+    if (!appSeen) {
+      // With the user's normal Edge profile, Edge may hand the --app request
+      // to an already-running browser process whose command line does not keep
+      // the original --app argument. In that case we deliberately keep the
+      // QA backend alive instead of falsely assuming the Workbench was closed.
+      if (checks >= 10) {
+        appendBackgroundLog('launcher', 'Edge app window could not be tied to a dedicated process; backend will remain alive for stable desktop startup.\n');
+        clearInterval(edgeLifetimeMonitor);
+        edgeLifetimeMonitor = null;
+      }
+      return;
+    }
+
+    consecutiveMisses += 1;
+    if (consecutiveMisses >= 3) {
+      appendBackgroundLog('launcher', 'QA Sentinel Edge app window closed; stopping background services.\n');
+      clearInterval(edgeLifetimeMonitor);
+      edgeLifetimeMonitor = null;
+      stopAll(0);
+    }
+  };
+
+  setTimeout(check, 1_500);
+  edgeLifetimeMonitor = setInterval(check, 3_000);
+}
+
+function openWorkbenchWindow(url, { trackLifetime = true } = {}) {
   const edgeCommand = findEdgeCommand();
+  const appUrl = url === DASHBOARD_URL ? WORKBENCH_APP_URL : url;
 
   if (edgeCommand) {
-    // Use an isolated Edge app profile so Windows/Edge does not reuse
-    // a previously maximized browser window and ignore our Workbench size.
-    const edgeProfileDir = path.join(
-      process.env.LOCALAPPDATA || projectRoot,
-      'QA-Sentinel-Tyra',
-      'EdgeProfile'
-    );
-
-    fs.mkdirSync(edgeProfileDir, { recursive: true });
-
-    spawn(edgeCommand, [
-      `--app=${url}`,
-      `--user-data-dir=${edgeProfileDir}`,
+    const child = spawn(edgeCommand, [
+      `--app=${appUrl}`,
       '--new-window',
       '--window-size=1280,760',
       '--window-position=70,40',
       '--no-first-run',
       '--no-default-browser-check',
       '--disable-session-crashed-bubble',
-      '--force-dark-mode',
-      '--enable-features=WebUIDarkMode',
+      '--disable-background-mode',
     ], {
       cwd: projectRoot,
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
-    }).unref();
+    });
 
-    return;
+    // V7 intentionally uses the user's normal Edge profile. The isolated
+    // --user-data-dir profile repeatedly produced a blank/grey Workbench on
+    // first launch even though Dashboard/API and all frontend assets returned
+    // HTTP 200. Normal Edge rendered the same dashboard correctly, so the
+    // profile isolation was the failing layer and is removed here.
+    child.once('exit', (code, signal) => {
+      workbenchWindowProcess = null;
+      appendBackgroundLog(
+        'launcher',
+        `Edge bootstrap process exited (${signal ? `signal ${signal}` : `code ${code ?? 0}`}); backend remains alive.\n`
+      );
+    });
+
+    child.unref();
+
+    if (trackLifetime) {
+      workbenchWindowProcess = child;
+      startEdgeLifetimeMonitor(appUrl);
+    }
+
+    return child;
   }
 
-  spawn(
+  const child = spawn(
     process.env.ComSpec || 'cmd.exe',
-    ['/d', '/s', '/c', 'start', '', url],
+    ['/d', '/s', '/c', 'start', '', appUrl],
     {
       cwd: projectRoot,
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
     }
-  ).unref();
+  );
+  child.unref();
+  return child;
 }
 
 const projectRoot = findProjectRoot();
@@ -276,6 +609,139 @@ const workbenchStatusPath = projectRoot
 const reportIndexPath = projectRoot
   ? path.join(projectRoot, 'playwright-report', 'index.html')
   : null;
+const runtimeDir = projectRoot
+  ? path.join(process.env.LOCALAPPDATA || projectRoot, 'QA-Sentinel-Tyra')
+  : null;
+const instanceLockPath = runtimeDir ? path.join(runtimeDir, 'launcher.lock') : null;
+
+function isPidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function processCommandLine(pid) {
+  if (process.platform !== 'win32' || !Number.isInteger(pid) || pid <= 0) return '';
+  try {
+    const escaped = String(pid).replace(/[^0-9]/g, '');
+    const result = spawnSync(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', `(Get-CimInstance Win32_Process -Filter "ProcessId=${escaped}").CommandLine`],
+      {
+        cwd: projectRoot,
+        env: process.env,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+        windowsHide: true,
+        shell: false,
+      }
+    );
+    return String(result.stdout || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+function isQaSentinelLauncherProcess(pid) {
+  if (!isPidAlive(pid)) return false;
+  const commandLine = processCommandLine(pid).toLowerCase();
+  if (!commandLine) return false;
+  return commandLine.includes('qa-sentinel-tyra.exe') ||
+    commandLine.includes('qa-sentinel-tyra.raw.exe') ||
+    commandLine.includes('qa-sentinel-launcher.cjs');
+}
+
+function acquireInstanceLock() {
+  if (!instanceLockPath) return true;
+  fs.mkdirSync(path.dirname(instanceLockPath), { recursive: true });
+
+  try {
+    if (fs.existsSync(instanceLockPath)) {
+      const previousPid = Number.parseInt(fs.readFileSync(instanceLockPath, 'utf8').trim(), 10);
+      if (isQaSentinelLauncherProcess(previousPid)) {
+        return false;
+      }
+
+      // Stale lock: PID is gone or has been recycled by an unrelated process.
+      appendBackgroundLog('launcher', `Removing stale launcher lock for PID ${previousPid || 'unknown'}.\n`);
+      fs.rmSync(instanceLockPath, { force: true });
+    }
+
+    fs.writeFileSync(instanceLockPath, String(process.pid), { flag: 'wx' });
+    ownsInstanceLock = true;
+    return true;
+  } catch (error) {
+    if (error?.code === 'EEXIST') return false;
+    appendBackgroundLog('launcher', `Instance lock warning: ${error.message}\n`);
+    return true;
+  }
+}
+
+function releaseInstanceLock() {
+  if (!ownsInstanceLock || !instanceLockPath) return;
+  try {
+    const current = fs.existsSync(instanceLockPath)
+      ? Number.parseInt(fs.readFileSync(instanceLockPath, 'utf8').trim(), 10)
+      : null;
+    if (current === process.pid) fs.rmSync(instanceLockPath, { force: true });
+  } catch {
+    // no-op
+  }
+  ownsInstanceLock = false;
+}
+
+function readInstanceLockPid() {
+  if (!instanceLockPath) return null;
+  try {
+    if (!fs.existsSync(instanceLockPath)) return null;
+    const pid = Number.parseInt(fs.readFileSync(instanceLockPath, 'utf8').trim(), 10);
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function removeInstanceLockRegardless() {
+  if (!instanceLockPath) return;
+  try {
+    fs.rmSync(instanceLockPath, { force: true });
+  } catch {
+    // no-op
+  }
+}
+
+function restartSelfAfterUnhealthyInstance(previousPid) {
+  appendBackgroundLog('launcher', `Recovering unhealthy existing launcher PID ${previousPid || 'unknown'}.\n`);
+
+  if (previousPid && previousPid !== process.pid && isQaSentinelLauncherProcess(previousPid)) {
+    try {
+      spawnSync('taskkill', ['/pid', String(previousPid), '/t', '/f'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+    } catch {
+      // Continue with lock cleanup even if taskkill fails.
+    }
+  }
+
+  removeInstanceLockRegardless();
+
+  const child = spawn(process.execPath, process.argv.slice(1), {
+    cwd: projectRoot,
+    env: process.env,
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  child.unref();
+  process.exit(0);
+}
+
+process.once('exit', releaseInstanceLock);
 
 let playwrightVersion = null;
 try {
@@ -295,7 +761,7 @@ const workbenchState = {
   projectRoot: projectRoot || null,
   dashboardUrl: DASHBOARD_URL,
   reportUrl: REPORT_URL,
-  controlUrl: `http://${CONTROL_HOST}:${CONTROL_PORT}/api/status`,
+  controlUrl: CONTROL_URL,
   dashboardReady: false,
   reportReady: false,
   reportAvailable: Boolean(reportIndexPath && fs.existsSync(reportIndexPath)),
@@ -363,9 +829,9 @@ function startReportService() {
     return false;
   }
 
-  startWindowsService(
+  startNodeService(
     'Playwright Report',
-    'node scripts/serve-playwright-report.mjs'
+    path.join('scripts', 'serve-playwright-report.mjs')
   );
 
   setWorkbenchState({
@@ -414,7 +880,7 @@ function runTask(taskConfig) {
   const {
     action,
     label,
-    command,
+    steps = [],
     nextTask,
     onStartMessage,
     onCompleteMessage,
@@ -422,24 +888,37 @@ function runTask(taskConfig) {
     target = 'both',
   } = taskConfig;
 
+  if (!Array.isArray(steps) || steps.length === 0) {
+    setWorkbenchState({
+      busy: false,
+      currentAction: null,
+      currentTarget: null,
+      lastExitCode: 1,
+      overallStatus: 'error',
+      phase: `${action}-failed`,
+      message: `${label} has no executable task steps configured.`,
+    });
+    return false;
+  }
+
   const isQaTask = action === 'run-full-qa' || action === 'fast-chromium';
   const taskStartedAt = new Date().toISOString();
   const taskStartedAtMs = Date.now();
   const reportMtimeBefore = isQaTask ? reportMtimeMs() : 0;
 
-  const child = spawn(
-    process.env.ComSpec || 'cmd.exe',
-    ['/d', '/s', '/c', command],
-    {
-      cwd: projectRoot,
-      env: process.env,
-      stdio: 'inherit',
-      shell: false,
-      windowsHide: false,
-    }
-  );
+  activeTask = {
+    action,
+    label,
+    steps,
+    child: null,
+    stepIndex: 0,
+    target,
+    taskStartedAt,
+    taskStartedAtMs,
+    reportMtimeBefore,
+    isQaTask,
+  };
 
-  activeTask = { action, label, command, child, target, taskStartedAt, taskStartedAtMs, reportMtimeBefore, isQaTask };
   setWorkbenchState({
     busy: true,
     currentAction: action,
@@ -459,32 +938,19 @@ function runTask(taskConfig) {
     overallStatus: 'running',
   });
 
-  child.once('error', error => {
-    activeTask = null;
-    setWorkbenchState({
-      busy: false,
-      currentAction: null,
-      currentTarget: null,
-      lastExitCode: 1,
-      ...(isQaTask ? {
-        lastQaCompletedAt: new Date().toISOString(),
-        lastQaExitCode: 1,
-        lastQaReportFresh: false,
-      } : {}),
-      overallStatus: 'error',
-      phase: `${action}-failed`,
-      message: `${label} could not start: ${error.message}`,
-    });
-  });
+  appendBackgroundLog(
+    'launcher',
+    `Action ${action} accepted for target=${target}. Steps: ${steps.map(step => step.script).join(' -> ')}\n`
+  );
 
-  child.once('exit', code => {
-    activeTask = null;
-
+  const finish = (code) => {
     const reportMtimeAfter = isQaTask ? reportMtimeMs() : 0;
     const qaReportFresh = isQaTask && reportMtimeAfter > 0 && (
       reportMtimeAfter > reportMtimeBefore || reportMtimeAfter >= taskStartedAtMs
     );
     const qaCompletedAt = isQaTask ? new Date().toISOString() : null;
+
+    activeTask = null;
 
     setWorkbenchState({
       reportReady: false,
@@ -496,9 +962,7 @@ function runTask(taskConfig) {
       } : {}),
     });
 
-    if (stopping) {
-      return;
-    }
+    if (stopping) return;
 
     if ((code ?? 1) !== 0) {
       setWorkbenchState({
@@ -523,7 +987,6 @@ function runTask(taskConfig) {
         phase: `${action}-complete`,
         message: onCompleteMessage || `${label} finished successfully.`,
       });
-
       setTimeout(() => runTask(nextTask), 500);
       return;
     }
@@ -537,8 +1000,91 @@ function runTask(taskConfig) {
       phase: `${action}-complete`,
       message: onCompleteMessage || `${label} finished successfully.`,
     });
-  });
+  };
 
+  const runStep = (index) => {
+    if (!activeTask || stopping) return;
+
+    if (index >= steps.length) {
+      finish(0);
+      return;
+    }
+
+    const step = steps[index];
+    activeTask.stepIndex = index;
+
+    const stepLabel = step.label || step.script;
+    setWorkbenchState({
+      phase: action,
+      message: steps.length > 1
+        ? `${onStartMessage || `${label} is running.`} Step ${index + 1}/${steps.length}: ${stepLabel}`
+        : (onStartMessage || `${label} is running.`),
+    });
+
+    let child;
+    try {
+      child = spawnNpmScript(step.script, `${label} / ${stepLabel}`);
+    } catch (error) {
+      appendBackgroundLog('launcher', `Action ${action} could not start step ${step.script}: ${error.message}\n`);
+      activeTask = null;
+      setWorkbenchState({
+        busy: false,
+        currentAction: null,
+        currentTarget: null,
+        lastExitCode: 1,
+        ...(isQaTask ? {
+          lastQaCompletedAt: new Date().toISOString(),
+          lastQaExitCode: 1,
+          lastQaReportFresh: false,
+        } : {}),
+        overallStatus: 'error',
+        phase: `${action}-failed`,
+        message: `${label} could not start: ${error.message}`,
+      });
+      return;
+    }
+
+    activeTask.child = child;
+    pipeBackgroundOutput(child, `task-${action}`);
+
+    child.once('error', error => {
+      if (!activeTask) return;
+      appendBackgroundLog('launcher', `Action ${action} child error: ${error.message}\n`);
+      activeTask = null;
+      setWorkbenchState({
+        busy: false,
+        currentAction: null,
+        currentTarget: null,
+        lastExitCode: 1,
+        ...(isQaTask ? {
+          lastQaCompletedAt: new Date().toISOString(),
+          lastQaExitCode: 1,
+          lastQaReportFresh: false,
+        } : {}),
+        overallStatus: 'error',
+        phase: `${action}-failed`,
+        message: `${label} could not start: ${error.message}`,
+      });
+    });
+
+    child.once('exit', code => {
+      if (!activeTask || stopping) return;
+
+      appendBackgroundLog(
+        'launcher',
+        `Action ${action} step ${step.script} exited with code ${code ?? 1}.\n`
+      );
+
+      if ((code ?? 1) !== 0) {
+        finish(code ?? 1);
+        return;
+      }
+
+      runStep(index + 1);
+    });
+  };
+
+  runStep(0);
   return true;
 }
 
@@ -574,11 +1120,19 @@ function queueAction(action, requestedTarget = 'both') {
       action: 'run-full-qa',
       label: target === 'both' ? 'Full QA' : `${targetLabel(target)} scoped QA`,
       target,
-      command: target === 'nation'
-        ? 'npm run scan:nation && npm run qa:nation'
+      steps: target === 'nation'
+        ? [
+            { script: 'scan:nation', label: 'Discover Nation pages' },
+            { script: 'qa:nation', label: 'Run Nation QA' },
+          ]
         : target === 'skills'
-          ? 'npm run scan:skills && npm run qa:skills'
-          : 'npm run qa:unattended',
+          ? [
+              { script: 'scan:skills', label: 'Discover AI Skills pages' },
+              { script: 'qa:skills', label: 'Run AI Skills QA' },
+            ]
+          : [
+              { script: 'qa:unattended', label: 'Run full unattended QA' },
+            ],
       onStartMessage: target === 'both'
         ? 'Full QA is running across Nation and AI Skills.'
         : `${targetLabel(target)} scoped QA is running.`,
@@ -589,11 +1143,11 @@ function queueAction(action, requestedTarget = 'both') {
       action: 'fast-chromium',
       label: `Fast Chromium — ${targetLabel(target)}`,
       target,
-      command: target === 'nation'
-        ? 'npm run qa:nation'
+      steps: target === 'nation'
+        ? [{ script: 'qa:nation', label: 'Run Nation Chromium QA' }]
         : target === 'skills'
-          ? 'npm run qa:skills'
-          : 'npm run qa:sites',
+          ? [{ script: 'qa:skills', label: 'Run AI Skills Chromium QA' }]
+          : [{ script: 'qa:sites', label: 'Run both sites Chromium QA' }],
       onStartMessage: `Fast Chromium is running for ${targetLabel(target)}.`,
       onCompleteMessage: `Fast Chromium finished for ${targetLabel(target)}. Latest data has been refreshed.`,
       onFailureMessage: `Fast Chromium for ${targetLabel(target)} finished with findings or a non-zero exit code.`,
@@ -601,7 +1155,7 @@ function queueAction(action, requestedTarget = 'both') {
     'security-production': {
       action: 'security-production',
       label: 'Production Safe Security',
-      command: 'npm run qa:pentest:production',
+      steps: [{ script: 'qa:pentest:production', label: 'Production Safe security checks' }],
       onStartMessage: 'Production Safe security mode is running.',
       onCompleteMessage: 'Production Safe security evidence has been refreshed.',
       onFailureMessage: 'Production Safe security mode did not complete cleanly. Review pentest evidence.',
@@ -609,7 +1163,7 @@ function queueAction(action, requestedTarget = 'both') {
     'security-staging': {
       action: 'security-staging',
       label: 'Staging Active Security',
-      command: 'npm run qa:pentest:staging',
+      steps: [{ script: 'qa:pentest:staging', label: 'Staging Active security checks' }],
       onStartMessage: 'Staging Active security mode is running. Ensure authorization and allowlisting are configured.',
       onCompleteMessage: 'Staging Active security evidence has been refreshed.',
       onFailureMessage: 'Staging Active security mode did not complete cleanly. Review pentest evidence and guardrails.',
@@ -617,7 +1171,7 @@ function queueAction(action, requestedTarget = 'both') {
     'security-manual': {
       action: 'security-manual',
       label: 'Manual Validation',
-      command: 'npm run qa:pentest:manual',
+      steps: [{ script: 'qa:pentest:manual', label: 'Manual validation checklist' }],
       onStartMessage: 'Manual Validation checklist generation is running.',
       onCompleteMessage: 'Manual Validation guidance has been refreshed.',
       onFailureMessage: 'Manual Validation did not complete cleanly. Review pentest evidence.',
@@ -634,7 +1188,14 @@ function queueAction(action, requestedTarget = 'both') {
     };
   }
 
-  runTask(config);
+  const started = runTask(config);
+  if (!started) {
+    return {
+      ok: false,
+      statusCode: 500,
+      message: `${config.label} could not be started. Check the Workbench launcher log.`,
+    };
+  }
   return { ok: true, statusCode: 202, message: `${config.label} started.` };
 }
 
@@ -718,6 +1279,24 @@ if (missing.length > 0) {
   return;
 }
 
+
+if (SMOKE_TASK_LAUNCH) {
+  const npmProbe = runNpmCliSync(['--version']);
+  if (npmProbe.error || npmProbe.status !== 0) {
+    appendBackgroundLog(
+      'launcher',
+      `Packaged task-launch smoke test failed: ${npmProbe.error?.message || npmProbe.stderr || `exit ${npmProbe.status}`}\n`
+    );
+    process.exit(1);
+  }
+
+  appendBackgroundLog(
+    'launcher',
+    `Packaged task-launch smoke test passed with npm ${String(npmProbe.stdout || '').trim()}.\n`
+  );
+  process.exit(0);
+}
+
 if (CHECK_ONLY) {
   setWorkbenchState({
     overallStatus: 'ready',
@@ -730,6 +1309,31 @@ if (CHECK_ONLY) {
   process.exit(0);
 }
 
+if (!acquireInstanceLock()) {
+  // A verified QA Sentinel launcher is already running. Only open another
+  // Workbench window after BOTH local services are actually reachable.
+  const previousPid = readInstanceLockPid();
+  Promise.all([
+    waitForUrl(DASHBOARD_URL, 10_000),
+    waitForUrl(CONTROL_URL, 10_000),
+  ])
+    .then(() => {
+      if (SMOKE_STARTUP) {
+        process.exit(0);
+        return;
+      }
+      openWorkbenchWindow(DASHBOARD_URL, { trackLifetime: false });
+      process.exit(0);
+    })
+    .catch(error => {
+      // Do not open a dead 127.0.0.1 page. Recover the unhealthy old launcher
+      // automatically and relaunch once with a clean instance lock.
+      appendBackgroundLog('launcher', `Existing instance unhealthy: ${error.message}\n`);
+      restartSelfAfterUnhealthyInstance(previousPid);
+    });
+  return;
+}
+
 process.once('SIGINT', () => stopAll(0));
 process.once('SIGTERM', () => stopAll(0));
 process.once('SIGHUP', () => stopAll(0));
@@ -737,13 +1341,16 @@ process.once('SIGHUP', () => stopAll(0));
 setWorkbenchState({
   overallStatus: 'starting',
   phase: 'starting-dashboard',
-  message: 'Starting dashboard service.',
+  message: 'Starting hidden dashboard and control services.',
 });
 
-startWindowsService('Dashboard', 'npm run dashboard');
+startNodeService('Dashboard', path.join('scripts', 'serve-dashboard.mjs'));
 startControlServer();
 
-waitForUrl(DASHBOARD_URL)
+Promise.all([
+  waitForUrl(DASHBOARD_URL),
+  waitForUrl(CONTROL_URL),
+])
   .then(() => {
     setWorkbenchState({
       dashboardReady: true,
@@ -752,14 +1359,25 @@ waitForUrl(DASHBOARD_URL)
       message: 'Workbench is ready. Playwright remains closed until you open it from Workbench.',
     });
 
+    if (SMOKE_STARTUP) {
+      setWorkbenchState({
+        overallStatus: 'ready',
+        phase: 'smoke-startup-passed',
+        message: 'Packaged startup smoke test passed.',
+      });
+      setTimeout(() => stopAll(0), 150);
+      return;
+    }
+
     openWorkbenchWindow(DASHBOARD_URL);
 
     title('WORKBENCH READY');
     console.log(`[QA Sentinel] Workbench: ${DASHBOARD_URL}`);
-    console.log('[QA Sentinel] Opening a single app-like Edge window without the normal address bar.');
+    console.log('[QA Sentinel] Opening a single app-like Edge window through the normal Edge profile.');
     console.log('[QA Sentinel] Playwright Report will open only when you select it inside the workbench.');
     console.log('[QA Sentinel] Automatic QA is disabled on normal startup. Use --auto-test only when you explicitly want Full QA to begin immediately.');
-    console.log('[QA Sentinel] Keep this window open. Press Ctrl+C to stop the background services.');
+    console.log('[QA Sentinel] Desktop mode is active; Dashboard starts directly through Node with no npm/CMD window.');
+    console.log('[QA Sentinel] Workbench opens only after both Dashboard and Control API are ready.');
 
     if (!SKIP_TESTS) {
       setTimeout(() => {

@@ -13,13 +13,65 @@ function fail(message) {
   process.exit(1);
 }
 
+function runCheck(exe) {
+  const result = spawnSync(exe, ['--check'], {
+    cwd: root,
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 30000,
+  });
+  const text = `${result.stdout || ''}\n${result.stderr || ''}`;
+  return {
+    ok: result.status === 0 && !/Pkg:\s*Error reading from file/i.test(text),
+    result,
+    text,
+  };
+}
+
+function patchGuiSubsystem(exePath) {
+  const buffer = fs.readFileSync(exePath);
+  if (buffer.length < 0x100 || buffer.toString('ascii', 0, 2) !== 'MZ') {
+    throw new Error('Not a valid PE executable (missing MZ header).');
+  }
+
+  const peOffset = buffer.readUInt32LE(0x3c);
+  if (peOffset + 4 + 20 + 70 > buffer.length) {
+    throw new Error('Invalid PE header offset.');
+  }
+
+  if (buffer.toString('ascii', peOffset, peOffset + 4) !== 'PE\0\0') {
+    throw new Error('Not a valid PE executable (missing PE signature).');
+  }
+
+  const optionalHeader = peOffset + 4 + 20;
+  const magic = buffer.readUInt16LE(optionalHeader);
+  if (magic !== 0x10b && magic !== 0x20b) {
+    throw new Error(`Unsupported PE optional-header magic: 0x${magic.toString(16)}`);
+  }
+
+  // IMAGE_OPTIONAL_HEADER.Subsystem is WORD at +0x44 for PE32 and PE32+.
+  // 2 = IMAGE_SUBSYSTEM_WINDOWS_GUI, 3 = WINDOWS_CUI.
+  const subsystemOffset = optionalHeader + 0x44;
+  const previous = buffer.readUInt16LE(subsystemOffset);
+  buffer.writeUInt16LE(2, subsystemOffset);
+  fs.writeFileSync(exePath, buffer);
+  return previous;
+}
+
 if (!fs.existsSync(rawExe)) fail('RAW executable is missing. Run npm run build:exe:raw first.');
 if (!fs.existsSync(icon)) fail(`Compact icon is missing: ${icon}`);
 if (!fs.existsSync(resedit)) fail('resedit-cli is missing. Run npm install --save-dev resedit-cli@3.1.0');
 
+const rawCheck = runCheck(rawExe);
+if (!rawCheck.ok) {
+  if (rawCheck.result.stdout) process.stdout.write(rawCheck.result.stdout);
+  if (rawCheck.result.stderr) process.stderr.write(rawCheck.result.stderr);
+  fail('RAW executable did not pass --check.');
+}
+
 try { fs.rmSync(finalExe, { force: true }); } catch {}
 
-console.log('[QA Sentinel] Applying compact icon without growing the PE resource section...');
+console.log('[QA Sentinel] Applying Tyra icon with --no-grow...');
 const edit = spawnSync(resedit, [
   rawExe,
   finalExe,
@@ -34,44 +86,36 @@ const edit = spawnSync(resedit, [
 if (edit.stdout) process.stdout.write(edit.stdout);
 if (edit.stderr) process.stderr.write(edit.stderr);
 
-if (edit.status !== 0 || !fs.existsSync(finalExe)) {
-  console.warn('[QA Sentinel] Icon injection was not safe. Falling back to the verified RAW executable.');
+let iconApplied = edit.status === 0 && fs.existsSync(finalExe);
+if (!iconApplied) {
+  console.warn('[QA Sentinel] Safe icon injection was unavailable; using RAW payload as fallback.');
   fs.copyFileSync(rawExe, finalExe);
-  console.log('[QA Sentinel] Final EXE created without custom embedded icon.');
-  process.exit(0);
 }
 
-console.log('[QA Sentinel] Running executable smoke test...');
-const verify = spawnSync(finalExe, ['--check'], {
-  cwd: root,
-  encoding: 'utf8',
-  windowsHide: true,
-  timeout: 30000,
-});
-
-const verifyText = `${verify.stdout || ''}\n${verify.stderr || ''}`;
-const corrupted = verify.status !== 0 || /Pkg:\s*Error reading from file/i.test(verifyText);
-
-if (corrupted) {
-  console.warn('[QA Sentinel] Post-processed EXE failed verification. Restoring RAW executable as final EXE.');
-  try { fs.rmSync(finalExe, { force: true }); } catch {}
+let preGuiCheck = runCheck(finalExe);
+if (!preGuiCheck.ok) {
+  console.warn('[QA Sentinel] Icon candidate failed verification; restoring RAW payload.');
   fs.copyFileSync(rawExe, finalExe);
-
-  const fallbackVerify = spawnSync(finalExe, ['--check'], {
-    cwd: root,
-    encoding: 'utf8',
-    windowsHide: true,
-    timeout: 30000,
-  });
-
-  if (fallbackVerify.status !== 0) {
-    if (fallbackVerify.stdout) process.stdout.write(fallbackVerify.stdout);
-    if (fallbackVerify.stderr) process.stderr.write(fallbackVerify.stderr);
-    fail('Even the RAW fallback did not pass --check.');
-  }
-
-  console.log('[QA Sentinel] Final EXE restored from verified RAW build.');
-  process.exit(0);
+  iconApplied = false;
+  preGuiCheck = runCheck(finalExe);
+  if (!preGuiCheck.ok) fail('Fallback payload failed verification before desktop-mode patch.');
 }
 
-console.log('[QA Sentinel] Final EXE passed --check with the embedded Tyra icon.');
+console.log('[QA Sentinel] Switching final EXE from console subsystem to Windows desktop GUI subsystem...');
+let previousSubsystem;
+try {
+  previousSubsystem = patchGuiSubsystem(finalExe);
+} catch (error) {
+  fail(`Could not enable desktop GUI subsystem: ${error.message}`);
+}
+
+const finalCheck = runCheck(finalExe);
+if (!finalCheck.ok) {
+  if (finalCheck.result.stdout) process.stdout.write(finalCheck.result.stdout);
+  if (finalCheck.result.stderr) process.stderr.write(finalCheck.result.stderr);
+  fail('Desktop-mode EXE failed --check after GUI subsystem patch.');
+}
+
+console.log(`[QA Sentinel] Desktop EXE verified. Subsystem ${previousSubsystem} -> 2 (GUI).`);
+console.log(`[QA Sentinel] Custom icon: ${iconApplied ? 'yes' : 'fallback/default'}.`);
+console.log('[QA Sentinel] Double-click now starts Workbench without a persistent console window.');
