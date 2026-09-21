@@ -234,3 +234,29 @@ cd /mnt/c/Users/Pette/Downloads/qa-sentinel-tyra-main
 - Auto-filing GitHub issues from every P3
 - Replacing Playwright with another runner
 - Calling this “the best QA system in the world”
+
+## Completed operational hardening — 2026-09-21
+
+- [x] Unified anonymous + authenticated discovery for Nation and AI Skills
+- [x] Protected-route authentication verification
+- [x] AI Skills `/my-pathway` authenticated coverage
+- [x] Safe Interaction Discovery with destructive-action exclusions
+- [x] Interaction coverage and clipping telemetry
+- [x] Combined multi-site discovery coverage
+- [x] Authentication Manager in Workbench
+- [x] Real-Chrome Google login handoff
+- [x] Automatic CDP session capture after manual login
+- [x] Automatic authenticated rescan and coverage rebuild
+- [x] Authentication Manager moved to dedicated port `43174`
+- [x] Windows EXE integration
+- [x] Windows EXE manually verified
+
+Verified snapshot:
+
+- COMPLETE authentication
+- 49 unique/effective routes
+- 48 authenticated routes
+- 24 dynamic-content routes
+- 225 safe UI interactions
+- no clipping at the current 20/page interaction limit
+- coverage not limited

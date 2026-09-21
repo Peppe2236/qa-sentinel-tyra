@@ -1488,3 +1488,42 @@ See [`docs/PENTEST-SECURITY.md`](docs/PENTEST-SECURITY.md) for safe and authoriz
 - CI/CD and policy profiles
 - auditability and historical intelligence
 - integrations, APIs and module architecture
+
+## Authenticated Discovery & Authentication Manager — verified 2026-09-21
+
+QA Sentinel Tyra now supports unified anonymous and authenticated discovery for Nation and AI Skills.
+
+Verified snapshot:
+
+- Authentication: **COMPLETE**
+- Page observations: **79**
+- Anonymous routes: **31**
+- Authenticated routes: **48**
+- Unique routes: **49**
+- Effective routes: **49**
+- Shared routes: **30**
+- Anonymous-only routes: **1**
+- Authenticated-only routes: **18**
+- Dynamic-content routes: **24**
+- Safe UI interactions: **225**
+- Coverage limited: **false**
+
+AI Skills authentication is verified against the protected `/my-pathway` route instead of treating a loaded storage-state file as proof of authentication.
+
+Interaction Discovery safely explores menus, tabs, expandable controls, filters, details, pagination and similar UI while destructive or state-changing actions remain excluded. The default limit is 20 safe interactions per page. The verified Nation and AI Skills authenticated runs showed no page clipped by that limit.
+
+The Workbench now includes an Authentication Manager for Nation and AI Skills. It validates existing sessions, verifies protected routes, reuses valid sessions and opens real Google Chrome when a fresh Google sign-in is required. The operator performs the login manually; Tyra then captures the resulting session and automatically reruns authenticated discovery and coverage generation.
+
+Dashboard: `127.0.0.1:4173`
+Authentication Manager: `127.0.0.1:43174`
+
+Useful commands:
+
+- `npm run auth:nation:refresh`
+- `npm run auth:skills:refresh`
+- `npm run scan:deep`
+- `npm run scan:coverage`
+
+The Authentication Manager refresh flow does not read or store the Google password. Playwright authentication state under `playwright/.auth/` remains private runtime data and must never be committed.
+
+The rebuilt `dist/QA-Sentinel-Tyra.exe` was manually verified on 2026-09-21 with the Authentication Manager integrated into the desktop Workbench.

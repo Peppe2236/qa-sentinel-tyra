@@ -181,3 +181,21 @@ The README banner in `docs/assets/qa-sentinel-tyra-banner.png` uses the current 
 | Playwright report | 9323, on demand |
 
 All Workbench control services are local to the machine.
+
+## Authentication Manager integration — verified 2026-09-21
+
+The QA Sentinel Tyra desktop Workbench now includes authenticated-session management for Nation and AI Skills.
+
+Runtime services:
+
+- Workbench / Dashboard: `127.0.0.1:4173`
+- Authentication Manager: `127.0.0.1:43174`
+- Playwright report: opened on demand
+
+The Authentication Manager verifies the current Playwright session before authenticated discovery begins. When authentication has expired, real Google Chrome is opened for manual operator login. After successful login, Tyra captures the resulting session and continues the authenticated scan automatically.
+
+Port `43174` is intentionally separate from the existing launcher services to avoid the port collision discovered during Windows/WSL validation.
+
+The rebuilt `dist/QA-Sentinel-Tyra.exe` was manually verified on 2026-09-21 with Authentication Manager and authenticated discovery operational.
+
+Authentication files under `playwright/.auth/` are private runtime data and must not be committed.

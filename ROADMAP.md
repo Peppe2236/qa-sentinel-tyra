@@ -365,3 +365,33 @@ M10 Platform & Enterprise Evolution                 🧭 PLANNED
 The development doctrine remains unchanged:
 
 > **Evidence before conclusions. NOT VERIFIED is not PASSED.**
+
+## Post-M7 authenticated discovery & session management — ✅ VERIFIED 2026-09-21
+
+The post-M7 operational layer now includes verified multi-site authenticated discovery and desktop session management.
+
+Completed and verified:
+
+- unified anonymous + authenticated discovery for Nation and AI Skills
+- protected-route authentication verification
+- authenticated AI Skills `/my-pathway` coverage
+- safe Interaction Discovery
+- interaction clipping telemetry
+- combined multi-site coverage
+- Authentication Manager in the Workbench
+- real-Chrome Google login handoff
+- automatic session capture after manual login
+- automatic authenticated rescan and coverage rebuild
+- rebuilt and manually verified Windows EXE
+
+Verified discovery snapshot:
+
+- Authentication: **COMPLETE**
+- Unique/effective routes: **49 / 49**
+- Authenticated routes: **48**
+- Dynamic-content routes: **24**
+- Safe interactions: **225**
+- Interaction clipping at 20/page: **none**
+- Coverage limited: **false**
+
+This is verified post-M7 operational hardening. Milestone 8 Security Weakness Intelligence remains **IN PROGRESS** until deeper security evidence correlation and Unified Decision integration are completed and validated.
