@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import process from 'node:process';
 
-const dashboardScript = 'scripts/serve-dashboard.mjs';
+const dashboardScript = 'scripts/start-dashboard-with-auth.mjs';
 const reportDirectory = 'playwright-report';
 const dashboardUrl = 'http://127.0.0.1:4173';
 const reportUrl = 'http://127.0.0.1:9323';
@@ -18,11 +18,11 @@ if (!existsSync(dashboardScript)) {
 }
 
 if (!existsSync(`${reportDirectory}/index.html`)) {
-  fail('Ingen Playwright-rapport hittades. Kor en QA-testkorning forst.');
+  fail('No Playwright report was found. Run a QA test first.');
 }
 
 if (checkOnly) {
-  console.log('[QA Sentinel] Lokal startkontroll godkand.');
+  console.log('[QA Sentinel] Local startup check passed.');
   console.log(`[QA Sentinel] Dashboard: ${dashboardUrl}`);
   console.log(`[QA Sentinel] Playwright Report: ${reportUrl}`);
   process.exit(0);
@@ -65,7 +65,7 @@ function startProcess(label, command, args) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[QA Sentinel] ${label} kunde inte startas: ${message}`);
+    console.error(`[QA Sentinel] ${label} could not be started: ${message}`);
     stopAll(1);
     return;
   }
@@ -73,7 +73,7 @@ function startProcess(label, command, args) {
   children.set(label, child);
 
   child.once('error', error => {
-    console.error(`[QA Sentinel] ${label} kunde inte startas: ${error.message}`);
+    console.error(`[QA Sentinel] ${label} could not be started: ${error.message}`);
     children.delete(label);
     stopAll(1);
   });

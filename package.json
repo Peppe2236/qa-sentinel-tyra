@@ -38,7 +38,7 @@
     "scan:nation": "node scripts/scan-site.mjs https://nation.dev/ nation",
     "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/ ai-skills",
     "scan:all": "npm run scan:nation && npm run scan:skills",
-    "dashboard": "node scripts/serve-dashboard.mjs",
+    "dashboard": "node scripts/start-dashboard-with-auth.mjs",
     "report": "playwright show-report",
     "start:local": "node scripts/start-local.mjs",
     "start:windows": "node scripts/qa-sentinel-launcher.cjs",
@@ -61,7 +61,10 @@
     "scan:coverage": "node scripts/build-discovery-coverage.mjs",
     "scan:nation:deep": "npm run scan:nation && npm run scan:nation:auth && npm run scan:coverage",
     "scan:skills:auth": "node scripts/run-authenticated-scan.mjs https://aiskills.nation.dev/ ai-skills playwright/.auth/ai-skills.json /my-pathway",
-    "scan:skills:deep": "npm run scan:skills && npm run scan:skills:auth && npm run scan:coverage"
+    "scan:skills:deep": "npm run scan:skills && npm run scan:skills:auth && npm run scan:coverage",
+    "dashboard:plain": "node scripts/serve-dashboard.mjs",
+    "auth:nation:refresh": "node scripts/auth-refresh.mjs nation",
+    "auth:skills:refresh": "node scripts/auth-refresh.mjs ai-skills"
   },
   "keywords": [
     "qa",
