@@ -23,7 +23,7 @@
     "qa": "node scripts/run-qa.mjs",
     "qa:full": "npm run scan:all && npm run qa",
     "qa:sites": "node scripts/qa-sites.mjs",
-    "qa:unattended": "node scripts/qa-unattended.mjs",
+    "qa:unattended": "node scripts/run-unattended-with-failure-report.mjs",
     "qa:pentest": "node scripts/qa-pentest.mjs",
     "qa:pentest:production": "node scripts/qa-pentest.mjs --mode production-safe",
     "qa:pentest:staging": "node scripts/qa-pentest.mjs --mode staging-active",
@@ -64,7 +64,9 @@
     "scan:skills:deep": "npm run scan:skills && npm run scan:skills:auth && npm run scan:coverage",
     "dashboard:plain": "node scripts/serve-dashboard.mjs",
     "auth:nation:refresh": "node scripts/auth-refresh.mjs nation",
-    "auth:skills:refresh": "node scripts/auth-refresh.mjs ai-skills"
+    "auth:skills:refresh": "node scripts/auth-refresh.mjs ai-skills",
+    "qa:unattended:core": "node scripts/qa-unattended.mjs",
+    "report:failed-playwright": "node scripts/generate-failed-playwright-report.mjs"
   },
   "keywords": [
     "qa",
