@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="sentinel-ai.css" />
 <link rel="stylesheet" href="./autonomous-qa.css" />
 <link rel="stylesheet" href="./discovery-release-readiness.css" />
+<link rel="stylesheet" href="./discovery-coverage.css" />
 <link rel="stylesheet" href="./site-health.css" />
   <link rel="stylesheet" href="./root-cause-intelligence.css" />
   <link rel="stylesheet" href="./ux-ui.css" />
@@ -34,6 +35,7 @@
   <link rel="stylesheet" href="./collapsible-panels.css" />
   <link rel="stylesheet" href="./workbench-v3.css" />
   <link rel="stylesheet" href="./workbench-v52.css" />
+  <link rel="stylesheet" href="./discovery-workbench.css" />
 
 </head>
 
@@ -597,6 +599,209 @@
       <small>Most recent retained observation</small>
     </article>
   </div>
+
+
+  <!-- =======================================================
+       DISCOVERY COVERAGE
+       Evidence only — Unified Decision remains release authority
+       ======================================================= -->
+
+  <section
+    id="discovery-coverage-panel"
+    class="discovery-coverage-panel"
+    data-status="not-verified"
+  >
+    <div class="discovery-coverage-heading">
+      <div>
+        <span class="discovery-coverage-eyebrow">
+          AUTONOMOUS DISCOVERY COVERAGE
+        </span>
+
+        <h3>
+          Anonymous + Authenticated Coverage
+        </h3>
+
+        <p>
+          Routes and safe UI interactions observed by Sentinel.
+          Coverage describes discovered evidence and does not
+          replace the canonical release decision.
+        </p>
+      </div>
+
+      <span
+        id="discovery-coverage-status"
+        class="discovery-coverage-status"
+      >
+        NOT VERIFIED
+      </span>
+    </div>
+
+    <div class="discovery-coverage-metrics">
+      <article>
+        <span>Unique routes</span>
+        <strong id="discovery-coverage-unique">—</strong>
+        <small>Distinct discovered Nation routes</small>
+      </article>
+
+      <article>
+        <span>Anonymous</span>
+        <strong id="discovery-coverage-anonymous">—</strong>
+        <small>Routes visible during anonymous discovery</small>
+      </article>
+
+      <article>
+        <span>Authenticated</span>
+        <strong id="discovery-coverage-authenticated">—</strong>
+        <small>Routes visible with member storage state</small>
+      </article>
+
+      <article>
+        <span>Dynamic content</span>
+        <strong id="discovery-coverage-dynamic">—</strong>
+        <small>Dynamic job and post routes</small>
+      </article>
+
+      <article>
+        <span>Safe interactions</span>
+        <strong id="discovery-coverage-interactions">—</strong>
+        <small>Non-destructive discovery clicks</small>
+      </article>
+
+      <article>
+        <span>User-impact findings</span>
+        <strong id="discovery-coverage-impact-findings">—</strong>
+        <small>Current discovery findings requiring review</small>
+      </article>
+    </div>
+
+    <div class="discovery-coverage-visibility">
+      <div class="discovery-coverage-block-heading">
+        <div>
+          <span>ROUTE VISIBILITY</span>
+          <h4>Observed access states</h4>
+        </div>
+
+        <small>
+          Relative to discovered routes, not an assumed total application size
+        </small>
+      </div>
+
+      <div class="discovery-coverage-bars">
+        <div class="discovery-coverage-bar-row">
+          <div>
+            <span>Shared</span>
+            <strong id="discovery-coverage-shared">—</strong>
+          </div>
+
+          <div class="discovery-coverage-bar">
+            <span
+              id="discovery-coverage-shared-bar"
+              class="is-shared"
+            ></span>
+          </div>
+        </div>
+
+        <div class="discovery-coverage-bar-row">
+          <div>
+            <span>Authenticated-only</span>
+            <strong id="discovery-coverage-auth-only">—</strong>
+          </div>
+
+          <div class="discovery-coverage-bar">
+            <span
+              id="discovery-coverage-auth-only-bar"
+              class="is-auth"
+            ></span>
+          </div>
+        </div>
+
+        <div class="discovery-coverage-bar-row">
+          <div>
+            <span>Anonymous-only</span>
+            <strong id="discovery-coverage-anon-only">—</strong>
+          </div>
+
+          <div class="discovery-coverage-bar">
+            <span
+              id="discovery-coverage-anon-only-bar"
+              class="is-anonymous"
+            ></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="discovery-coverage-state-grid">
+      <article>
+        <span>Anonymous crawl</span>
+        <strong id="discovery-coverage-anon-state">
+          NOT VERIFIED
+        </strong>
+        <small>
+          Queue completion within the configured discovery scope
+        </small>
+      </article>
+
+      <article>
+        <span>Authenticated crawl</span>
+        <strong id="discovery-coverage-auth-state">
+          NOT VERIFIED
+        </strong>
+        <small>
+          Queue completion within the configured discovery scope
+        </small>
+      </article>
+
+      <article>
+        <span>Anonymous interactions</span>
+        <strong id="discovery-coverage-anon-clicks">—</strong>
+        <small>Safe interactions executed</small>
+      </article>
+
+      <article>
+        <span>Authenticated interactions</span>
+        <strong id="discovery-coverage-auth-clicks">—</strong>
+        <small>Safe interactions executed</small>
+      </article>
+    </div>
+
+    <div class="discovery-coverage-details">
+      <details>
+        <summary>
+          <span>Authenticated-only routes</span>
+          <strong id="discovery-coverage-auth-route-count">0</strong>
+        </summary>
+
+        <div
+          id="discovery-coverage-auth-routes"
+          class="discovery-coverage-route-list"
+        >
+          No authenticated-only routes recorded.
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <span>Current discovery findings</span>
+          <strong id="discovery-coverage-finding-count">0</strong>
+        </summary>
+
+        <div
+          id="discovery-coverage-findings"
+          class="discovery-coverage-finding-list"
+        >
+          No current user-impacting discovery findings.
+        </div>
+      </details>
+    </div>
+
+    <p class="discovery-coverage-footnote">
+      “Crawl complete” means the discovery queue was exhausted
+      before the configured page limit. It does not claim that
+      every possible application state or hidden route exists in
+      the discovered set.
+    </p>
+  </section>
 
   <div class="discovery-release-canonical">
     <div class="discovery-release-block-heading">
@@ -4134,6 +4339,7 @@
   <script type="module" src="./workbench-i18n.mjs"></script>
   <script type="module" src="./workbench-v3.mjs"></script>
   <script type="module" src="./workbench-v52.mjs"></script>
+  <script type="module" src="./discovery-workbench.mjs"></script>
 
 </body>
 </html>

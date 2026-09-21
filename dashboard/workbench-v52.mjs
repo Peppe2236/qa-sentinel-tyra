@@ -150,6 +150,511 @@ async function refreshRuntimeVersions() {
   } catch { /* launcher can still be starting */ }
 }
 
+
+async function loadDiscoveryJson(path) {
+  try {
+    const response = await fetch(
+      `${path}?t=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+
+function ensureDiscoveryCoverageCard() {
+  const dashboardMain =
+    document.querySelector('.v5-dashboard-main');
+
+  if (!dashboardMain) {
+    return false;
+  }
+
+  if (
+    dashboardMain.querySelector(
+      '#v52-discovery-coverage'
+    )
+  ) {
+    return false;
+  }
+
+  const card =
+    document.createElement('section');
+
+  card.id =
+    'v52-discovery-coverage';
+
+  card.className =
+    'v5-recent-card v52-discovery-card';
+
+  card.innerHTML = `
+    <div class="v52-discovery-header">
+      <div>
+        <span class="v52-discovery-eyebrow">
+          AUTONOMOUS DISCOVERY
+        </span>
+
+        <h3>Discovery Coverage</h3>
+
+        <p>
+          Anonymous + authenticated route and
+          interaction discovery for Nation.
+        </p>
+      </div>
+
+      <span
+        id="v52-discovery-status"
+        class="v52-discovery-status"
+      >
+        LOADING
+      </span>
+    </div>
+
+    <div class="v52-discovery-metrics">
+      <article>
+        <span>Unique routes</span>
+        <strong id="v52-discovery-unique">—</strong>
+      </article>
+
+      <article>
+        <span>Anonymous</span>
+        <strong id="v52-discovery-anonymous">—</strong>
+      </article>
+
+      <article>
+        <span>Authenticated</span>
+        <strong id="v52-discovery-authenticated">—</strong>
+      </article>
+
+      <article>
+        <span>Dynamic content</span>
+        <strong id="v52-discovery-dynamic">—</strong>
+      </article>
+
+      <article>
+        <span>Safe interactions</span>
+        <strong id="v52-discovery-clicks">—</strong>
+      </article>
+
+      <article>
+        <span>Current findings</span>
+        <strong id="v52-discovery-findings">—</strong>
+      </article>
+    </div>
+
+    <div class="v52-discovery-bars">
+      <div>
+        <span>
+          Shared
+          <strong id="v52-discovery-shared">—</strong>
+        </span>
+        <div>
+          <i id="v52-discovery-shared-bar"></i>
+        </div>
+      </div>
+
+      <div>
+        <span>
+          Auth-only
+          <strong id="v52-discovery-auth-only">—</strong>
+        </span>
+        <div>
+          <i id="v52-discovery-auth-bar"></i>
+        </div>
+      </div>
+
+      <div>
+        <span>
+          Anonymous-only
+          <strong id="v52-discovery-anon-only">—</strong>
+        </span>
+        <div>
+          <i id="v52-discovery-anon-bar"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="v52-discovery-footer">
+      <span id="v52-discovery-anon-state">
+        Anonymous: —
+      </span>
+
+      <span id="v52-discovery-auth-state">
+        Authenticated: —
+      </span>
+    </div>
+
+    <details class="v52-discovery-details">
+      <summary>
+        Authenticated-only routes
+        <strong id="v52-discovery-route-count">0</strong>
+      </summary>
+
+      <div
+        id="v52-discovery-route-list"
+        class="v52-discovery-route-list"
+      ></div>
+    </details>
+
+    <details class="v52-discovery-details">
+      <summary>
+        Current user-impacting findings
+        <strong id="v52-discovery-finding-count">0</strong>
+      </summary>
+
+      <div
+        id="v52-discovery-finding-list"
+        class="v52-discovery-finding-list"
+      ></div>
+    </details>
+  `;
+
+  const recent =
+    dashboardMain.querySelector(
+      '.v5-recent-card'
+    );
+
+  if (recent) {
+    recent.insertAdjacentElement(
+      'afterend',
+      card
+    );
+  } else {
+    dashboardMain.appendChild(card);
+  }
+
+  return true;
+}
+
+
+function setDiscoveryText(id, value) {
+  const element =
+    document.getElementById(id);
+
+  if (element) {
+    element.textContent =
+      String(value ?? '—');
+  }
+}
+
+
+function setDiscoveryBar(id, value, total) {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return;
+  }
+
+  const numerator =
+    Number(value ?? 0);
+
+  const denominator =
+    Number(total ?? 0);
+
+  const percent =
+    denominator > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            numerator / denominator * 100
+          )
+        )
+      : 0;
+
+  element.style.width =
+    `${percent.toFixed(1)}%`;
+}
+
+
+function discoveryUserImpactFindings(
+  anonymous,
+  authenticated
+) {
+  const findings = [];
+  const seen = new Set();
+
+  for (
+    const [mode, report]
+    of [
+      ['anonymous', anonymous],
+      ['authenticated', authenticated],
+    ]
+  ) {
+    for (const page of report?.pages ?? []) {
+      for (
+        const finding
+        of page.findings ?? []
+      ) {
+        if (
+          finding.userImpact !== true &&
+          finding.severity !== 'error' &&
+          finding.severity !== 'critical'
+        ) {
+          continue;
+        }
+
+        const key = [
+          mode,
+          page.pathname,
+          finding.code,
+          finding.message,
+        ].join('|');
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+
+        findings.push({
+          mode,
+          pathname:
+            page.pathname ?? 'Unknown route',
+          severity:
+            finding.severity ?? 'warning',
+          code:
+            finding.code ??
+            'DISCOVERY_FINDING',
+          title:
+            finding.title ??
+            'Discovery finding',
+        });
+      }
+    }
+  }
+
+  return findings;
+}
+
+
+async function refreshDiscoveryCoverage() {
+  ensureDiscoveryCoverageCard();
+
+  const card =
+    document.getElementById(
+      'v52-discovery-coverage'
+    );
+
+  if (!card) {
+    return;
+  }
+
+  const [
+    coverage,
+    anonymous,
+    authenticated,
+  ] = await Promise.all([
+    loadDiscoveryJson(
+      './data/discovery-coverage-nation.json'
+    ),
+    loadDiscoveryJson(
+      './data/discovered-pages-nation.json'
+    ),
+    loadDiscoveryJson(
+      './data/discovered-pages-nation-authenticated.json'
+    ),
+  ]);
+
+  if (!coverage) {
+    setDiscoveryText(
+      'v52-discovery-status',
+      'NOT VERIFIED'
+    );
+
+    card.dataset.status =
+      'not-verified';
+
+    return;
+  }
+
+  const c =
+    coverage.coverage ?? {};
+
+  const interactions =
+    coverage.interactions ?? {};
+
+  const unique =
+    Number(c.uniqueRoutes ?? 0);
+
+  const findings =
+    discoveryUserImpactFindings(
+      anonymous,
+      authenticated
+    );
+
+  const limited =
+    Boolean(
+      c.anonymousCoverageLimited ||
+      c.authenticatedCoverageLimited
+    );
+
+  card.dataset.status =
+    limited
+      ? 'limited'
+      : 'complete';
+
+  setDiscoveryText(
+    'v52-discovery-status',
+    limited
+      ? 'LIMITED'
+      : 'CRAWL COMPLETE'
+  );
+
+  setDiscoveryText(
+    'v52-discovery-unique',
+    c.uniqueRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-anonymous',
+    c.anonymousRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-authenticated',
+    c.authenticatedRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-dynamic',
+    c.dynamicContentRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-clicks',
+    interactions.totalClicks ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-findings',
+    findings.length
+  );
+
+  setDiscoveryText(
+    'v52-discovery-shared',
+    c.sharedRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-auth-only',
+    c.authenticatedOnlyRoutes ?? 0
+  );
+
+  setDiscoveryText(
+    'v52-discovery-anon-only',
+    c.anonymousOnlyRoutes ?? 0
+  );
+
+  setDiscoveryBar(
+    'v52-discovery-shared-bar',
+    c.sharedRoutes,
+    unique
+  );
+
+  setDiscoveryBar(
+    'v52-discovery-auth-bar',
+    c.authenticatedOnlyRoutes,
+    unique
+  );
+
+  setDiscoveryBar(
+    'v52-discovery-anon-bar',
+    c.anonymousOnlyRoutes,
+    unique
+  );
+
+  setDiscoveryText(
+    'v52-discovery-anon-state',
+    `Anonymous: ${
+      c.anonymousCoverageLimited
+        ? 'LIMITED'
+        : 'CRAWL COMPLETE'
+    }`
+  );
+
+  setDiscoveryText(
+    'v52-discovery-auth-state',
+    `Authenticated: ${
+      c.authenticatedCoverageLimited
+        ? 'LIMITED'
+        : 'CRAWL COMPLETE'
+    }`
+  );
+
+  const routes =
+    Array.isArray(
+      coverage.authenticatedOnlyRoutes
+    )
+      ? coverage.authenticatedOnlyRoutes
+      : [];
+
+  setDiscoveryText(
+    'v52-discovery-route-count',
+    routes.length
+  );
+
+  const routeList =
+    document.getElementById(
+      'v52-discovery-route-list'
+    );
+
+  if (routeList) {
+    routeList.innerHTML =
+      routes.length
+        ? routes
+            .map(
+              route =>
+                `<code>${String(route)
+                  .replaceAll('&', '&amp;')
+                  .replaceAll('<', '&lt;')
+                  .replaceAll('>', '&gt;')}</code>`
+            )
+            .join('')
+        : '<span>No authenticated-only routes.</span>';
+  }
+
+  setDiscoveryText(
+    'v52-discovery-finding-count',
+    findings.length
+  );
+
+  const findingList =
+    document.getElementById(
+      'v52-discovery-finding-list'
+    );
+
+  if (findingList) {
+    findingList.innerHTML =
+      findings.length
+        ? findings
+            .map(item => `
+              <article data-severity="${item.severity}">
+                <strong>
+                  ${item.title}
+                </strong>
+                <span>
+                  ${item.pathname}
+                </span>
+                <small>
+                  ${item.code} · ${item.mode}
+                </small>
+              </article>
+            `)
+            .join('')
+        : '<span>No current user-impacting findings.</span>';
+  }
+}
+
+
 document.title = 'QA Sentinel Tyra';
 document.body.classList.add('v52-app');
 decorateNav();
@@ -157,12 +662,18 @@ decorateMetrics();
 decorateQuickActions();
 decorateFooter();
 addSystemVersionRows();
+ensureDiscoveryCoverageCard();
+refreshDiscoveryCoverage();
 refreshRuntimeVersions();
 
 // Keep enhancements intact if history/live content refreshes.
 const observer = new MutationObserver(() => {
   decorateMetrics();
   decorateQuickActions();
+
+  if (ensureDiscoveryCoverageCard()) {
+    refreshDiscoveryCoverage();
+  }
 });
 observer.observe(document.getElementById('workbench-workspace') || document.body, { childList:true, subtree:true });
 
@@ -174,3 +685,4 @@ document.addEventListener('qa-sentinel-language-change', () => {
 });
 
 setInterval(refreshRuntimeVersions, 5000);
+setInterval(refreshDiscoveryCoverage, 10000);

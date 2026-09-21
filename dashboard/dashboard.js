@@ -7528,13 +7528,461 @@ function renderSiteStatistics(run) {
   }
 }
 
+
+function discoveryCoveragePercent(value, total) {
+  const numerator = Number(value ?? 0);
+  const denominator = Number(total ?? 0);
+
+  if (
+    !Number.isFinite(numerator) ||
+    !Number.isFinite(denominator) ||
+    denominator <= 0
+  ) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      (numerator / denominator) * 100
+    )
+  );
+}
+
+
+function setDiscoveryCoverageBar(id, value, total) {
+  const element = byId(id);
+
+  if (!element) {
+    return;
+  }
+
+  element.style.width =
+    `${discoveryCoveragePercent(value, total).toFixed(1)}%`;
+}
+
+
+function renderDiscoveryCoverageRouteList(routes) {
+  const container =
+    byId('discovery-coverage-auth-routes');
+
+  if (!container) {
+    return;
+  }
+
+  const values =
+    Array.isArray(routes)
+      ? routes
+      : [];
+
+  setText(
+    'discovery-coverage-auth-route-count',
+    values.length
+  );
+
+  if (values.length === 0) {
+    container.innerHTML =
+      '<p class="discovery-coverage-empty">' +
+      'No authenticated-only routes recorded.' +
+      '</p>';
+
+    return;
+  }
+
+  container.innerHTML =
+    values
+      .map(route => `
+        <div class="discovery-coverage-route-item">
+          <code>${escapeHtml(String(route))}</code>
+        </div>
+      `)
+      .join('');
+}
+
+
+function discoveryFindingKey(item) {
+  return [
+    item.mode,
+    item.pathname,
+    item.code,
+    item.message,
+  ].join('|');
+}
+
+
+function collectDiscoveryImpactFindings(
+  anonymousReport,
+  authenticatedReport
+) {
+  const findings = [];
+  const seen = new Set();
+
+  const reports = [
+    ['anonymous', anonymousReport],
+    ['authenticated', authenticatedReport],
+  ];
+
+  for (const [mode, report] of reports) {
+    for (const page of report?.pages ?? []) {
+      for (const finding of page.findings ?? []) {
+        const severity =
+          String(finding.severity ?? '').toLowerCase();
+
+        const important =
+          finding.userImpact === true ||
+          severity === 'critical' ||
+          severity === 'error';
+
+        if (!important) {
+          continue;
+        }
+
+        const item = {
+          mode,
+          pathname:
+            page.pathname ??
+            page.finalUrl ??
+            page.url ??
+            'Unknown route',
+
+          severity:
+            severity || 'warning',
+
+          category:
+            finding.category ??
+            'discovery',
+
+          code:
+            finding.code ??
+            'DISCOVERY_FINDING',
+
+          title:
+            finding.title ??
+            'Discovery finding',
+
+          message:
+            finding.message ??
+            '',
+
+          userImpact:
+            finding.userImpact === true,
+        };
+
+        const key =
+          discoveryFindingKey(item);
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        findings.push(item);
+      }
+    }
+  }
+
+  const severityOrder = {
+    critical: 0,
+    error: 1,
+    warning: 2,
+    info: 3,
+  };
+
+  findings.sort((left, right) => {
+    const severityDifference =
+      (severityOrder[left.severity] ?? 9) -
+      (severityOrder[right.severity] ?? 9);
+
+    if (severityDifference !== 0) {
+      return severityDifference;
+    }
+
+    return String(left.pathname).localeCompare(
+      String(right.pathname)
+    );
+  });
+
+  return findings;
+}
+
+
+function renderDiscoveryCoverageFindings(findings) {
+  const container =
+    byId('discovery-coverage-findings');
+
+  if (!container) {
+    return;
+  }
+
+  const values =
+    Array.isArray(findings)
+      ? findings
+      : [];
+
+  setText(
+    'discovery-coverage-finding-count',
+    values.length
+  );
+
+  setText(
+    'discovery-coverage-impact-findings',
+    values.length
+  );
+
+  if (values.length === 0) {
+    container.innerHTML =
+      '<p class="discovery-coverage-empty">' +
+      'No current user-impacting discovery findings.' +
+      '</p>';
+
+    return;
+  }
+
+  container.innerHTML =
+    values
+      .slice(0, 25)
+      .map(item => `
+        <article
+          class="discovery-coverage-finding"
+          data-severity="${escapeHtml(item.severity)}"
+        >
+          <div class="discovery-coverage-finding-heading">
+            <span>
+              ${escapeHtml(item.severity.toUpperCase())}
+            </span>
+
+            <code>
+              ${escapeHtml(String(item.pathname))}
+            </code>
+          </div>
+
+          <strong>
+            ${escapeHtml(String(item.title))}
+          </strong>
+
+          <p>
+            ${escapeHtml(String(item.code))}
+            ·
+            ${escapeHtml(String(item.mode))}
+          </p>
+
+          ${
+            item.message
+              ? `<small>${escapeHtml(String(item.message))}</small>`
+              : ''
+          }
+        </article>
+      `)
+      .join('');
+}
+
+
+function renderDiscoveryCoverage(
+  coverageReport,
+  anonymousReport,
+  authenticatedReport
+) {
+  const panel =
+    byId('discovery-coverage-panel');
+
+  if (!panel) {
+    return;
+  }
+
+  if (
+    !coverageReport ||
+    typeof coverageReport !== 'object'
+  ) {
+    panel.dataset.status =
+      'not-verified';
+
+    setText(
+      'discovery-coverage-status',
+      'NOT VERIFIED'
+    );
+
+    return;
+  }
+
+  const coverage =
+    coverageReport.coverage ?? {};
+
+  const interactions =
+    coverageReport.interactions ?? {};
+
+  const uniqueRoutes =
+    Number(coverage.uniqueRoutes ?? 0);
+
+  const sharedRoutes =
+    Number(coverage.sharedRoutes ?? 0);
+
+  const authenticatedOnly =
+    Number(
+      coverage.authenticatedOnlyRoutes ??
+      0
+    );
+
+  const anonymousOnly =
+    Number(
+      coverage.anonymousOnlyRoutes ??
+      0
+    );
+
+  const anonymousLimited =
+    Boolean(
+      coverage.anonymousCoverageLimited
+    );
+
+  const authenticatedLimited =
+    Boolean(
+      coverage.authenticatedCoverageLimited
+    );
+
+  const limited =
+    anonymousLimited ||
+    authenticatedLimited;
+
+  panel.dataset.status =
+    limited
+      ? 'limited'
+      : 'complete';
+
+  setText(
+    'discovery-coverage-status',
+    limited
+      ? 'LIMITED'
+      : 'CRAWL COMPLETE'
+  );
+
+  setText(
+    'discovery-coverage-unique',
+    uniqueRoutes
+  );
+
+  setText(
+    'discovery-coverage-anonymous',
+    coverage.anonymousRoutes ?? 0
+  );
+
+  setText(
+    'discovery-coverage-authenticated',
+    coverage.authenticatedRoutes ?? 0
+  );
+
+  setText(
+    'discovery-coverage-dynamic',
+    coverage.dynamicContentRoutes ?? 0
+  );
+
+  setText(
+    'discovery-coverage-interactions',
+    interactions.totalClicks ?? 0
+  );
+
+  setText(
+    'discovery-coverage-shared',
+    sharedRoutes
+  );
+
+  setText(
+    'discovery-coverage-auth-only',
+    authenticatedOnly
+  );
+
+  setText(
+    'discovery-coverage-anon-only',
+    anonymousOnly
+  );
+
+  setText(
+    'discovery-coverage-anon-clicks',
+    interactions.anonymousClicks ?? 0
+  );
+
+  setText(
+    'discovery-coverage-auth-clicks',
+    interactions.authenticatedClicks ?? 0
+  );
+
+  setText(
+    'discovery-coverage-anon-state',
+    anonymousLimited
+      ? 'LIMITED'
+      : 'CRAWL COMPLETE'
+  );
+
+  setText(
+    'discovery-coverage-auth-state',
+    authenticatedLimited
+      ? 'LIMITED'
+      : 'CRAWL COMPLETE'
+  );
+
+  setDiscoveryCoverageBar(
+    'discovery-coverage-shared-bar',
+    sharedRoutes,
+    uniqueRoutes
+  );
+
+  setDiscoveryCoverageBar(
+    'discovery-coverage-auth-only-bar',
+    authenticatedOnly,
+    uniqueRoutes
+  );
+
+  setDiscoveryCoverageBar(
+    'discovery-coverage-anon-only-bar',
+    anonymousOnly,
+    uniqueRoutes
+  );
+
+  renderDiscoveryCoverageRouteList(
+    coverageReport.authenticatedOnlyRoutes
+  );
+
+  const findings =
+    collectDiscoveryImpactFindings(
+      anonymousReport,
+      authenticatedReport
+    );
+
+  renderDiscoveryCoverageFindings(
+    findings
+  );
+}
+
+
 async function render() {
-  const [run, history, issues, unifiedIssues] =
+  const [
+    run,
+    history,
+    issues,
+    unifiedIssues,
+    discoveryCoverage,
+    anonymousDiscovery,
+    authenticatedDiscovery,
+  ] =
   await Promise.all([
     loadJson('./data/latest-run.json', null),
     loadJson('./data/history.json', []),
     loadJson('./data/issues.json', []),
     loadJson('./data/unified-issues.json', []),
+
+    loadJson(
+      './data/discovery-coverage-nation.json',
+      null
+    ),
+
+    loadJson(
+      './data/discovered-pages-nation.json',
+      null
+    ),
+
+    loadJson(
+      './data/discovered-pages-nation-authenticated.json',
+      null
+    ),
   ]);
 
   if (!run) {
@@ -7560,6 +8008,13 @@ async function render() {
   renderMetadata(run);
   renderReleaseAssessment(run);
   renderDiscoveryReleaseReadiness(run);
+
+  renderDiscoveryCoverage(
+    discoveryCoverage,
+    anonymousDiscovery,
+    authenticatedDiscovery
+  );
+
   renderMetrics(run);
   renderSentinelAi(run);
   renderRootCauseNotes(run);

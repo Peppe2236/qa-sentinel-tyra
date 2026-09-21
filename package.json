@@ -36,7 +36,7 @@
     "qa:compat": "node scripts/qa-compat.mjs",
     "scan": "node scripts/scan-site.mjs",
     "scan:nation": "node scripts/scan-site.mjs https://nation.dev/ nation",
-    "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/skills ai-skills",
+    "scan:skills": "node scripts/scan-site.mjs https://aiskills.nation.dev/ ai-skills",
     "scan:all": "npm run scan:nation && npm run scan:skills",
     "dashboard": "node scripts/serve-dashboard.mjs",
     "report": "playwright show-report",
@@ -55,7 +55,13 @@
     "clean": "node -e \"const fs=require('fs'); for (const p of ['test-results','playwright-report','blob-report']) fs.rmSync(p,{recursive:true,force:true});\"",
     "qa:demo": "npm run scan:all && node scripts/qa-demo.mjs",
     "build:exe:raw": "pkg scripts/qa-sentinel-launcher.cjs --targets node20-win-x64 --output dist/QA-Sentinel-Tyra.raw.exe",
-    "build:exe:icon": "node scripts/build-exe-final.cjs"
+    "build:exe:icon": "node scripts/build-exe-final.cjs",
+    "scan:nation:auth": "node scripts/run-authenticated-scan.mjs https://nation.dev/ nation playwright/.auth/nation.json /home /profile /jobs /benchmarks",
+    "scan:deep": "npm run scan:nation && npm run scan:nation:auth && npm run scan:skills && npm run scan:skills:auth && npm run scan:coverage",
+    "scan:coverage": "node scripts/build-discovery-coverage.mjs",
+    "scan:nation:deep": "npm run scan:nation && npm run scan:nation:auth && npm run scan:coverage",
+    "scan:skills:auth": "node scripts/run-authenticated-scan.mjs https://aiskills.nation.dev/ ai-skills playwright/.auth/ai-skills.json /my-pathway",
+    "scan:skills:deep": "npm run scan:skills && npm run scan:skills:auth && npm run scan:coverage"
   },
   "keywords": [
     "qa",

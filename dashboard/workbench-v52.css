@@ -606,3 +606,214 @@ body.v52-app .v53-stage[data-state="idle"] strong,
 body.v52-app .v53-stage[data-state="idle"] small {
   color:#7894ae;
 }
+
+
+/* ==========================================================
+   V5.2 — DISCOVERY COVERAGE
+   ========================================================== */
+
+body.v52-app .v52-discovery-card {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+}
+
+body.v52-app .v52-discovery-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+body.v52-app .v52-discovery-eyebrow {
+  display:block;
+  margin-bottom:3px;
+  color:#65d9ff;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+
+body.v52-app .v52-discovery-header h3 {
+  margin:0 0 3px;
+  font-size:14px;
+}
+
+body.v52-app .v52-discovery-header p {
+  margin:0;
+  color:#8fa7bf;
+  font-size:9.5px;
+}
+
+body.v52-app .v52-discovery-status {
+  padding:5px 8px;
+  border:1px solid rgba(132,160,190,.3);
+  border-radius:999px;
+  color:#b7cce1;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+
+body.v52-app
+.v52-discovery-card[data-status="complete"]
+.v52-discovery-status {
+  border-color:rgba(58,226,154,.45);
+  color:#6ef0b7;
+  background:rgba(58,226,154,.08);
+}
+
+body.v52-app
+.v52-discovery-card[data-status="limited"]
+.v52-discovery-status {
+  border-color:rgba(246,195,79,.45);
+  color:#f7d578;
+  background:rgba(246,195,79,.08);
+}
+
+body.v52-app .v52-discovery-metrics {
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:7px;
+}
+
+body.v52-app .v52-discovery-metrics article {
+  min-width:0;
+  padding:8px;
+  border:1px solid rgba(var(--wb-accent-rgb),.18);
+  border-radius:7px;
+  background:rgba(5,21,38,.72);
+}
+
+body.v52-app .v52-discovery-metrics span {
+  display:block;
+  color:#89a4bf;
+  font-size:8px;
+  text-transform:uppercase;
+}
+
+body.v52-app .v52-discovery-metrics strong {
+  display:block;
+  margin-top:5px;
+  color:#eef8ff;
+  font-size:18px;
+}
+
+body.v52-app .v52-discovery-bars {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+body.v52-app .v52-discovery-bars > div {
+  display:grid;
+  gap:4px;
+}
+
+body.v52-app .v52-discovery-bars span {
+  display:flex;
+  justify-content:space-between;
+  color:#91abc3;
+  font-size:8.5px;
+}
+
+body.v52-app .v52-discovery-bars span strong {
+  color:#dcecff;
+}
+
+body.v52-app .v52-discovery-bars > div > div {
+  height:5px;
+  overflow:hidden;
+  border-radius:99px;
+  background:rgba(130,160,190,.13);
+}
+
+body.v52-app .v52-discovery-bars i {
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:99px;
+  background:#47cfff;
+}
+
+body.v52-app #v52-discovery-auth-bar {
+  background:#9a7cff;
+}
+
+body.v52-app #v52-discovery-anon-bar {
+  background:#45dfa0;
+}
+
+body.v52-app .v52-discovery-footer {
+  display:flex;
+  gap:14px;
+  color:#77dcb5;
+  font-size:8.5px;
+  font-weight:700;
+}
+
+body.v52-app .v52-discovery-details {
+  border-top:1px solid rgba(var(--wb-accent-rgb),.14);
+  padding-top:6px;
+}
+
+body.v52-app .v52-discovery-details summary {
+  display:flex;
+  justify-content:space-between;
+  cursor:pointer;
+  color:#bcd1e5;
+  font-size:9px;
+  font-weight:700;
+}
+
+body.v52-app .v52-discovery-route-list,
+body.v52-app .v52-discovery-finding-list {
+  display:grid;
+  gap:5px;
+  max-height:180px;
+  margin-top:7px;
+  overflow:auto;
+}
+
+body.v52-app .v52-discovery-route-list code {
+  padding:5px 7px;
+  border-radius:5px;
+  background:rgba(255,255,255,.035);
+  color:#9fc5e8;
+  font-size:8px;
+  overflow-wrap:anywhere;
+}
+
+body.v52-app .v52-discovery-finding-list article {
+  display:grid;
+  gap:2px;
+  padding:6px 7px;
+  border:1px solid rgba(245,193,78,.23);
+  border-radius:6px;
+  background:rgba(255,255,255,.025);
+}
+
+body.v52-app .v52-discovery-finding-list strong {
+  font-size:9px;
+}
+
+body.v52-app .v52-discovery-finding-list span,
+body.v52-app .v52-discovery-finding-list small {
+  color:#8da8c0;
+  font-size:8px;
+}
+
+@media (max-width:1100px) {
+  body.v52-app .v52-discovery-metrics {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media (max-width:720px) {
+  body.v52-app .v52-discovery-metrics,
+  body.v52-app .v52-discovery-bars {
+    grid-template-columns:1fr;
+  }
+}
