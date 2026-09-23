@@ -4,11 +4,69 @@
 
 QA Sentinel Tyra has completed the **Milestone 5 Quality Intelligence Framework**, the **Milestone 6 Advisory Autonomous QA Framework**, and **Milestone 7 Unified Dashboard Intelligence & Operationalization**.
 
-**Milestone 8 Security Weakness Intelligence is IN PROGRESS.** The security execution modes, authorization guardrails and dedicated pentest reporting foundation are delivered, while deeper evidence maturity, correlation, posture/history and canonical Unified Decisioning integration remain unfinished.
+**Milestone 8 Security Weakness Intelligence is IN PROGRESS.** The security execution modes, Security Orchestrator, repository security engines, Security Posture, triage v2 and Auth/AuthZ M8.2.4 A–D integration are now delivered and production-safe verified. Deeper API authorization, cross-user/role/IDOR verification, server-side logout invalidation, historical correlation and canonical Unified Decisioning integration remain unfinished.
 
 On **2026-09-16**, QA Sentinel Tyra also delivered a cross-cutting **Desktop Workbench & Operator Experience** layer. This is an operational interface enhancement rather than a new release-authority model: Unified Decisioning v5 remains canonical and Autonomous QA remains advisory-only.
 
 QA Sentinel Tyra is evolving from a Playwright-centered QA tool into an **evidence-driven Quality Intelligence ecosystem**. Playwright remains a core execution engine, but Discovery, Functional QA, Security, Accessibility, UX/UI, Performance, API/Backend, Root-Cause Intelligence, Cross-Layer Correlation, Unified Decisioning, Sentinel AI / Eve, reporting and advisory Autonomous QA all contribute to one evidence model.
+
+## Current M8 verification — 2026-09-23
+
+The current Milestone 8 implementation has reached the following verified boundary.
+
+| Track | Status |
+|---|---|
+| M8.1 QA Trust & Run Integrity | Foundation delivered; remaining hardening tracked separately |
+| M8.2 Security Orchestrator | ✅ Verified |
+| Repository security engines | ✅ npm audit / Gitleaks / Semgrep / Trivy |
+| Security Posture | ✅ Verified foundation |
+| Security triage v2 | ✅ Verified |
+| M8.2.4A Auth/AuthZ foundation | ✅ Verified |
+| M8.2.4B Protected-route verification | ✅ Verified |
+| M8.2.4C Security Posture integration | ✅ Verified |
+| M8.2.4D Finding normalization | ✅ Verified |
+| M8.2.4E+ deeper authorization | 🚧 NOT VERIFIED |
+
+### Latest authorized Production Safe verification
+
+- Evidence status: **COMPLETE**
+- Applicable engines: **6/6**
+- Raw observations: **4**
+- Unique findings: **4**
+- Open findings: **1**
+- Confirmed findings: **1**
+- Needs review: **0**
+- False positives: **3**
+- Actionable critical: **0**
+- Actionable high: **0**
+- Actionable medium: **1**
+- Actionable low: **0**
+
+### Auth/AuthZ verification
+
+- Sites checked: **2/2**
+- Route checks: **15**
+- Open Auth/AuthZ findings: **0**
+- Engine execution: **complete**
+- Verification coverage: **partial**
+- Finding normalization: **complete**
+- Triage pending: **false**
+
+The confirmed MEDIUM finding is the missing `Content-Security-Policy`
+configuration weakness on AI Skills. Missing CSP alone is not treated as
+proof of exploitable XSS.
+
+The following Auth/AuthZ dimensions remain explicitly **NOT VERIFIED**:
+
+- cross-user authorization
+- role authorization
+- object ownership / IDOR
+- server API authorization
+- server-side logout invalidation
+
+`100%` engine execution coverage means all applicable configured security
+engines completed. It does not mean complete application-security or
+authorization coverage.
 
 ## Decision authority and safety boundaries
 
@@ -234,16 +292,53 @@ A finding may only move upward when new evidence supports the stronger claim.
 
 | Delivery | Status | Capability |
 |---|---|---|
-| 8.1 Security Evidence Foundation | 🚧 Partial | Mode separation, authorization/scope boundaries and dedicated pentest evidence delivered; canonical shared evidence-envelope work continues |
-| 8.2 Header & Browser Security Intelligence | ✅ Foundation delivered | HTTP/security headers plus TLS/certificate assessment in Production Safe |
-| 8.3 Cookie & Session Security | 🚧 Partial | Existing cookie/session verification exists; deeper evidence maturity continues |
-| 8.4 Authentication & Authorization Intelligence | 🚧 Partial | Protected-route evidence + Manual Validation foundation; deeper safe boundary testing continues |
+| 8.1 Security Evidence Foundation | 🚧 Advanced foundation | Mode separation, authorization/scope boundaries, Security Posture, fingerprinting and triage are delivered; canonical release integration remains separate |
+| 8.2 Header & Browser Security Intelligence | ✅ Foundation delivered | HTTP/security headers, TLS/certificate assessment and normalized Security Posture evidence in Production Safe |
+| 8.3 Cookie & Session Security | 🚧 Partial | Session-cookie defensive flags and saved-session behavior are observed; server-side invalidation remains NOT VERIFIED |
+| 8.4 Authentication & Authorization Intelligence | 🚧 Advanced foundation | M8.2.4 A–D verified: protected-route checks, session-state boundaries, engine coverage, shared finding normalization and triage; cross-user/role/IDOR/API/logout dimensions remain NOT VERIFIED |
 | 8.5 CORS & Cross-Origin Intelligence | 🧭 Planned / expandable | Evidence-driven CORS assessment without fabricating exploitability |
 | 8.6 Information Disclosure Intelligence | 🚧 Partial | Optional safe exposure/sensitive-path checks; deeper classification continues |
-| 8.7 API Security Evidence | 🚧 Partial | Existing first-party API evidence + manual validation; dedicated security semantics continue |
+| 8.7 API Security Evidence | 🚧 Partial | Existing first-party API observations are available; passive server API authorization evidence remains NOT VERIFIED |
 | 8.8 Safe Input & Abuse-Resistance Signals | 🚧 Partial | Manual foundation delivered; automated non-destructive signals continue |
-| 8.9 Security Posture & Correlation | 🧭 Planned | Correlation/posture/history model before canonical release integration |
-| 8.10 Security Reporting & Unified Decisioning | 🚧 Partial | Dedicated pentest dashboard and HTML/JSON/Markdown reports delivered; canonical release integration intentionally inactive |
+| 8.9 Security Posture & Correlation | 🚧 Partial | Shared Security Posture, engine coverage, normalization, fingerprints and triage are delivered; historical comparison and deeper cross-tool correlation continue |
+| 8.10 Security Reporting & Unified Decisioning | 🚧 Partial | Pentest and Security Posture dashboard/report evidence delivered; canonical Unified Decisioning integration intentionally remains inactive |
+
+### Next M8 implementation order
+
+1. **M8.2.4E — Passive API authorization evidence**
+   - Nation GraphQL and AI Skills API/session boundary evidence
+   - status, redirect and authorization behavior only
+   - no response-sensitive bodies
+   - no mutation, fuzzing or arbitrary identifier enumeration
+
+2. **Cross-user and role authorization**
+   - requires explicitly approved dedicated User A / User B / role accounts
+   - only configured resources may be compared
+   - no automatic resource discovery or ID enumeration
+
+3. **Object ownership / IDOR verification**
+   - explicit approved test resources only
+   - evidence-driven access-control comparison
+
+4. **Server-side logout invalidation**
+   - ephemeral sessions only
+   - verify whether invalidated sessions remain usable
+
+5. **Historical Security Posture**
+   - compare normalized findings across runs
+   - distinguish new, persistent and resolved findings
+
+6. **Cross-tool root-cause correlation**
+   - dependency advisories
+   - secret findings
+   - SAST
+   - DAST / header evidence
+   - Auth/AuthZ
+   - stable correlation semantics
+
+7. **Canonical security / Unified Decision integration**
+   - only after the evidence and correlation contract is explicitly validated
+   - no silent release-score changes
 
 ### Milestone 8 safety contract
 

@@ -1,0 +1,96 @@
+.security-posture-panel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid rgba(120,150,190,.28);
+  border-radius: 14px;
+  background: rgba(15,30,50,.06);
+}
+
+.security-posture-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.security-posture-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  opacity: .65;
+}
+
+.security-posture-heading h2 {
+  margin: 4px 0;
+}
+
+.security-posture-heading p {
+  margin: 0;
+  opacity: .72;
+}
+
+.security-posture-badge {
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.security-posture-summary,
+.security-engine-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.security-posture-summary > div,
+.security-engine-card {
+  padding: 11px;
+  border: 1px solid rgba(120,150,190,.2);
+  border-radius: 9px;
+}
+
+.security-posture-summary span,
+.security-engine-card span {
+  display: block;
+  font-size: 11px;
+  opacity: .65;
+  margin-bottom: 5px;
+}
+
+.security-findings {
+  display: grid;
+  gap: 8px;
+}
+
+.security-findings article {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(120,150,190,.18);
+  border-radius: 8px;
+}
+
+.security-findings span,
+.security-findings small {
+  opacity: .7;
+}
+
+.security-posture-panel .ok {
+  color: #35b779;
+}
+
+.security-posture-panel .warn {
+  color: #e6a43a;
+}
+
+.security-posture-panel .bad {
+  color: #e45858;
+}
+
+.security-posture-note {
+  margin-top: 14px;
+  font-size: 12px;
+  opacity: .7;
+}

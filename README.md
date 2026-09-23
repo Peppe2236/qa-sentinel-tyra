@@ -219,6 +219,13 @@ New modules should feed the same evidence, provenance, confidence and Unified De
 | Active staging security assessment | ✅ Guarded: allowlisted non-production targets + explicit double opt-in |
 | Manual security validation | ✅ No-network checklist/report workflow |
 | Pentest dashboard + evidence reports | ✅ HTML/JSON/Markdown; intentionally isolated from Unified Decisioning |
+| QA Run Integrity | ✅ Evidence validity, execution completeness and infrastructure/product separation |
+| Security Orchestrator | ✅ Repository-only and Production Safe orchestration |
+| Repository security engines | ✅ npm audit / Gitleaks / Semgrep / Trivy |
+| Security triage v2 | ✅ Confirmed / needs-review / false-positive / accepted-risk semantics |
+| Security Posture | ✅ Normalized findings, fingerprints, engine coverage and actionable severity |
+| Auth/AuthZ security | ✅ M8.2.4A–C protected-route/session evidence and posture integration |
+| Auth/AuthZ finding normalization | ✅ M8.2.4D shared fingerprint / posture / triage pipeline |
 | Windows EXE / desktop launcher | ✅ Workbench startup, on-demand QA, failsafe EXE post-processing and Tyra icon pipeline |
 | Dedicated desktop QA Workbench v5.3.1 | ✅ Delivered 2026-09-16 |
 | Workbench target selection | ✅ Both sites / Nation only / AI Skills only |
@@ -232,6 +239,42 @@ New modules should feed the same evidence, provenance, confidence and Unified De
 ## Latest verified QA snapshots
 
 QA Sentinel Tyra keeps **development validation**, **test evidence** and **release authority** separate. A component can be validated without claiming that the live applications have a fresh full release-scope QA decision.
+
+### Current Security Verification — 2026-09-23
+
+The latest verified Production Safe Security Posture completed successfully.
+
+| Metric | Verified result |
+|---|---|
+| Security posture | COMPLETE |
+| Applicable engines | 6 / 6 complete |
+| Raw observations | 4 |
+| Unique findings | 4 |
+| Open findings | 1 |
+| Confirmed findings | 1 |
+| Needs review | 0 |
+| False positives | 3 |
+| Actionable Critical / High / Medium / Low | 0 / 0 / 1 / 0 |
+| Auth/AuthZ route checks | 15 |
+| Open Auth/AuthZ findings | 0 |
+| Auth/AuthZ engine execution | complete |
+| Auth/AuthZ verification coverage | partial |
+| Auth/AuthZ finding normalization | complete |
+| Auth/AuthZ triage pending | false |
+
+The confirmed MEDIUM finding is a missing `Content-Security-Policy` configuration weakness on AI Skills. Missing CSP alone is not treated as proof of exploitable XSS.
+
+`coveragePercent: 100` means that all applicable security engines completed. It does not mean that every security or authorization dimension has been verified.
+
+The following Auth/AuthZ dimensions remain **NOT VERIFIED**:
+
+- cross-user authorization
+- role authorization
+- object ownership / IDOR
+- server API authorization
+- server-side logout invalidation
+
+Security Posture remains separate from canonical Unified Decisioning and does not silently change release readiness.
 
 ### Latest development validation — 2026-09-16
 
@@ -609,7 +652,13 @@ npm run qa:matrix
 Security assessment is intentionally separated from normal QA execution:
 
 ```bash
-# Production Safe — authorized, non-destructive
+# Repository-only integrated security posture
+npm run qa:security:repo
+
+# Production Safe integrated security posture
+QA_PENTEST_AUTHORIZED=true npm run qa:security:production
+
+# Production Safe — low-level Tyra Pentest engine
 QA_PENTEST_AUTHORIZED=true npm run qa:pentest:production
 
 # Production Safe + optional ZAP Baseline
@@ -1294,13 +1343,22 @@ Delivered 2026-09-16 as a cross-cutting operational enhancement, without changin
 
 ### Milestone 8 — Security Weakness Intelligence 🚧 IN PROGRESS
 
-- ✅ separate Production Safe, Staging Active and Manual Validation modes
+- ✅ Production Safe, Repository Only, Staging Active and Manual Validation boundaries
 - ✅ authorization-gated, non-destructive production HTTP/TLS assessment
+- ✅ npm audit, Gitleaks, Semgrep and Trivy repository security engines
+- ✅ Security Orchestrator and normalized Security Posture
+- ✅ stable security rule IDs, fingerprints and triage v2
+- ✅ confirmed / needs-review / false-positive / accepted-risk evidence states
+- ✅ M8.2.4A Auth/AuthZ configuration and repository-only evidence
+- ✅ M8.2.4B Production Safe anonymous / authenticated / cleared-session route verification
+- ✅ M8.2.4C Auth/AuthZ engine and Security Posture coverage integration
+- ✅ M8.2.4D Auth/AuthZ shared finding normalization and triage integration
 - ✅ optional ZAP Baseline and allowlisted non-production ZAP Full Scan boundaries
-- ✅ dedicated Pentest dashboard and HTML/JSON/Markdown reporting
-- 🚧 evidence maturity/correlation across cookie/session, auth/access-control, CORS, API and abuse-resistance domains
-- 🚧 Security Posture, historical comparison and canonical shared-evidence integration
-- 🔒 pentest evidence remains isolated from Unified Decisioning until explicitly validated
+- 🚧 passive server API authorization evidence
+- 🚧 cross-user, role and object-ownership / IDOR verification
+- 🚧 server-side logout invalidation verification
+- 🚧 historical Security Posture and deeper cross-tool root-cause correlation
+- 🔒 security evidence remains isolated from Unified Decisioning until canonical release integration is explicitly validated
 
 ### Milestone 9 — Sentinel Ecosystem Intelligence 🧭 PLANNED
 

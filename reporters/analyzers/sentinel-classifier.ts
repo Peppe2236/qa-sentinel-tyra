@@ -207,18 +207,16 @@ export function classifyIssue(
     };
   }
 
-  if (
-    result.category === 'performance' ||
-    title.includes('page load') ||
-    title.includes('api timing') ||
+  const measuredPerformanceEvidence =
     includesAny(message, [
       'page load was',
       'first-party xhr/fetch',
       'exceeded threshold',
       'navigation-timing',
       'playwright-load',
-    ])
-  ) {
+    ]);
+
+  if (measuredPerformanceEvidence) {
     return {
       classification: 'performance-issue',
       reason:

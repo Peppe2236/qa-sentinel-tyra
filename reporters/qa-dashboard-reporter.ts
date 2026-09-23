@@ -1814,7 +1814,8 @@ const run: DashboardRun = {
       .reverse()
       .find(entry =>
         entry.schemaVersion === 5 &&
-        entry.releaseDecisionSource === 'unified-v5'
+        entry.releaseDecisionSource === 'unified-v5' &&
+        entry.releaseAssessment?.status !== 'not-verified'
       );
 
     Object.assign(

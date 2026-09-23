@@ -118,6 +118,34 @@ test.describe('human review ownership', () => {
     expect(bucketTestResult(axe)).toBe('machine-owned');
   });
 
+  test('performance classification requires measured timing evidence', () => {
+    const locatorFailure = sampleTest({
+      title: 'homepage page load stays within budget',
+      category: 'performance',
+      error: {
+        message:
+          'locator("[data-testid=hero]") was not visible',
+      },
+    });
+
+    const measuredFailure = sampleTest({
+      title: 'homepage performance budget',
+      category: 'performance',
+      error: {
+        message:
+          'Page load was 6200 ms and exceeded threshold 5000 ms',
+      },
+    });
+
+    expect(
+      classifyIssue(locatorFailure).classification
+    ).not.toBe('performance-issue');
+
+    expect(
+      classifyIssue(measuredFailure).classification
+    ).toBe('performance-issue');
+  });
+
   test('ambiguous sidebar failure needs a human', () => {
     const result = sampleTest({
       title: 'sidebar button changes visible layout',

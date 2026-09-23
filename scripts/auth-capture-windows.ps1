@@ -108,25 +108,66 @@ $targetUri = [Uri]$TargetUrl
 
 function Find-AuthenticatedTarget {
   try {
-    $pages = @(
-      Invoke-RestMethod `
-        "http://127.0.0.1:$Port/json"
-    )
+    $endpoint =
+      "http://127.0.0.1:$Port/json/list"
+
+    $raw =
+      & curl.exe `
+        -s `
+        --max-time 2 `
+        $endpoint
+
+    if (-not $raw) {
+      return $null
+    }
+
+    $json =
+      $raw -join "`n"
+
+    $parsed =
+      ConvertFrom-Json `
+        -InputObject $json
+
+    $pages =
+      @()
+
+    foreach ($item in $parsed) {
+      $pages += $item
+    }
 
     foreach ($page in $pages) {
+      if (
+        $page.type -ne "page" -or
+        -not $page.url
+      ) {
+        continue
+      }
+
       try {
-        $uri = [Uri]$page.url
+        $uri =
+          [Uri]$page.url
+
+        $actualPath =
+          $uri.AbsolutePath.TrimEnd('/')
+
+        $expectedPath =
+          $targetUri.AbsolutePath.TrimEnd('/')
 
         if (
-          $uri.Host -eq $targetUri.Host -and
-          $uri.AbsolutePath -eq
-            $targetUri.AbsolutePath
+          $uri.Host -ieq $targetUri.Host -and
+          $actualPath -ieq $expectedPath
         ) {
           return $page
         }
-      } catch {}
+      }
+      catch {
+        continue
+      }
     }
-  } catch {}
+  }
+  catch {
+    return $null
+  }
 
   return $null
 }
@@ -304,9 +345,7 @@ $nationCookies = @(
   $response.result.cookies |
   Where-Object {
     $domain =
-      $_.domain
-        .TrimStart('.')
-        .ToLowerInvariant()
+      $_.domain.TrimStart('.').ToLowerInvariant()
 
     $domain -eq 'nation.dev' -or
     $domain.EndsWith('.nation.dev')

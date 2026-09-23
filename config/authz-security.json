@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "authorizationEnvironmentVariable": "QA_PENTEST_AUTHORIZED",
+  "timeoutMs": 20000,
+  "sites": [
+    {
+      "id": "nation",
+      "name": "Nation",
+      "origin": "https://nation.dev",
+      "authState": "playwright/.auth/nation.json",
+      "protectedRoutes": [
+        "/home",
+        "/profile",
+        "/jobs",
+        "/benchmarks"
+      ],
+      "authRedirectPatterns": [
+        "/signin",
+        "/login",
+        "accounts.google.com"
+      ],
+      "sessionCookieNames": [
+        "__Secure-nation.session_token"
+      ],
+      "observationOnlyEndpoints": [
+        {
+          "method": "POST",
+          "url": "https://nation.dev/api/proxy/graphql",
+          "policy": "passive-only",
+          "reason": "Observed during discovery; no production GraphQL authorization mutation/fuzzing is performed."
+        }
+      ]
+    },
+    {
+      "id": "ai-skills",
+      "name": "AI Skills",
+      "origin": "https://aiskills.nation.dev",
+      "authState": "playwright/.auth/ai-skills.json",
+      "protectedRoutes": [
+        "/my-pathway"
+      ],
+      "authRedirectPatterns": [
+        "/signin",
+        "/login",
+        "/api/auth/signin",
+        "accounts.google.com"
+      ],
+      "sessionCookieNames": [
+        "__Secure-authjs.session-token"
+      ],
+      "observationOnlyEndpoints": [
+        {
+          "method": "GET",
+          "url": "https://aiskills.nation.dev/api/auth/session",
+          "policy": "observation-only",
+          "reason": "Status/URL classification may be observed later; response-body identity data is not required for this engine."
+        }
+      ]
+    }
+  ],
+  "authSettleMs": 1500
+}

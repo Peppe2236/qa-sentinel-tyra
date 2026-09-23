@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "entries": [
+    {
+      "id": "TRIAGE-GITLEAKS-REQ-METADATA-001",
+      "source": "Gitleaks",
+      "ruleId": "generic-api-key",
+      "target": "tests/nation/auth-session.spec.ts",
+      "line": 64,
+      "status": "false-positive",
+      "classification": "qa-requirement-identifier",
+      "reason": "The matched strings are QA requirement, acceptance-criteria and flow identifiers inside qualityMeta metadata. They are not credentials or API keys."
+    },
+    {
+      "id": "TRIAGE-GITLEAKS-REQ-CATALOG-002",
+      "source": "Gitleaks",
+      "ruleId": "generic-api-key",
+      "target": "tests/unit/quality-catalog.spec.ts",
+      "line": 260,
+      "status": "false-positive",
+      "classification": "qa-requirement-identifier",
+      "reason": "The matched strings are QA requirement catalog identifiers used by a unit test. They are not credentials or API keys."
+    },
+    {
+      "id": "TRIAGE-SEMGREP-LOCAL-DASHBOARD-003",
+      "source": "Semgrep",
+      "ruleId": "typescript.react.security.react-insecure-request.react-insecure-request",
+      "target": "scripts/sentinel.mjs",
+      "line": 208,
+      "status": "false-positive",
+      "classification": "intentional-loopback-http",
+      "reason": "The request targets the local QA Sentinel Tyra dashboard at 127.0.0.1:4173 and is used only as a loopback availability check. It does not transmit data to a remote HTTP endpoint."
+    },
+    {
+      "id": "TRIAGE-TYRA-AISKILLS-CSP-004",
+      "source": "Tyra Security Modes",
+      "ruleId": "missing-content-security-policy",
+      "target": "https://aiskills.nation.dev",
+      "status": "confirmed",
+      "classification": "missing-csp-header",
+      "reason": "Production-safe HTTP header inspection confirmed that the AI Skills response does not include a Content-Security-Policy header. This is retained as a confirmed configuration weakness; absence of CSP alone does not establish an exploitable XSS vulnerability."
+    }
+  ]
+}

@@ -50,3 +50,5 @@ Thumbs.db
 .DS_Store
 # Local patch/rollback backups
 *.pre-*
+.workbench-backup/
+*.bak
