@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { verifyStoredSession } from './lib/auth-session.mjs';
+import { assessCoverage, requiredSessionsVerified } from './lib/qa-coverage.mjs';
+const require = createRequire(import.meta.url);
 import {
   chromium,
   firefox,
@@ -78,14 +82,6 @@ function firstLine(error) {
     .split(/\r?\n/)
     .find(Boolean) ??
     'Unknown error';
-}
-
-function normalizePathname(value) {
-  const clean =
-    String(value || '/')
-      .replace(/\/+$/, '');
-
-  return clean || '/';
 }
 
 function checkHarness() {
@@ -295,66 +291,11 @@ async function checkAuth(
         headless: true,
       });
 
-    const context =
-      await browser.newContext({
-        storageState:
-          absoluteState,
-      });
-
-    const page =
-      await context.newPage();
-
-    const response =
-      await page.goto(
-        url,
-        {
-          waitUntil:
-            'domcontentloaded',
-          timeout: 20000,
-        }
-      );
-
-    const finalUrl =
-      page.url();
-
-    base.finalUrl =
-      finalUrl;
-
-    const expected =
-      new URL(url);
-
-    const actual =
-      new URL(finalUrl);
-
-    const signin =
-      /\/signin(?:\/|$)/i.test(
-        actual.pathname
-      );
-
-    const exactProtectedPath =
-      actual.origin ===
-        expected.origin &&
-      normalizePathname(
-        actual.pathname
-      ) ===
-        normalizePathname(
-          expected.pathname
-        );
-
-    base.verified =
-      !signin &&
-      exactProtectedPath &&
-      (
-        !response ||
-        response.status() < 400
-      );
-
-    base.status =
-      base.verified
-        ? 'VERIFIED'
-        : 'NOT_VERIFIED';
-
-    await context.close();
+    const result = await verifyStoredSession(browser, absoluteState, url);
+    Object.assign(base, result, {
+      siteId: path.basename(statePath, '.json'),
+      status: result.verified ? 'VERIFIED' : 'NOT_VERIFIED',
+    });
   } catch (error) {
     base.status =
       'NOT_VERIFIED';
@@ -373,97 +314,26 @@ async function checkAuth(
 }
 
 function playwrightList() {
-  const command =
-    process.platform ===
-    'win32'
-      ? 'npx.cmd'
-      : 'npx';
-
-  const result =
-    spawnSync(
-      command,
-      [
-        'playwright',
-        'test',
-        '--list',
-        '--reporter=line',
-      ],
-      {
-        cwd: root,
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          FORCE_COLOR: '0',
-        },
-      }
-    );
-
-  const output =
-    `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-
-  const projectMatches =
-    [
-      ...output.matchAll(
-        /\[([^\]]+)\]\s+›/g
-      ),
-    ];
-
-  const projects =
-    [
-      ...new Set(
-        projectMatches.map(
-          match =>
-            match[1]
-        )
-      ),
-    ].sort();
-
-  const totalMatch =
-    output.match(
-      /Total:\s+(\d+)\s+tests?/i
-    );
-
-  let expectedExecutions =
-    totalMatch
-      ? Number(totalMatch[1])
-      : projectMatches.length;
-
-  if (
-    !Number.isFinite(
-      expectedExecutions
-    )
-  ) {
-    expectedExecutions = 0;
-  }
-
+  const result = spawnSync(process.execPath, [
+    require.resolve('@playwright/test/cli'), 'test', '--list',
+    '--reporter=./scripts/list-qa-scope.cjs',
+  ], { cwd: root, encoding: 'utf8', timeout: 60000, maxBuffer: 10 * 1024 * 1024,
+    env: { ...process.env, FORCE_COLOR: '0' } });
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  let projectDetails = [];
+  try {
+    const json = output.split(/\r?\n/).find(line => line.startsWith('QA_SCOPE_JSON:'));
+    projectDetails = JSON.parse(json.slice('QA_SCOPE_JSON:'.length)).projectDetails;
+  } catch {}
+  const expectedProjects = projectDetails.map(p => p.name).sort();
+  const expectedExecutions = projectDetails.reduce((sum, p) => sum + p.expectedExecutions, 0);
   return {
-    command:
-      `${command} playwright test --list --reporter=line`,
-    exitCode:
-      result.status,
-    ok:
-      result.status === 0 &&
-      expectedExecutions > 0,
+    command: 'playwright test --list --reporter=./scripts/list-qa-scope.cjs',
+    exitCode: result.status, ok: result.status === 0 && expectedExecutions > 0,
+    projectDetails, expectedProjects, expectedProjectCount: expectedProjects.length,
     expectedExecutions,
-    expectedProjects:
-      projects,
-    expectedProjectCount:
-      projects.length,
-    error:
-      result.error
-        ? firstLine(
-            result.error
-          )
-        : (
-            result.status === 0
-              ? null
-              : (
-                  output
-                    .split(/\r?\n/)
-                    .find(Boolean) ??
-                  'Playwright --list failed.'
-                )
-          ),
+    error: result.status === 0 && expectedExecutions > 0 ? null
+      : 'Playwright scope enumeration failed or produced no tests. Inspect config and dependencies.',
   };
 }
 
@@ -757,6 +627,7 @@ async function preflight() {
         'AI Skills',
         'https://aiskills.nation.dev/',
       ],
+      ['Nation Dev', 'https://dev.nation.dev/community'],
     ]
   ) {
     console.log(
@@ -810,6 +681,11 @@ async function preflight() {
         }
       )
     );
+    authentication.push(await checkAuth(chromium, {
+      name: 'Nation Dev authenticated session',
+      statePath: 'playwright/.auth/nation-dev.json',
+      url: 'https://dev.nation.dev/profile',
+    }));
   }
 
   const scope =
@@ -865,7 +741,7 @@ async function preflight() {
   ) {
     if (!auth.verified) {
       warnings.push(
-        `${auth.name}: ${auth.status}`
+        `${auth.name}: ${auth.status} — ${auth.error ?? "Session not verified on protected route."}`
       );
     }
   }
@@ -938,6 +814,13 @@ async function preflight() {
   console.log(
     `Expected executions: ${scope.expectedExecutions}`
   );
+
+  for (const [label, items] of [['BLOCKERS', blockers], ['WARNINGS', warnings]]) {
+    if (items.length) {
+      console.log('\n' + label);
+      for (const item of items) console.log('- ' + item);
+    }
+  }
 
   console.log(
     `Integrity file: ${stateFile}`
@@ -1059,41 +942,19 @@ async function postrun() {
       )
     );
 
-  const observedProjects =
-    [
-      ...new Set(
-        tests
-          .map(
-            test =>
-              test.project
-          )
-          .filter(Boolean)
-      ),
-    ].sort();
-
-  const expectedProjects =
-    scope.expectedProjects ??
-    [];
-
-  const missingProjects =
-    expectedProjects.filter(
-      project =>
-        !observedProjects.includes(
-          project
-        )
-    );
-
-  const expectedExecutions =
-    scope.expectedExecutions;
-
-  const actualExecutions =
-    tests.length;
+  const authChecks = preflightState?.checks?.authentication ?? [];
+  const coverage = assessCoverage(scope, tests, authChecks);
+  const observedProjects = coverage.observedProjects;
+  const expectedProjects = scope.expectedProjects ?? [];
+  const missingProjects = coverage.missingProjects;
+  const expectedExecutions = scope.expectedExecutions;
+  const actualExecutions = coverage.actualExecutions;
 
   const completeness =
     expectedExecutions > 0
       ? Math.min(
           100,
-          Math.round(
+          Math.floor(
             (
               actualExecutions /
               expectedExecutions
@@ -1103,17 +964,11 @@ async function postrun() {
         )
       : 0;
 
-  const authChecks =
-    preflightState?.checks
-      ?.authentication ??
-    [];
-
-  const authVerified =
-    authChecks.length >= 2 &&
-    authChecks.every(
-      item =>
-        item.verified === true
-    );
+  const authVerified = requiredSessionsVerified(authChecks, [
+    'https://nation.dev/home',
+    'https://aiskills.nation.dev/my-pathway',
+    'https://dev.nation.dev/profile',
+  ]);
 
   const blockers = [];
   const warnings = [];
@@ -1144,6 +999,10 @@ async function postrun() {
     );
   }
 
+  if (!scope.ok) blockers.push('QA scope could not be enumerated; coverage is not verified.');
+  for (const project of coverage.incompleteProjects) {
+    blockers.push(`${project.project}: ${project.status} — ${project.cause}`);
+  }
   if (!authVerified) {
     warnings.push(
       'Authenticated coverage was not fully verified during preflight.'
@@ -1154,7 +1013,7 @@ async function postrun() {
     'VALID';
 
   if (
-    infrastructureItems.length
+    infrastructureItems.length || !scope.ok
   ) {
     status =
       'INVALID';
@@ -1226,6 +1085,11 @@ async function postrun() {
       observedProjectCount:
         observedProjects.length,
       missingProjects,
+      missingExecutions: coverage.missingExecutions,
+      incompleteProjects: coverage.incompleteProjects,
+      skippedExecutions: coverage.skippedExecutions,
+      reportedExecutions: coverage.reportedExecutions,
+      retryAttempts: coverage.retryAttempts,
       rawFailedExecutions:
         failedExecutions.length,
       productFailureExecutions:

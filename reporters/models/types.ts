@@ -75,6 +75,7 @@ export interface UntestedRoute {
 export interface HumanReviewCredentials {
   nation: boolean;
   aiSkills: boolean;
+  nationDev?: boolean;
 }
 
 export interface IssueCluster {
@@ -2329,6 +2330,7 @@ export interface DashboardTestResult {
 
   duration: number;
   retry: number;
+  repeatEachIndex?: number;
 
   severity: Severity;
   category: Category;

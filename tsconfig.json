@@ -21,6 +21,7 @@
   "include": [
     "playwright.config.ts",
     "playwright.unit.config.ts",
+    "playwright.auth-regression.config.ts",
     "config/**/*.ts",
     "tests/**/*.ts",
     "reporters/**/*.ts",

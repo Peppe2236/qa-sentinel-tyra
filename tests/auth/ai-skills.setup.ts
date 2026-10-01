@@ -1,34 +1,32 @@
-import { test as setup, expect } from '@playwright/test';
-
+import { test as setup } from '@playwright/test';
+import fs from 'node:fs';
 import { readOptionalCredentials } from '../helpers/env';
-import {
-  authStateHasData,
-  AI_SKILLS_AUTH_STATE,
-  writeEmptyAuthState,
-} from '../helpers/auth-state';
-import { SkillsCatalogPage } from '../pages/skills-catalog.page';
+import { AI_SKILLS_AUTH_STATE } from '../helpers/auth-state';
 import { completeConfiguredLogin } from '../helpers/complete-login';
 
 setup.setTimeout(120_000);
 
-setup('prepare AI Skills storageState', async ({ page }) => {
-  if (authStateHasData(AI_SKILLS_AUTH_STATE)) {
-    return;
+setup('prepare AI Skills storageState', async ({ browser, page }) => {
+  const { verifyStoredSession, saveVerifiedSession } =
+    await import('../../scripts/lib/auth-session.mjs');
+  const targetUrl = 'https://aiskills.nation.dev/my-pathway';
+  if (fs.existsSync(AI_SKILLS_AUTH_STATE)) {
+    const existing = await verifyStoredSession(browser, AI_SKILLS_AUTH_STATE, targetUrl);
+    if (existing.verified) return;
+    console.warn('[Auth] AI Skills: stored session is not verified.');
   }
-
-  writeEmptyAuthState(AI_SKILLS_AUTH_STATE);
 
   const credentials = readOptionalCredentials('ai-skills');
-
   if (!credentials) {
-    return;
+    throw new Error('AI Skills authentication BLOCKED: no valid session or configured credentials. Run npm run auth:skills:refresh:manual, then qa:preflight.');
   }
 
-  const catalog = new SkillsCatalogPage(page);
-
-  await catalog.gotoPath('/signin');
+  await page.goto('https://aiskills.nation.dev/signin', { waitUntil: 'domcontentloaded' });
   await completeConfiguredLogin(page, credentials, 'AI Skills');
-  await expect(page).toHaveURL(/aiskills\.nation\.dev/i, { timeout: 20_000 });
-  await expect(page).not.toHaveURL(/\/signin\/?$/i, { timeout: 20_000 });
-  await page.context().storageState({ path: AI_SKILLS_AUTH_STATE });
+  // Export only after the login context has opened the protected route.
+  const { verifyProtectedPage } = await import('../../scripts/lib/auth-session.mjs');
+  const login = await verifyProtectedPage(page, targetUrl);
+  if (!login.verified) throw new Error('AI Skills authentication BLOCKED: ' + login.error);
+  const candidate = await page.context().storageState({ indexedDB: true });
+  await saveVerifiedSession(browser, candidate, targetUrl, AI_SKILLS_AUTH_STATE);
 });

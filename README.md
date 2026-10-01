@@ -240,6 +240,78 @@ New modules should feed the same evidence, provenance, confidence and Unified De
 
 QA Sentinel Tyra keeps **development validation**, **test evidence** and **release authority** separate. A component can be validated without claiming that the live applications have a fresh full release-scope QA decision.
 
+### Authentication recovery and coverage hardening — 2026-10-01
+
+The M8.1 operational update verifies saved and newly captured sessions against
+protected routes in a fresh browser context. Cookie presence alone is no longer
+accepted as authenticated evidence. Redirects, HTTP errors and visible login
+forms reject the candidate; a failed capture preserves the previous auth file.
+
+The operator's Nation Dev refresh and preflight targets are retained. Run
+Integrity requires all three protected sessions (`/home`, `/my-pathway` and
+`/profile`); project counts are still read from the local Playwright matrix.
+Nation and AI Skills retain their named-session-cookie checks, including
+chunked cookies, before live verification. Expired, empty and inapplicable
+cookies are rejected. Nation Dev uses protected-route verification without
+assuming an undocumented cookie name.
+
+Windows/WSL manual capture uses a dedicated QA Chrome profile, an automatically
+allocated loopback DevTools port and browser-level `Target.getTargets` discovery.
+It does not depend on `/json/list` and does not attach to an unrelated browser
+listening on port 9222. Only an exact dedicated QA profile match is eligible for
+stale-process restart. Startup, CDP commands and login waiting have deadlines.
+
+Run Integrity reads configured project dependencies and per-project planned
+counts. The dashboard lists incomplete projects, missing execution counts and
+recovery actions. A failed setup dependency is a confirmed blocker; an
+unverified preflight session alone is reported as a possible cause. Skips and
+retry attempts cannot inflate executed coverage; repeatEach executions remain
+distinct. Auth refresh uses an isolated reporter and output directory so it does
+not replace the latest Full QA dashboard run.
+
+| Evidence | Status |
+|---|---|
+| TypeScript validation | Passed |
+| Unit tests | 161 passed |
+| Chromium tests against a local auth fixture | 6 passed |
+| PowerShell syntax parsing | Passed; Windows runtime remains unverified |
+| Operator-reported AI Skills discovery | 13/13 routes passed; `/my-pathway` verified; no auth redirects |
+| Operator-reported local preflight | READY; 30 projects and 1558 executions enumerated |
+| Full local 30-project execution after this update | Awaiting a new Full QA run |
+| Real Windows Chrome/CDP capture after this update | Awaiting Windows/WSL verification |
+
+The operator log was produced by the previous auth refresh version. It proves
+that the saved session worked at that time, not that the new capture lifecycle
+has been validated. Enumerated projects are planned scope, not executed scope.
+The upstream two-site matrix and the operator's local three-site matrix may
+have different totals; read the local configuration rather than hard-coding
+30 projects or 1558 executions.
+
+Recovery in Ubuntu/WSL:
+
+```bash
+npm run auth:skills:refresh:manual
+npm run qa:preflight
+# When all configured sessions are verified, use Full QA in the Workbench.
+```
+
+Local development verification:
+
+```bash
+npm run typecheck
+npm run test:unit
+npx playwright install chromium
+npx playwright test --config=playwright.auth-regression.config.ts
+```
+
+The regression configuration uses local fixtures and no production reporter.
+Full QA does not invoke the separate pentest modes through this update.
+Unified Decisioning remains the release authority; complete execution does not
+mean that all tests passed or that a release is approved.
+
+See [Authentication recovery](docs/auth-recovery.md) for lifecycle details,
+platform requirements and remaining limitations.
+
 ### Current Security Verification — 2026-09-23
 
 The latest verified Production Safe Security Posture completed successfully.
@@ -531,7 +603,14 @@ No prompts and no production writes. First-party cookie/consent banners are dism
 
 `qa:sites` is the fast Chromium-only alias. `qa:matrix` is the 18-project matrix **without** a fresh scan.
 
-If `.env` contains `NATION_TEST_EMAIL`/`PASSWORD` and/or `AI_SKILLS_TEST_*`, the run logs in once, writes `playwright/.auth/*.json` (`storageState`), and hits member routes (`/home`, `/jobs`, `/profile`, `/assessment`). If those variables are missing, the tests skip and the pack lists **one** human item: *Add test account to unlock /home /jobs /profile /assessment*.
+Auth setup first live-verifies an existing `playwright/.auth/*.json` session.
+If verification fails, configured `NATION_TEST_EMAIL`/`NATION_TEST_PASSWORD`
+or `AI_SKILLS_TEST_EMAIL`/`AI_SKILLS_TEST_PASSWORD` can attempt login. Without a
+reusable session or a successful configured login, setup fails explicitly and
+its dependent matrix projects are blocked. Some existing member-journey tests
+still require configured credentials and may skip even with a captured session;
+those skips remain missing executed coverage and must be reviewed before
+claiming a complete Full QA run.
 
 After the run, open:
 

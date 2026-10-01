@@ -1,393 +1,117 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
+import { verifyStoredSession, saveVerifiedSession } from './lib/auth-session.mjs';
 
 const root = process.cwd();
 const siteId = process.argv[2];
-
 const configs = {
   nation: {
-    id: 'nation',
-    label: 'Nation',
-    targetUrl: 'https://nation.dev/home',
+    label: 'Nation', targetUrl: 'https://nation.dev/jobs',
     authFile: 'playwright/.auth/nation.json',
-    profileName: 'qa-sentinel-nation-auth',
-    port: 9223,
+    profileName: 'qa-sentinel-nation-auth', port: 9223,
     scanScript: 'scan:nation:auth',
-    coverageFile:
-      'dashboard/data/discovery-coverage-nation.json',
+    coverageFile: 'dashboard/data/discovery-coverage-nation.json',
   },
-
   'ai-skills': {
-    id: 'ai-skills',
-    label: 'AI Skills',
-    targetUrl:
-      'https://aiskills.nation.dev/my-pathway',
-    authFile:
-      'playwright/.auth/ai-skills.json',
-    profileName:
-      'qa-sentinel-ai-skills-auth',
-    port: 9222,
-    scanScript:
-      'scan:skills:auth',
-    coverageFile:
-      'dashboard/data/discovery-coverage-ai-skills.json',
+    label: 'AI Skills', targetUrl: 'https://aiskills.nation.dev/my-pathway',
+    authFile: 'playwright/.auth/ai-skills.json',
+    profileName: 'qa-sentinel-ai-skills-auth', port: 9222,
+    scanScript: 'scan:skills:auth',
+    coverageFile: 'dashboard/data/discovery-coverage-ai-skills.json',
   },
 };
-
+configs['nation-dev'] = {
+  label: 'Nation Dev', targetUrl: 'https://dev.nation.dev/profile',
+  authFile: 'playwright/.auth/nation-dev.json',
+  profileName: 'qa-sentinel-nation-dev-auth', port: 9224,
+  scanScript: 'scan:nation-dev:auth',
+  coverageFile: 'dashboard/data/discovery-coverage-nation-dev.json',
+};
 const config = configs[siteId];
-
 if (!config) {
-  console.error(
-    'Usage: node scripts/auth-refresh.mjs ' +
-    '<nation|ai-skills>'
-  );
-  process.exit(1);
+  console.error('Usage: node scripts/auth-refresh.mjs <nation|ai-skills|nation-dev>');
+  process.exit(2);
 }
-
-const statusFile = path.resolve(
-  root,
-  'dashboard/data',
-  `auth-manager-${siteId}.json`
-);
-
-const authFile = path.resolve(
-  root,
-  config.authFile
-);
-
-function writeStatus(
-  state,
-  message,
-  extra = {}
-) {
-  fs.mkdirSync(
-    path.dirname(statusFile),
-    { recursive: true }
-  );
-
-  fs.writeFileSync(
-    statusFile,
-    JSON.stringify(
-      {
-        schemaVersion: 1,
-        siteId,
-        siteLabel: config.label,
-        state,
-        message,
-        updatedAt:
-          new Date().toISOString(),
-        ...extra,
-      },
-      null,
-      2
-    ) + '\n',
-    'utf8'
-  );
+const statusFile = path.resolve(root, 'dashboard/data', `auth-manager-${siteId}.json`);
+const authFile = path.resolve(root, config.authFile);
+const candidateFile = `${authFile}.capture-${randomUUID()}.json`;
+function writeStatus(state, message, extra = {}) {
+  fs.mkdirSync(path.dirname(statusFile), { recursive: true });
+  fs.writeFileSync(statusFile, JSON.stringify({
+    schemaVersion: 1, siteId, siteLabel: config.label, state, message,
+    updatedAt: new Date().toISOString(), ...extra,
+  }, null, 2) + '\n');
 }
-
-function run(
-  command,
-  args,
-  options = {}
-) {
-  const result = spawnSync(
-    command,
-    args,
-    {
-      cwd: root,
-      stdio: 'inherit',
-      env: process.env,
-      ...options,
-    }
-  );
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  if ((result.status ?? 1) !== 0) {
-    throw new Error(
-      `${command} ${args.join(' ')} failed ` +
-      `with exit code ${result.status}`
-    );
-  }
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    cwd: root, stdio: 'inherit', env: process.env, ...options,
+  });
+  if (result.error) throw new Error(`${path.basename(command)} could not start or timed out (${result.error.code ?? 'unknown'}).`);
+  if (result.status !== 0) throw new Error(`${path.basename(command)} failed with exit code ${result.status ?? 'unknown'}. See the diagnostic above.`);
 }
-
-function capture(
-  command,
-  args
-) {
-  const result = spawnSync(
-    command,
-    args,
-    {
-      cwd: root,
-      encoding: 'utf8',
-    }
-  );
-
-  if (result.error) {
-    throw result.error;
+function windowsPath(file) {
+  if (process.platform === 'win32') return file;
+  const result = spawnSync('wslpath', ['-w', file], { encoding: 'utf8', timeout: 10000 });
+  if (result.error || result.status !== 0) {
+    throw new Error('Manual Chrome capture requires Windows or WSL with Windows interop enabled.');
   }
-
-  if ((result.status ?? 1) !== 0) {
-    throw new Error(
-      result.stderr ||
-      `${command} failed`
-    );
-  }
-
   return result.stdout.trim();
 }
-
-async function existingSessionWorks() {
-  if (!fs.existsSync(authFile)) {
-    return false;
-  }
-
-  let browser;
-
-  try {
-    browser =
-      await chromium.launch({
-        headless: true,
-      });
-
-    const context =
-      await browser.newContext({
-        storageState:
-          config.authFile,
-      });
-
-    const page =
-      await context.newPage();
-
-    await page.goto(
-      config.targetUrl,
-      {
-        waitUntil:
-          'domcontentloaded',
-        timeout: 30000,
-      }
-    );
-
-    const actual =
-      new URL(page.url());
-
-    const expected =
-      new URL(config.targetUrl);
-
-    await context.close();
-
-    return (
-      actual.origin ===
-        expected.origin &&
-      actual.pathname ===
-        expected.pathname
-    );
-  } catch {
-    return false;
-  } finally {
-    await browser
-      ?.close()
-      .catch(() => {});
-  }
+async function checkSession(storageState) {
+  const browser = await chromium.launch({ headless: true });
+  try { return await verifyStoredSession(browser, storageState, config.targetUrl); }
+  finally { await browser.close(); }
 }
-
 async function main() {
-  console.log('');
-  console.log(
-    '=============================================='
-  );
-  console.log(
-    ` QA SENTINEL TYRA — ${config.label} AUTH`
-  );
-  console.log(
-    '=============================================='
-  );
-
-  writeStatus(
-    'checking',
-    'Checking existing authenticated session.'
-  );
-
-  const alreadyValid =
-    await existingSessionWorks();
-
-  if (alreadyValid) {
-    console.log(
-      'Existing session is valid.'
-    );
-
-    writeStatus(
-      'verifying',
-      'Existing session is valid. Refreshing authenticated discovery.'
-    );
-  } else {
-    writeStatus(
-      'waiting-login',
-      'Opening secure Chrome. Sign in normally; Tyra will continue automatically.'
-    );
-
-    console.log('');
-    console.log(
-      'Opening real Google Chrome...'
-    );
-    console.log(
-      'Sign in normally if requested.'
-    );
-    console.log(
-      'Tyra will continue automatically.'
-    );
-    console.log('');
-
-    const psScript =
-      path.resolve(
-        root,
-        'scripts/auth-capture-windows.ps1'
-      );
-
-    const windowsScript =
-      capture(
-        'wslpath',
-        ['-w', psScript]
-      );
-
-    const windowsOutput =
-      capture(
-        'wslpath',
-        ['-w', authFile]
-      );
-
-    run(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        windowsScript,
-        '-SiteLabel',
-        config.label,
-        '-TargetUrl',
-        config.targetUrl,
-        '-OutputPath',
-        windowsOutput,
-        '-Port',
-        String(config.port),
-        '-ProfileName',
-        config.profileName,
-        '-TimeoutSeconds',
-        '600',
-      ]
-    );
-
-    writeStatus(
-      'verifying',
-      'Session captured. Running authenticated discovery.'
-    );
+  console.log(`\nQA SENTINEL TYRA — ${config.label} AUTH`);
+  writeStatus('checking', 'Verifying saved session on the protected route.');
+  const existing = fs.existsSync(authFile) ? await checkSession(authFile) : { verified: false };
+  if (!existing.verified) {
+    writeStatus('waiting-login', 'Opening dedicated Chrome. Sign in normally; capture is limited to 10 minutes.');
+    console.log('Saved session is not verified. Opening dedicated QA Chrome...');
+    const psScript = windowsPath(path.resolve(root, 'scripts/auth-capture-windows.ps1'));
+    const windowsOutput = windowsPath(candidateFile);
+    run('powershell.exe', [
+      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psScript,
+      '-SiteLabel', config.label, '-TargetUrl', config.targetUrl,
+      '-OutputPath', windowsOutput, '-Port', String(config.port),
+      '-ProfileName', config.profileName, '-TimeoutSeconds', '600',
+    ], { timeout: 660000 });
+    writeStatus('verifying', 'Candidate captured. Verifying reuse in a fresh context.');
+    const browser = await chromium.launch({ headless: true });
+    try {
+      let candidate;
+      try { candidate = JSON.parse(fs.readFileSync(candidateFile, 'utf8')); }
+      catch { throw new Error('Captured storage state could not be parsed. Previous session was retained.'); }
+      await saveVerifiedSession(browser, candidate, config.targetUrl, authFile);
+    } finally { await browser.close(); }
   }
-
-  console.log('');
-  console.log(
-    'Running authenticated discovery...'
-  );
-
-  run(
-    'npm',
-    [
-      'run',
-      config.scanScript,
-    ]
-  );
-
-  console.log('');
-  console.log(
-    'Updating Discovery Coverage...'
-  );
-
-  run(
-    'npm',
-    [
-      'run',
-      'scan:coverage',
-    ]
-  );
-
-  const coveragePath =
-    path.resolve(
-      root,
-      config.coverageFile
-    );
-
-  if (!fs.existsSync(coveragePath)) {
-    throw new Error(
-      `Coverage file was not created: ` +
-      config.coverageFile
-    );
+  writeStatus('verifying', 'Session verified. Updating authenticated discovery.');
+  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  const npmOptions = { shell: process.platform === 'win32' };
+  run(npm, ['run', config.scanScript], npmOptions);
+  run(npm, ['run', 'scan:coverage'], npmOptions);
+  const coveragePath = path.resolve(root, config.coverageFile);
+  if (!fs.existsSync(coveragePath)) throw new Error('Authenticated discovery did not produce coverage.');
+  const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+  if (coverage.authenticatedVerified !== true) {
+    throw new Error(`${config.label} protected route verification passed, but authenticated discovery was not verified.`);
   }
-
-  const coverage =
-    JSON.parse(
-      fs.readFileSync(
-        coveragePath,
-        'utf8'
-      )
-    );
-
-  if (
-    coverage.authenticatedVerified !==
-    true
-  ) {
-    throw new Error(
-      `${config.label} session was captured ` +
-      'but authenticated verification did not pass.'
-    );
-  }
-
-  writeStatus(
-    'complete',
-    'Authenticated session verified.',
-    {
-      authenticatedVerified:
-        true,
-      coverageGeneratedAt:
-        coverage.generatedAt ??
-        null,
-    }
-  );
-
-  console.log('');
-  console.log(
-    `${config.label}: AUTHENTICATED VERIFIED`
-  );
-  console.log(
-    '=============================================='
-  );
+  writeStatus('complete', 'Authenticated session and discovery verified.', {
+    authenticatedVerified: true, coverageGeneratedAt: coverage.generatedAt ?? null,
+  });
+  console.log(`${config.label}: AUTHENTICATED VERIFIED`);
 }
-
-main().catch(error => {
-  const message =
-    error instanceof Error
-      ? error.message
-      : String(error);
-
-  writeStatus(
-    'error',
-    message,
-    {
-      authenticatedVerified:
-        false,
-    }
-  );
-
-  console.error('');
-  console.error(
-    'AUTH REFRESH FAILED'
-  );
-  console.error(message);
-
-  process.exit(1);
-});
+try {
+  await main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : 'Authentication refresh failed.';
+  writeStatus('error', message, { authenticatedVerified: false });
+  console.error('\nAUTH REFRESH BLOCKED\n' + message);
+  process.exitCode = 1;
+} finally {
+  fs.rmSync(candidateFile, { force: true });
+}

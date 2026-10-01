@@ -3,6 +3,8 @@ import {
 } from 'node:child_process';
 
 import process from 'node:process';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 
 const site =
@@ -31,6 +33,17 @@ const configs = {
     project:
       'ai-skills-auth-setup',
   },
+
+  'nation-dev': {
+    label:
+      'Nation Dev',
+
+    setupFile:
+      'tests/auth/nation-dev.setup.ts',
+
+    project:
+      'nation-dev-auth-setup',
+  },
 };
 
 
@@ -40,7 +53,7 @@ const config =
 
 if (!config) {
   console.error(
-    'Usage: node scripts/auth-refresh-auto.mjs <nation|ai-skills>'
+    'Usage: node scripts/auth-refresh-auto.mjs <nation|ai-skills|nation-dev>'
   );
 
   process.exit(2);
@@ -67,6 +80,8 @@ function run(
 
         shell:
           false,
+
+        timeout: 180000,
       }
     );
 
@@ -83,13 +98,6 @@ function run(
     1
   );
 }
-
-
-const npx =
-  process.platform ===
-  'win32'
-    ? 'npx.cmd'
-    : 'npx';
 
 
 console.log('');
@@ -130,9 +138,9 @@ console.log('');
 
 const automaticResult =
   run(
-    npx,
+    process.execPath,
     [
-      'playwright',
+      require.resolve('@playwright/test/cli'),
       'test',
 
       config.setupFile,
@@ -141,6 +149,9 @@ const automaticResult =
       config.project,
 
       '--workers=1',
+      '--reporter=line',
+      '--output=test-results/auth-refresh',
+      '--retries=0',
 
       '--headed',
     ]

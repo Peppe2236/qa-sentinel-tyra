@@ -10,6 +10,56 @@ On **2026-09-16**, QA Sentinel Tyra also delivered a cross-cutting **Desktop Wor
 
 QA Sentinel Tyra is evolving from a Playwright-centered QA tool into an **evidence-driven Quality Intelligence ecosystem**. Playwright remains a core execution engine, but Discovery, Functional QA, Security, Accessibility, UX/UI, Performance, API/Backend, Root-Cause Intelligence, Cross-Layer Correlation, Unified Decisioning, Sentinel AI / Eve, reporting and advisory Autonomous QA all contribute to one evidence model.
 
+## M8.1 authentication recovery and coverage hardening — 2026-10-01
+
+Implementation is delivered with development validation. Windows/WSL capture
+and a fresh full local matrix run remain acceptance checks.
+
+| Track | Delivery and verification boundary |
+|---|---|
+| Saved-session verification | Protected-route navigation in a fresh browser context; cookies alone are insufficient |
+| Three-site preservation | Nation Dev refresh and preflight retained; all three sessions required; Nation and AI Skills named-cookie guards preserved |
+| Candidate promotion | Verify exported state before replacing the saved auth file; failed candidates preserve previous state |
+| Chrome capture | Dedicated QA profile, automatic loopback port, browser websocket and `Target.getTargets`; exact-profile stale-process selection |
+| Bounded recovery | Startup, CDP and sign-in deadlines with explicit failure diagnostics |
+| Auth setup isolation | Refresh setup uses an independent reporter/output directory and cannot replace Full QA dashboard evidence |
+| Coverage attribution | Actual configured dependencies and per-project planned counts; confirmed failed setup versus possible auth cause |
+| Executed evidence | Skips and retries cannot fill coverage gaps; repeated planned executions remain distinct |
+| Operator UI | Incomplete project list, execution counts, cause and recovery action |
+| Development checks | TypeScript passed; 161 unit tests and 6 local Chromium regressions passed; PowerShell syntax parsed successfully |
+
+### Operator evidence available on 2026-10-01
+
+- AI Skills authenticated discovery: **13/13 routes passed**, zero warnings,
+  zero user-impacting errors and zero auth redirects; `/my-pathway` verified.
+- Local preflight: **READY**; Chromium, Firefox, WebKit and all three site
+  targets ready; **30 projects / 1558 executions enumerated**.
+- The provided log used the older refresh implementation. New Windows CDP
+  capture is therefore **NOT VERIFIED** by this log.
+- Enumerated scope does not establish **30/30 projects executed** or
+  **1558/1558 executions completed**. Full QA evidence remains outstanding.
+
+### Next acceptance work
+
+1. Validate the updated Windows/WSL Chrome lifecycle, including an unrelated
+   occupied fixed port, stale dedicated QA profile, no `/json/list` page data,
+   login timeout and candidate reuse after Google sign-in.
+2. Run Full QA with the operator's complete local project configuration.
+   Resolve every missing or skipped execution and confirm all configured
+   sessions, projects and planned executions have appropriate evidence.
+3. Review credential-gated member tests: a valid captured session must not be
+   mistaken for full member-journey execution when tests still skip.
+4. Review applications requiring IndexedDB or sessionStorage. Manual Windows
+   capture currently exports cookies and target-origin localStorage only;
+   unsupported state must fail verification rather than imply success.
+
+M8 remains **IN PROGRESS**. These changes do not invoke pentest, implement
+cross-user/role/IDOR authorization, grant Autonomous QA execution authority,
+or replace Unified Decisioning as the canonical release authority.
+
+See [Authentication recovery](docs/auth-recovery.md) for implementation and
+validation commands.
+
 ## Current M8 verification — 2026-09-23
 
 The current Milestone 8 implementation has reached the following verified boundary.
@@ -398,6 +448,8 @@ Formalize the shared **Evidence Engine** so every Sentinel domain uses common pr
 These are real dependencies or administrative steps and must not be silently described as completed:
 
 - credentialed member-route depth depends on `NATION_TEST_*` / `AI_SKILLS_TEST_*`
+- updated Windows/WSL CDP capture and the fresh full local matrix require acceptance evidence
+- review skipped member journeys before marking executed coverage complete
 - optional LLM enrichment depends on `SENTINEL_LLM_API_KEY` or `OPENAI_API_KEY`
 - optional paid iframe captcha solving depends on `SENTINEL_CAPTCHA_SOLVER_KEY`
 - GitHub Pages must be enabled in repository settings

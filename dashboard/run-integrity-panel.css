@@ -124,3 +124,10 @@
     flex-direction: column;
   }
 }
+
+.qa-ri-coverage { margin-top: 1rem; }
+.qa-ri-coverage h3 { margin: 0 0 .5rem; }
+.qa-ri-table-scroll { overflow-x: auto; }
+.qa-ri-coverage table { width: 100%; border-collapse: collapse; text-align: left; }
+.qa-ri-coverage th, .qa-ri-coverage td { padding: .65rem; border-bottom: 1px solid currentColor; vertical-align: top; }
+.qa-ri-coverage td { min-width: 9rem; }

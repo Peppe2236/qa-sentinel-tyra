@@ -11,6 +11,11 @@ export const AI_SKILLS_AUTH_STATE = path.resolve(
   'playwright/.auth/ai-skills.json'
 );
 
+export const NATION_DEV_AUTH_STATE = path.resolve(
+  process.cwd(),
+  'playwright/.auth/nation-dev.json'
+);
+
 export const EMPTY_STORAGE_STATE = {
   cookies: [] as never[],
   origins: [] as never[],
@@ -59,4 +64,78 @@ export function authStateHasData(filePath: string): boolean {
   } catch {
     return false;
   }
+}
+
+
+export function authStateHasUsableCookie(
+  filePath: string,
+  cookieNamePrefixes: string[],
+  minValiditySeconds = 300
+): boolean {
+  if (!authStateExists(filePath)) {
+    return false;
+  }
+
+  try {
+    const state = JSON.parse(
+      fs.readFileSync(filePath, 'utf8')
+    ) as {
+      cookies?: Array<{
+        name?: unknown;
+        expires?: unknown;
+      }>;
+    };
+
+    if (!Array.isArray(state.cookies)) {
+      return false;
+    }
+
+    const nowSeconds =
+      Date.now() / 1000;
+
+    return state.cookies.some(cookie => {
+      if (
+        !cookie ||
+        typeof cookie.name !== 'string'
+      ) {
+        return false;
+      }
+
+      const matches =
+        cookieNamePrefixes.some(prefix =>
+          cookie.name === prefix ||
+          authCookieNameStartsWith(cookie.name, 
+            `${prefix}.`
+          )
+        );
+
+      if (!matches) {
+        return false;
+      }
+
+      /*
+       * Playwright represents session cookies
+       * with a negative expiry.
+       */
+      if (
+        typeof cookie.expires !== 'number' ||
+        cookie.expires < 0
+      ) {
+        return true;
+      }
+
+      return (
+        cookie.expires >
+        nowSeconds + minValiditySeconds
+      );
+    });
+  } catch {
+    return false;
+  }
+}
+
+function authCookieNameStartsWith(
+  value: unknown, prefix: string, position?: number
+): boolean {
+  return typeof value === 'string' && value.startsWith(prefix, position);
 }

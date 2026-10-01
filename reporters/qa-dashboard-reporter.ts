@@ -1119,9 +1119,11 @@ class QaDashboardReporter implements Reporter {
       project,
 
 site:
-  project.startsWith('ai-skills-')
-    ? 'ai-skills'
-    : 'nation',
+  project.startsWith('nation-dev-')
+    ? 'nation-dev'
+    : project.startsWith('ai-skills-')
+      ? 'ai-skills'
+      : 'nation',
 
 browserFamily:
   resolveBrowserFamily(
@@ -1145,6 +1147,7 @@ profile:
 
       duration: result.duration,
       retry: result.retry,
+      repeatEachIndex: test.repeatEachIndex,
 
       severity,
       category,
@@ -1286,7 +1289,7 @@ profile:
 const discoveryIssues =
   refineDiscoveryIssues([
     ...loadDiscoveryIssues(),
-    ...loadSmartScanDiscoveryIssues(['nation', 'ai-skills']),
+    ...loadSmartScanDiscoveryIssues(['nation', 'ai-skills', 'nation-dev']),
   ]);
 
 const apiBackendEvidence =

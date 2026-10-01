@@ -238,6 +238,13 @@ function render(
     data?.execution ??
     {};
 
+  const incompleteProjects = execution.incompleteProjects ??
+    (execution.missingProjects ?? []).map(project => ({
+      project, status: 'NOT_EXECUTED', cause: 'No execution evidence. Inspect the runner log.',
+      expectedExecutions: null, actualExecutions: 0,
+      action: 'Resolve the project or setup failure, then rerun Full QA.',
+    }));
+
   const infra =
     data?.infrastructure ??
     {};
@@ -434,6 +441,23 @@ function render(
           : 'NOT_VERIFIED'
       )}
     </div>
+
+    ${incompleteProjects.length ? `
+      <div class="qa-ri-coverage">
+        <h3>QA coverage incomplete</h3>
+        <p>${esc(execution.missingExecutions ?? '?')} planned executions have no executed evidence.
+          ${esc(execution.skippedExecutions ?? 0)} skipped results do not verify coverage.</p>
+        <div class="qa-ri-table-scroll">
+          <table>
+            <thead><tr><th scope="col">Project</th><th scope="col">Executed / planned</th><th scope="col">Cause and action</th></tr></thead>
+            <tbody>${incompleteProjects.map(item => `
+              <tr><th scope="row">${esc(item.project)}<br>${esc(item.status)}</th>
+                <td>${esc(item.actualExecutions ?? 0)} / ${esc(item.expectedExecutions ?? '?')}</td>
+                <td>${esc(item.cause)}<br><strong>Action:</strong> ${esc(item.action)}</td>
+              </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>` : ''}
 
     ${
       blockers.length ||
