@@ -696,6 +696,11 @@ function renderDiscoveryReleaseReadiness(run) {
 
 
 function renderMetrics(run) {
+  // Share this exact report with the compact Workbench cards.
+  const dashboardMain = byId('dashboard-main');
+  if (dashboardMain) dashboardMain.qaSentinelRun = run;
+  document.dispatchEvent(new CustomEvent('qa-sentinel:run-data'));
+
   const isAllSites =
     activeSiteFilter === 'all';
 
@@ -6529,7 +6534,9 @@ function renderIssues() {
     ? 'Nation'
     : activeSiteFilter === 'ai-skills'
       ? 'AI Skills'
-      : 'All Sites';
+      : activeSiteFilter === 'nation-dev'
+        ? 'Nation Dev'
+        : 'All Sites';
 
 setText(
   'issues-site-label',
@@ -7384,6 +7391,12 @@ function renderSiteStatistics(run) {
       prefix: 'ai-skills-site',
       cardSelector:
         '.site-health-card[data-site="ai-skills"]',
+    },
+
+    'nation-dev': {
+      prefix: 'nation-dev-site',
+      cardSelector:
+        '.site-health-card[data-site="nation-dev"]',
     },
   };
 

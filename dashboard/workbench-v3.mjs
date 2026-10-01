@@ -51,7 +51,7 @@ const v5Messages = {
     appearance: 'Utseende', languageSupport: 'Språk', languageSupportBody: 'Svenska plus sex stora världsspråk. Språkvalet sparas automatiskt.',
     accessibility: 'Accessibility', accessibilityBody: 'Färgblindhet, kontrast, textstorlek och visuella preferenser ligger kvar globalt oavsett färgtema.',
     fullScope: 'Full QA-analys', rootCause: 'Root Cause & Advisory', securityEvidence: 'Säkerhetsevidens',
-    releaseStatus: 'Release Status', releaseLive: 'Live status från launcher', buildStage: 'Build', testsStage: 'Tester', analysisStage: 'Analys', reportStage: 'Rapport', decisionStage: 'Release Decision', complete: 'Klar', inProgress: 'Pågår', pending: 'Väntar', notVerified: 'Inte verifierad', target: 'Testmål', bothSites: 'Båda', nationOnly: 'Endast Nation', skillsOnly: 'Endast AI Skills', targetHelp: 'Välj vilka sajter som ska testas. Valet används av snabbåtgärderna och körsidorna.',
+    releaseStatus: 'Release Status', releaseLive: 'Live status från launcher', buildStage: 'Build', testsStage: 'Tester', analysisStage: 'Analys', reportStage: 'Rapport', decisionStage: 'Release Decision', complete: 'Klar', inProgress: 'Pågår', pending: 'Väntar', notVerified: 'Inte verifierad', target: 'Testmål', bothSites: 'Alla sajter', nationOnly: 'Endast Nation', skillsOnly: 'Endast AI Skills', nationDevOnly: 'Endast Nation Dev', targetHelp: 'Välj vilka sajter som ska testas. Valet används av snabbåtgärderna och körsidorna.',
   },
   en: {
     welcome: 'Welcome to QA Sentinel Tyra!', welcomeBody: 'Your automated quality assistant for safer, faster and better websites.', motto: 'Quality today, a better tomorrow.',
@@ -62,7 +62,7 @@ const v5Messages = {
     theme: 'Colour theme', themeHelp: 'Change the accent palette without affecting Accessibility preferences.', themeAzure: 'Tyra Azure', themeEmerald: 'Emerald', themeViolet: 'Amethyst', themeAmber: 'Amber', themeRose: 'Rose', themeIce: 'Arctic',
     appearance: 'Appearance', languageSupport: 'Languages', languageSupportBody: 'Swedish plus six major world languages. Your language choice is saved automatically.', accessibility: 'Accessibility', accessibilityBody: 'Colour-blindness, contrast, text size and visual preferences stay global regardless of theme.',
     fullScope: 'Full QA analysis', rootCause: 'Root Cause & Advisory', securityEvidence: 'Security evidence',
-    releaseStatus: 'Release Status', releaseLive: 'Live status from launcher', buildStage: 'Build', testsStage: 'Tests', analysisStage: 'Analysis', reportStage: 'Report', decisionStage: 'Release Decision', complete: 'Complete', inProgress: 'In Progress', pending: 'Pending', notVerified: 'Not verified', target: 'Test target', bothSites: 'Both sites', nationOnly: 'Nation only', skillsOnly: 'AI Skills only', targetHelp: 'Choose which sites to test. The selection is shared by quick actions and run pages.',
+    releaseStatus: 'Release Status', releaseLive: 'Live status from launcher', buildStage: 'Build', testsStage: 'Tests', analysisStage: 'Analysis', reportStage: 'Report', decisionStage: 'Release Decision', complete: 'Complete', inProgress: 'In Progress', pending: 'Pending', notVerified: 'Not verified', target: 'Test target', bothSites: 'All sites', nationOnly: 'Nation only', skillsOnly: 'AI Skills only', nationDevOnly: 'Nation Dev only', targetHelp: 'Choose which sites to test. The selection is shared by quick actions and run pages.',
   },
   'zh-CN': {
     welcome: '欢迎使用 QA Sentinel Tyra！', welcomeBody: '为更安全、更快速、更优质的网站提供自动化质量辅助。', motto: '今日质量，更好明天。',
@@ -234,6 +234,7 @@ pages.get('dashboard').innerHTML = `
             <button type="button" data-target="both" aria-checked="true" role="radio" data-v5-i18n="bothSites">Both sites</button>
             <button type="button" data-target="nation" aria-checked="false" role="radio" data-v5-i18n="nationOnly">Nation only</button>
             <button type="button" data-target="skills" aria-checked="false" role="radio" data-v5-i18n="skillsOnly">AI Skills only</button>
+      <button type="button" data-target="nation-dev" aria-checked="false" role="radio" data-v5-i18n="nationDevOnly">Nation Dev only</button>
           </div>
         </div>
         <button type="button" class="v5-quick-action v5-quick-primary" data-v5-action="run-full-qa"><span>▶</span><strong data-v5-i18n="startFull">Starta Full QA</strong><b>›</b></button>
@@ -280,6 +281,7 @@ function prependTargetPicker(pageName) {
       <button type="button" data-target="both" aria-checked="true" role="radio" data-v5-i18n="bothSites">Both sites</button>
       <button type="button" data-target="nation" aria-checked="false" role="radio" data-v5-i18n="nationOnly">Nation only</button>
       <button type="button" data-target="skills" aria-checked="false" role="radio" data-v5-i18n="skillsOnly">AI Skills only</button>
+      <button type="button" data-target="nation-dev" aria-checked="false" role="radio" data-v5-i18n="nationDevOnly">Nation Dev only</button>
     </div>`;
   page.prepend(picker);
 }
@@ -528,19 +530,24 @@ for (const button of themeChoices) button.addEventListener('click', () => applyT
    Test target selector — shared across Dashboard, Full QA and Fast Chromium.
    --------------------------------------------------------- */
 const TARGET_KEY = 'qa-sentinel-test-target';
-const validTargets = new Set(['both', 'nation', 'skills']);
+const validTargets = new Set(['both', 'nation', 'skills', 'nation-dev']);
 let selectedTarget = 'both';
 
 function targetDisplay(target = selectedTarget) {
   if (target === 'nation') return v5t('nationOnly');
   if (target === 'skills') return v5t('skillsOnly');
+  if (target === 'nation-dev') return v5t('nationDevOnly');
   return v5t('bothSites');
 }
 
 function targetProjectDisplay(target = selectedTarget) {
   if (target === 'nation') return 'nation.dev';
   if (target === 'skills') return 'ai-skills.nation.dev';
-  return 'nation.dev  |  ai-skills.nation.dev';
+  if (target === 'nation-dev') return 'dev.nation.dev';
+
+  return (
+    'nation.dev  |  ai-skills.nation.dev  |  dev.nation.dev'
+  );
 }
 
 function applyTarget(target, persist = true) {
@@ -813,49 +820,42 @@ document.addEventListener('click', event => {
    The canonical data still lives in the existing evidence panels.
    --------------------------------------------------------- */
 function numberFrom(id) {
-  const raw = document.getElementById(id)?.textContent?.replace(/[^0-9.-]/g, '') || '';
+  const raw = document.getElementById(id)?.textContent?.trim() || '';
+  if (!/^[0-9]+(?:\.[0-9]+)?$/.test(raw)) return null;
   const value = Number(raw);
   return Number.isFinite(value) ? value : null;
 }
 
 function updateDashboardMetrics() {
-  const nation = {
-    total: numberFrom('nation-site-total'),
-    passed: numberFrom('nation-site-passed'),
-    failed: numberFrom('nation-site-failed'),
-    warnings: numberFrom('nation-site-warnings'),
-  };
-  const skills = {
-    total: numberFrom('ai-skills-site-total'),
-    passed: numberFrom('ai-skills-site-passed'),
-    failed: numberFrom('ai-skills-site-failed'),
-    warnings: numberFrom('ai-skills-site-warnings'),
-  };
-
-  let totals;
-  if (selectedTarget === 'nation') totals = nation;
-  else if (selectedTarget === 'skills') totals = skills;
-  else {
-    const add = (a, b) => a !== null && b !== null ? a + b : null;
-    totals = {
-      total: add(nation.total, skills.total),
-      passed: add(nation.passed, skills.passed),
-      failed: add(nation.failed, skills.failed),
-      warnings: add(nation.warnings, skills.warnings),
-    };
-
-    // Fall back to canonical combined summary when site-level data is unavailable.
-    if (totals.passed === null) totals.passed = numberFrom('passed-value');
-    if (totals.failed === null) totals.failed = numberFrom('failed-value');
-    if (totals.warnings === null) totals.warnings = numberFrom('warnings-value');
-    if (totals.total === null && totals.passed !== null && totals.failed !== null) totals.total = totals.passed + totals.failed;
-  }
+  const count = value => value !== null && value !== undefined && value !== '' &&
+    Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+  const fields = ['total', 'passed', 'failed', 'warnings'];
+  // Read every rendered site, rather than assuming the original two sites.
+  const sites = Object.fromEntries(
+    [...document.querySelectorAll('.site-health-card[data-site]')].map(card => {
+      const site = card.dataset.site;
+      return [site, Object.fromEntries(fields.map(field =>
+        [field, numberFrom(`${site}-site-${field}`)]
+      ))];
+    })
+  );
+  const run = main.qaSentinelRun;
+  const allSites = selectedTarget === 'both' || selectedTarget === 'all';
+  const site = selectedTarget === 'skills' ? 'ai-skills' : selectedTarget;
+  const stats = allSites ? run : run?.siteStatistics?.[site];
+  const totals = Object.fromEntries(fields.map(field => {
+    const value = count(stats?.[allSites && field === 'total' ? 'totalTests' : field]);
+    if (value !== null) return [field, value];
+    if (!allSites) return [field, sites[site]?.[field] ?? null];
+    const values = Object.values(sites).map(entry => entry[field]);
+    return [field, values.length && values.every(value => value !== null)
+      ? values.reduce((sum, value) => sum + value, 0) : null];
+  }));
 
   const set = (id, value) => {
     const node = document.getElementById(id);
-    if (node && value !== null && value !== undefined) node.textContent = String(value);
+    if (node) node.textContent = String(value ?? '--');
   };
-
   set('v5-total-tests', totals.total);
   set('v5-passed', totals.passed);
   set('v5-failed', totals.failed);
@@ -863,20 +863,20 @@ function updateDashboardMetrics() {
 
   const totalCaption = document.querySelector('.v5-metric-total small');
   if (totalCaption) totalCaption.textContent = targetDisplay();
-
-  if (totals.total && totals.total > 0) {
-    set('v5-pass-rate', totals.passed !== null ? `${((totals.passed / totals.total) * 100).toFixed(1)}%` : '--%');
-    set('v5-fail-rate', totals.failed !== null ? `${((totals.failed / totals.total) * 100).toFixed(1)}%` : '--%');
-    set('v5-warning-rate', totals.warnings !== null ? `${((totals.warnings / totals.total) * 100).toFixed(1)}%` : '--%');
-  }
+  const rate = value => totals.total > 0 && value !== null
+    ? `${((value / totals.total) * 100).toFixed(1)}%` : '--%';
+  set('v5-pass-rate', rate(totals.passed));
+  set('v5-fail-rate', rate(totals.failed));
+  set('v5-warning-rate', rate(totals.warnings));
 }
 
 const metricsObserver = new MutationObserver(updateDashboardMetrics);
-for (const id of ['nation-site-total', 'nation-site-passed', 'nation-site-failed', 'nation-site-warnings', 'ai-skills-site-total', 'ai-skills-site-passed', 'ai-skills-site-failed', 'ai-skills-site-warnings', 'passed-value', 'failed-value', 'warnings-value']) {
-  const node = document.getElementById(id);
-  if (node) metricsObserver.observe(node, { childList: true, characterData: true, subtree: true });
+for (const node of document.querySelectorAll('.site-health-metrics strong')) {
+  metricsObserver.observe(node, { childList: true, characterData: true, subtree: true });
 }
+document.addEventListener('qa-sentinel:run-data', updateDashboardMetrics);
 updateDashboardMetrics();
+
 
 function normalizeHistory(payload) {
   if (Array.isArray(payload)) return payload;
